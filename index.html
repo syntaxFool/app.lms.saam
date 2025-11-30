@@ -620,13 +620,18 @@
             handleLogin(e) {
                 e.preventDefault();
                 const loginError = document.getElementById('loginError');
-                // Fallback: use window.store if this.store is missing
-                let storeToUse = this.store;
-                if (!storeToUse && window.store) {
-                    storeToUse = window.store;
-                    loginError.textContent = 'Debug: this.store missing, using window.store.';
+                // Forced initialization if missing
+                if (!window.store) {
+                    window.store = new LeadStore();
+                    loginError.textContent = 'Debug: Forced creation of window.store.';
                     loginError.classList.remove('hidden');
                 }
+                if (!window.app) {
+                    window.app = this;
+                    loginError.textContent = 'Debug: Forced creation of window.app.';
+                    loginError.classList.remove('hidden');
+                }
+                let storeToUse = this.store || window.store;
                 if (!storeToUse || !storeToUse.users) {
                     loginError.textContent = 'App error: User store not loaded. this.store=' + JSON.stringify(this.store) + ', window.store=' + JSON.stringify(window.store);
                     loginError.classList.remove('hidden');
