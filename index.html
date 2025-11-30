@@ -628,7 +628,12 @@
                 }
                 if (!window.app) {
                     window.app = this;
-                    loginError.textContent = 'Debug: Forced creation of window.app.';
+                    if (!this.store && window.store) {
+                        this.store = window.store;
+                        loginError.textContent = 'Debug: Forced creation of window.app and set this.store = window.store.';
+                    } else {
+                        loginError.textContent = 'Debug: Forced creation of window.app.';
+                    }
                     loginError.classList.remove('hidden');
                 }
                 let storeToUse = this.store || window.store;
