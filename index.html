@@ -675,6 +675,8 @@
             logout() { location.reload(); }
 
             async init() {
+                // Always ensure this.store is set to window.store
+                this.store = window.store;
                 // If dbUrl or appTitle is missing, try to fetch from backend (public endpoint)
                 if (!this.store.config.dbUrl || !this.store.config.appTitle) {
                     try {
@@ -750,6 +752,8 @@
                 c.innerHTML = this.store.users.map(u => `<div class="flex justify-between items-center p-3 bg-white border border-slate-100 rounded-lg"><div><div class="font-bold text-sm text-slate-800">${u.name} <span class="text-xs text-slate-400">(${u.username})</span></div><div class="text-xs uppercase font-bold text-primary bg-primary/5 w-fit px-1.5 rounded mt-0.5">${u.role}</div></div>${u.role !== 'superuser' ? `<button onclick="app.deleteUser('${u.id}')" class="text-red-400 p-2"><i class="ph-bold ph-trash"></i></button>` : ''}</div>`).join('');
             }
             async handleSaveAppConfig(e) {
+                // Always ensure this.store is set to window.store
+                this.store = window.store;
                 e.preventDefault();
                 await this.store.saveConfig({ appTitle: e.target.appTitle.value, dbUrl: e.target.dbUrl.value });
                 this.applyConfig();
