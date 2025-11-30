@@ -714,8 +714,12 @@
 
             // --- STANDARD LOGIC ---
 
-            handleLogin(e) {
+            async handleLogin(e) {
                 e.preventDefault();
+                document.getElementById('loginError').classList.add('hidden');
+                ui.showLoading(true, 'Syncing users...');
+                await this.store.syncWithCloud();
+                ui.showLoading(false);
                 const u = e.target.username.value;
                 const p = e.target.password.value;
                 const user = this.store.users.find(x => String(x.username) === String(u) && String(x.password) === String(p));
