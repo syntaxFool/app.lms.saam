@@ -965,13 +965,15 @@
             setTimeout(() => {
                 const store = new LeadStore();
                 window.app = new App(store);
-                // Wait for users to be loaded from cloud if dbUrl is set
+                // If dbUrl is set, try to sync users from cloud, else always allow local Superuser login
                 if (store.config.dbUrl) {
                     store.syncWithCloud().then(() => {
                         loadingOverlay.classList.add('hidden');
                     });
                 } else {
+                    // No dbUrl: show login immediately, allow local superuser
                     loadingOverlay.classList.add('hidden');
+                    document.getElementById('loginScreen').classList.remove('hidden');
                 }
             }, 0);
         });
