@@ -598,6 +598,11 @@
 
             handleLogin(e) {
                 e.preventDefault();
+                if (!this.store || !this.store.users) {
+                    document.getElementById('loginError').textContent = 'App error: User store not loaded.';
+                    document.getElementById('loginError').classList.remove('hidden');
+                    return;
+                }
                 const u = e.target.username.value;
                 const p = e.target.password.value;
                 const user = this.store.users.find(x => String(x.username) === String(u) && String(x.password) === String(p));
