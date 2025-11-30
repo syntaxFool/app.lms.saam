@@ -349,6 +349,8 @@
                     if (cloudData.logs) this.logs = cloudData.logs;
                     if (cloudData.interests) this.interests = cloudData.interests;
                     if (cloudData.settings) this.settings = cloudData.settings; 
+                    // Debug: log what we get from backend
+                    console.log('Backend config:', cloudData.config);
                     // Always sync appTitle from backend config if present
                     if (cloudData.config && cloudData.config.appTitle) this.config.appTitle = cloudData.config.appTitle;
                     this.saveLocal(); 
