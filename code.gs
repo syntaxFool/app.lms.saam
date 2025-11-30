@@ -8,16 +8,20 @@ function doGet() {
   const logs = readSheet(ss.getSheetByName('Logs'));
   const interests = readSheet(ss.getSheetByName('Interests'));
   
-  // NEW: Read Settings Sheet (Col 1 = Location, Col 2 = Source)
+  // NEW: Read Settings Sheet (Col 1 = Location, Col 2 = Source, Col 3 = ScriptURL)
   const settingsSheet = ss.getSheetByName('Settings');
   const settingsData = settingsSheet ? settingsSheet.getDataRange().getValues() : [];
-  
-  // Extract columns ignoring the header row
   let locations = [];
   let sources = [];
-  
-  if (settingsData.length > 1) {
-    // Assuming Row 1 is headers
+  let scriptUrl = '';
+  if (settingsData.length > 0) {
+    // Find ScriptURL header (C1)
+    const headers = settingsData[0];
+    const scriptUrlCol = headers.indexOf('ScriptURL');
+    if (scriptUrlCol !== -1 && settingsData.length > 1) {
+      scriptUrl = settingsData[1][scriptUrlCol] || '';
+    }
+    // Locations and Sources
     for (let i = 1; i < settingsData.length; i++) {
       if (settingsData[i][0]) locations.push(settingsData[i][0]); // Col 1
       if (settingsData[i][1]) sources.push(settingsData[i][1]);   // Col 2
@@ -35,7 +39,7 @@ function doGet() {
     users: users,
     logs: logs,
     interests: interests,
-    settings: { locations: locations, sources: sources } // Send lists to frontend
+    settings: { locations: locations, sources: sources, scriptUrl: scriptUrl } // Send lists to frontend
   })).setMimeType(ContentService.MimeType.JSON);
 }
 
@@ -67,6 +71,34 @@ function doPost(e) {
         writeSheet(ss.getSheetByName('Activities'), flatActivities, ['id', 'leadId', 'type', 'note', 'timestamp', 'createdBy', 'role']);
       }
       
+      return ContentService.createTextOutput(JSON.stringify({ status: 'success' })).setMimeType(ContentService.MimeType.JSON);
+    }
+    // New: Save ScriptURL to Settings
+    if (data.action === 'save_script_url' && data.scriptUrl) {
+      const settingsSheet = ss.getSheetByName('Settings');
+      let settingsData = settingsSheet.getDataRange().getValues();
+      // Ensure header row
+      if (settingsData.length === 0) {
+        settingsSheet.appendRow(['Locations', 'Sources', 'ScriptURL']);
+        settingsData = settingsSheet.getDataRange().getValues();
+      }
+      // Find ScriptURL col
+      const headers = settingsData[0];
+      let scriptUrlCol = headers.indexOf('ScriptURL');
+      if (scriptUrlCol === -1) {
+        scriptUrlCol = headers.length;
+        headers.push('ScriptURL');
+        settingsSheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+      }
+      // Ensure at least one data row
+      if (settingsData.length < 2) {
+        const row = [];
+        for (let i = 0; i < headers.length; i++) row.push('');
+        settingsSheet.appendRow(row);
+        settingsData = settingsSheet.getDataRange().getValues();
+      }
+      // Set ScriptURL value
+      settingsSheet.getRange(2, scriptUrlCol + 1).setValue(data.scriptUrl);
       return ContentService.createTextOutput(JSON.stringify({ status: 'success' })).setMimeType(ContentService.MimeType.JSON);
     }
   } catch (error) {
