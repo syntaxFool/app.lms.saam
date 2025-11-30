@@ -8,23 +8,26 @@ function doGet() {
   const logs = readSheet(ss.getSheetByName('Logs'));
   const interests = readSheet(ss.getSheetByName('Interests'));
   
-  // NEW: Read Settings Sheet (Col 1 = Location, Col 2 = Source, Col 3 = ScriptURL)
+  // Read Settings Sheet (Col 1 = Location, Col 2 = Source, Col 3 = ScriptURL, Col 4 = AppTitle)
   const settingsSheet = ss.getSheetByName('Settings');
   const settingsData = settingsSheet ? settingsSheet.getDataRange().getValues() : [];
   let locations = [];
   let sources = [];
   let scriptUrl = '';
+  let appTitle = '';
   if (settingsData.length > 0) {
-    // Find ScriptURL header (C1)
     const headers = settingsData[0];
     const scriptUrlCol = headers.indexOf('ScriptURL');
+    const appTitleCol = headers.indexOf('AppTitle');
     if (scriptUrlCol !== -1 && settingsData.length > 1) {
       scriptUrl = settingsData[1][scriptUrlCol] || '';
     }
-    // Locations and Sources
+    if (appTitleCol !== -1 && settingsData.length > 1) {
+      appTitle = settingsData[1][appTitleCol] || '';
+    }
     for (let i = 1; i < settingsData.length; i++) {
-      if (settingsData[i][0]) locations.push(settingsData[i][0]); // Col 1
-      if (settingsData[i][1]) sources.push(settingsData[i][1]);   // Col 2
+      if (settingsData[i][0]) locations.push(settingsData[i][0]);
+      if (settingsData[i][1]) sources.push(settingsData[i][1]);
     }
   }
 
@@ -39,7 +42,8 @@ function doGet() {
     users: users,
     logs: logs,
     interests: interests,
-    settings: { locations: locations, sources: sources, scriptUrl: scriptUrl } // Send lists to frontend
+    settings: { locations: locations, sources: sources, scriptUrl: scriptUrl },
+    config: { appTitle: appTitle }
   })).setMimeType(ContentService.MimeType.JSON);
 }
 
