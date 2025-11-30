@@ -372,20 +372,6 @@
         }
 
         class App {
-            constructor(store) {
-                this.store = store;
-                this.currentUser = null;
-                // On app load, if config is present, sync users from backend before showing login
-                if (this.store.config.dbUrl) {
-                    this.store.syncWithCloud().then(() => {
-                        // After sync, show login screen
-                        document.getElementById('loginScreen').classList.remove('hidden');
-                    });
-                } else {
-                    // If no config, show login screen immediately
-                    document.getElementById('loginScreen').classList.remove('hidden');
-                }
-            }
                                                 // Render the leads table view
                                                 renderTable(leads) {
                                                     const tbody = document.getElementById('tableBody');
@@ -500,28 +486,7 @@
                 // Switch tab if specified
                 if (tab) this.switchModalTab(tab);
             }
-            constructor() {
-                this.store = new LeadStore();
-                this.currentUser = null;
-                this.statusConfig = [
-                    { id: 'New', color: 'bg-blue-500', text: 'text-blue-700', bg: 'bg-blue-50' },
-                    { id: 'Contacted', color: 'bg-yellow-500', text: 'text-yellow-700', bg: 'bg-yellow-50' },
-                    { id: 'Proposal', color: 'bg-purple-500', text: 'text-purple-700', bg: 'bg-purple-50' },
-                    { id: 'Won', color: 'bg-green-500', text: 'text-green-700', bg: 'bg-green-50' },
-                    { id: 'Lost', color: 'bg-red-500', text: 'text-red-700', bg: 'bg-red-50' }
-                ];
-                this.activeMobileTab = this.statusConfig[0].id;
-                this.currentModalTab = 'info';
-                this.activeView = 'kanban'; 
-                this.selectedInterests = []; 
-                
-                this.store.subscribe((data) => {
-                    if (this.currentUser) {
-                        this.render(data);
-                        if(document.getElementById('sideMenu').classList.contains('open')) this.renderFollowUps();
-                    }
-                });
-            }
+
 
             // --- AUTOCOMPLETE LOGIC (Generic) ---
             setupAutocomplete(inputId, suggestionsId, dataList, onSelect) {
@@ -973,7 +938,8 @@
         };
 
         // Explicitly attach to window
-        window.app = new App();
+        const store = new LeadStore();
+        window.app = new App(store);
     </script>
 </body>
 </html>
