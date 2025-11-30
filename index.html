@@ -860,14 +860,20 @@
             setTimeout(() => {
                 const store = new LeadStore();
                 window.app = new App(store);
+                const loginScreen = document.getElementById('loginScreen');
+                const appContent = document.getElementById('appContent');
                 if (store.config.dbUrl) {
                     store.syncWithCloud().then(() => {
                         loadingOverlay.classList.add('hidden');
+                        // Always show login screen if no user is logged in
+                        if (loginScreen) loginScreen.classList.remove('hidden');
+                        if (appContent) appContent.classList.add('hidden');
                     });
                 } else {
                     // No dbUrl: show config modal and block login until set
                     loadingOverlay.classList.add('hidden');
-                    document.getElementById('loginScreen').classList.remove('hidden');
+                    if (loginScreen) loginScreen.classList.remove('hidden');
+                    if (appContent) appContent.classList.add('hidden');
                     // Show config modal automatically
                     if (window.ui && typeof window.ui.toggleConfig === 'function') {
                         setTimeout(() => window.ui.toggleConfig(true), 300);
