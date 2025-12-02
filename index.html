@@ -841,6 +841,25 @@
                 const num = f.phone.value || '';
                 const fullPhone = num ? (prefix + ' ' + num) : '';
 
+                // Phone number validation: must not be empty
+                if (!num || num.length < 10) {
+                    // Show error message (simple alert or custom UI)
+                    if (!document.getElementById('phoneErrorMsg')) {
+                        const phoneInput = f.phone;
+                        const err = document.createElement('div');
+                        err.id = 'phoneErrorMsg';
+                        err.className = 'text-red-500 text-xs mt-1';
+                        err.textContent = 'Phone number is required (10 digits)';
+                        phoneInput.parentNode.appendChild(err);
+                    }
+                    f.phone.focus();
+                    return;
+                } else {
+                    // Remove error if present
+                    const err = document.getElementById('phoneErrorMsg');
+                    if (err) err.remove();
+                }
+
                 const d = {
                     name: f.name.value,
                     interest: f.interest.value,
