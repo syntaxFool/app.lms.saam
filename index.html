@@ -195,17 +195,22 @@
     <div id="logsModal" class="fixed inset-0 z-[70] hidden" role="dialog" aria-modal="true">
         <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" onclick="ui.toggleLogs(false)"></div>
         <div class="modal-content absolute inset-x-0 bottom-0 md:relative md:inset-auto md:m-auto w-full md:w-[480px] md:h-[85vh] md:max-h-[800px] md:rounded-2xl bg-white shadow-2xl flex flex-col">
-                        <button type="button" onclick="ui.toggleModal(false)" class="absolute top-4 left-4 md:hidden flex items-center justify-center w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 focus:outline-none z-10">
-                            <i class="ph-bold ph-arrow-left text-xl text-primary"></i>
-                        </button>
-                        <button type="button" onclick="ui.toggleMenu(false)" class="absolute top-4 left-4 md:hidden flex items-center justify-center w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 focus:outline-none z-10">
-                            <i class="ph-bold ph-arrow-left text-xl text-primary"></i>
-                        </button>
-                        <button type="button" onclick="ui.toggleLogs(false)" class="absolute top-4 left-4 md:hidden flex items-center justify-center w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 focus:outline-none z-10">
-                            <i class="ph-bold ph-arrow-left text-xl text-primary"></i>
-                        </button>
+            <!-- Mobile Back Button -->
+            <button type="button" onclick="ui.toggleLogs(false)" class="absolute top-4 left-4 md:hidden flex items-center justify-center w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 focus:outline-none z-10">
+                <i class="ph-bold ph-arrow-left text-xl text-primary"></i>
+            </button>
+            <!-- Mobile Exit Button -->
+            <button type="button" onclick="ui.toggleLogs(false)" class="absolute top-4 right-4 md:hidden flex items-center justify-center w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 focus:outline-none z-10">
+                <i class="ph-bold ph-x text-xl text-primary"></i>
+            </button>
             <div class="md:hidden w-full flex justify-center pt-3 pb-1" onclick="ui.toggleLogs(false)"><div class="w-12 h-1.5 bg-slate-200 rounded-full"></div></div>
-            <div class="px-6 py-4 border-b border-slate-100 shrink-0 flex justify-between items-center"><h3 class="text-xl font-bold text-slate-800 flex items-center gap-2"><i class="ph-bold ph-scroll text-primary"></i> Session Logs</h3><button onclick="ui.toggleLogs(false)" class="hidden md:block p-1 text-slate-400 hover:text-slate-600 bg-slate-100 rounded-full"><i class="ph-bold ph-x text-lg"></i></button></div>
+            <div class="px-6 py-4 border-b border-slate-100 shrink-0 flex justify-between items-center">
+                <h3 class="text-xl font-bold text-slate-800 flex items-center gap-2"><i class="ph-bold ph-scroll text-primary"></i> Session Logs</h3>
+                <!-- Desktop Back Button -->
+                <button onclick="ui.toggleLogs(false)" class="hidden md:block p-1 mr-2 text-slate-400 hover:text-slate-600 bg-slate-100 rounded-full"><i class="ph-bold ph-arrow-left text-lg"></i></button>
+                <!-- Desktop Exit Button -->
+                <button onclick="ui.toggleLogs(false)" class="hidden md:block p-1 text-slate-400 hover:text-slate-600 bg-slate-100 rounded-full"><i class="ph-bold ph-x text-lg"></i></button>
+            </div>
             <div class="flex-1 overflow-y-auto p-0 bg-slate-50/50"><div id="logsContainer" class="divide-y divide-slate-100"></div></div>
         </div>
     </div>
@@ -214,11 +219,22 @@
     <div id="configModal" class="fixed inset-0 z-[70] hidden" role="dialog" aria-modal="true">
         <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" onclick="ui.toggleConfig(false)"></div>
         <div class="modal-content absolute inset-x-0 bottom-0 md:relative md:inset-auto md:m-auto w-full md:w-[480px] md:h-auto md:max-h-[90vh] md:rounded-2xl bg-white shadow-2xl flex flex-col">
-                        <button type="button" onclick="ui.toggleConfig(false)" class="absolute top-4 left-4 md:hidden flex items-center justify-center w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 focus:outline-none z-10">
-                            <i class="ph-bold ph-arrow-left text-xl text-primary"></i>
-                        </button>
+            <!-- Mobile Back Button -->
+            <button type="button" onclick="ui.toggleConfig(false)" class="absolute top-4 left-4 md:hidden flex items-center justify-center w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 focus:outline-none z-10">
+                <i class="ph-bold ph-arrow-left text-xl text-primary"></i>
+            </button>
+            <!-- Mobile Exit Button -->
+            <button type="button" onclick="ui.toggleConfig(false)" class="absolute top-4 right-4 md:hidden flex items-center justify-center w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 focus:outline-none z-10">
+                <i class="ph-bold ph-x text-xl text-primary"></i>
+            </button>
             <div class="md:hidden w-full flex justify-center pt-3 pb-1" onclick="ui.toggleConfig(false)"><div class="w-12 h-1.5 bg-slate-200 rounded-full"></div></div>
-            <div class="px-6 py-4 border-b border-slate-100 shrink-0 flex justify-between items-center"><h3 class="text-xl font-bold text-slate-800 flex items-center gap-2"><i class="ph-bold ph-user-gear text-primary"></i> User Config</h3><button onclick="ui.toggleConfig(false)" class="hidden md:block p-1 text-slate-400 hover:text-slate-600 bg-slate-100 rounded-full"><i class="ph-bold ph-x text-lg"></i></button></div>
+            <div class="px-6 py-4 border-b border-slate-100 shrink-0 flex justify-between items-center">
+                <h3 class="text-xl font-bold text-slate-800 flex items-center gap-2"><i class="ph-bold ph-user-gear text-primary"></i> User Config</h3>
+                <!-- Desktop Back Button -->
+                <button onclick="ui.toggleConfig(false)" class="hidden md:block p-1 mr-2 text-slate-400 hover:text-slate-600 bg-slate-100 rounded-full"><i class="ph-bold ph-arrow-left text-lg"></i></button>
+                <!-- Desktop Exit Button -->
+                <button onclick="ui.toggleConfig(false)" class="hidden md:block p-1 text-slate-400 hover:text-slate-600 bg-slate-100 rounded-full"><i class="ph-bold ph-x text-lg"></i></button>
+            </div>
             <div class="flex-1 overflow-y-auto p-6">
                 <div class="mb-8"><h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Database</h4><form onsubmit="app.handleSaveAppConfig(event)"><div class="space-y-3"><div><label class="block text-xs font-semibold text-slate-500 mb-1">Script URL</label><input type="text" name="dbUrl" id="configDbUrl" class="w-full bg-slate-50 border-slate-200 border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none" readonly></div><div><label class="block text-xs font-semibold text-slate-500 mb-1">App Name</label><input type="text" name="appTitle" id="configAppTitle" class="w-full bg-slate-50 border-slate-200 border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none"></div><button type="submit" class="w-full bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-slate-700">Save & Sync</button></div></form></div>
                 <div class="mb-8 p-4 bg-slate-50 rounded-xl border border-slate-200"><h4 class="text-sm font-bold text-slate-800 mb-3 flex justify-between">Add User <span id="userLimitMsg" class="text-xs font-normal text-slate-500"></span></h4><form onsubmit="app.handleAddUser(event)"><div class="grid grid-cols-2 gap-3 mb-3"><input type="text" name="newUsername" placeholder="ID" required class="w-full bg-white border-slate-200 border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none"><input type="password" name="newPassword" placeholder="Pwd" required class="w-full bg-white border-slate-200 border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none"></div><div class="grid grid-cols-2 gap-3 mb-3"><input type="text" name="newName" placeholder="Name" required class="w-full bg-white border-slate-200 border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none"><select name="newRole" class="w-full bg-white border-slate-200 border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none"><option value="agent">Agent</option><option value="admin">Admin</option></select></div><button type="submit" class="w-full bg-primary text-white font-bold py-2 rounded-lg text-sm hover:bg-indigo-600 transition shadow-sm">Create User</button></form></div>
@@ -231,9 +247,23 @@
     <div id="leadModal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true">
         <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" onclick="ui.toggleModal(false)"></div>
         <div class="modal-content absolute inset-x-0 bottom-0 md:relative md:inset-auto md:m-auto w-full md:w-[480px] md:h-[85vh] md:max-h-[800px] md:rounded-2xl bg-white shadow-2xl flex flex-col">
+            <!-- Mobile Back Button -->
+            <button type="button" onclick="ui.toggleModal(false)" class="absolute top-4 left-4 md:hidden flex items-center justify-center w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 focus:outline-none z-10">
+                <i class="ph-bold ph-arrow-left text-xl text-primary"></i>
+            </button>
+            <!-- Mobile Exit Button -->
+            <button type="button" onclick="ui.toggleModal(false)" class="absolute top-4 right-4 md:hidden flex items-center justify-center w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 focus:outline-none z-10">
+                <i class="ph-bold ph-x text-xl text-primary"></i>
+            </button>
             <div class="md:hidden w-full flex justify-center pt-3 pb-1" onclick="ui.toggleModal(false)"><div class="w-12 h-1.5 bg-slate-200 rounded-full"></div></div>
             <div class="px-6 pt-4 pb-0 border-b border-slate-100 shrink-0">
-                <div class="flex justify-between items-center mb-4"><h3 id="modalTitle" class="text-xl font-bold text-slate-800">New Lead</h3><button onclick="ui.toggleModal(false)" class="hidden md:block p-1 text-slate-400 hover:text-slate-600 bg-slate-100 rounded-full"><i class="ph-bold ph-x text-lg"></i></button></div>
+                <div class="flex justify-between items-center mb-4">
+                    <h3 id="modalTitle" class="text-xl font-bold text-slate-800">New Lead</h3>
+                    <!-- Desktop Back Button -->
+                    <button onclick="ui.toggleModal(false)" class="hidden md:block p-1 mr-2 text-slate-400 hover:text-slate-600 bg-slate-100 rounded-full"><i class="ph-bold ph-arrow-left text-lg"></i></button>
+                    <!-- Desktop Exit Button -->
+                    <button onclick="ui.toggleModal(false)" class="hidden md:block p-1 text-slate-400 hover:text-slate-600 bg-slate-100 rounded-full"><i class="ph-bold ph-x text-lg"></i></button>
+                </div>
                 <div class="flex gap-6 overflow-x-auto no-scrollbar"><button onclick="app.switchModalTab('info')" id="tab-btn-info" class="tab-active pb-3 font-semibold text-sm transition-colors whitespace-nowrap">Info</button><button onclick="app.switchModalTab('activity')" id="tab-btn-activity" class="tab-inactive pb-3 font-semibold text-sm transition-colors disabled:opacity-30 disabled:cursor-not-allowed whitespace-nowrap">Activity</button><button onclick="app.switchModalTab('contact')" id="tab-btn-contact" class="tab-inactive pb-3 font-semibold text-sm transition-colors disabled:opacity-30 disabled:cursor-not-allowed whitespace-nowrap">Contact</button></div>
             </div>
             <div class="flex-1 overflow-y-auto relative bg-slate-50/50">
