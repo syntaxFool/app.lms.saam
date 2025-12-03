@@ -245,6 +245,7 @@
                                 <th class="pb-3 font-bold pl-4 cursor-pointer hover:text-slate-700" onclick="app.sortTable('name')">Name <span id="sort-name" class="ml-1"></span></th>
                                 <th class="pb-3 font-bold cursor-pointer hover:text-slate-700" onclick="app.sortTable('phone')">Contact <span id="sort-phone" class="ml-1"></span></th>
                                 <th class="pb-3 font-bold cursor-pointer hover:text-slate-700" onclick="app.sortTable('status')">Status <span id="sort-status" class="ml-1"></span></th>
+                                <th class="pb-3 font-bold cursor-pointer hover:text-slate-700" onclick="app.sortTable('lostReason')">Lost Reason <span id="sort-lostReason" class="ml-1"></span></th>
                                 <th class="pb-3 font-bold cursor-pointer hover:text-slate-700" onclick="app.sortTable('interest')">Interest <span id="sort-interest" class="ml-1"></span></th>
                                 <th class="pb-3 font-bold cursor-pointer hover:text-slate-700" onclick="app.sortTable('source')">Source <span id="sort-source" class="ml-1"></span></th>
                                 <th class="pb-3 font-bold cursor-pointer hover:text-slate-700" onclick="app.sortTable('assignedTo')">Assigned <span id="sort-assignedTo" class="ml-1"></span></th>
@@ -390,6 +391,12 @@
 
                             <div class="grid grid-cols-2 gap-4"><div><label class="block text-sm font-semibold text-slate-700 mb-1.5">Value</label><div class="relative"><span class="absolute left-4 top-3.5 text-slate-400">₹</span><input type="number" name="value" id="leadValue" min="0" step="0.01" class="w-full bg-white border-slate-200 border rounded-xl pl-8 pr-4 py-3 focus:ring-2 focus:ring-primary outline-none" placeholder="0"></div></div><div><label class="block text-sm font-semibold text-slate-700 mb-1.5">Status</label><select name="status" id="formStatusSelect" class="w-full bg-white border-slate-200 border rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary outline-none appearance-none"></select></div></div>
                             
+                            <!-- LOST REASON (Conditional Display) -->
+                            <div id="lostReasonDisplay" class="hidden p-4 bg-red-50 border border-red-200 rounded-xl">
+                                <label class="block text-sm font-semibold text-red-800 mb-2">❌ Reason for Loss</label>
+                                <p id="lostReasonText" class="text-sm text-red-700 font-medium"></p>
+                            </div>
+                            
                             <!-- TEMPERATURE (Manual) -->
                             <div><label class="block text-sm font-semibold text-slate-700 mb-1.5">Temperature</label><select name="temperature" id="temperatureSelect" class="w-full bg-white border-slate-200 border rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary outline-none appearance-none"><option value="">Not Set</option><option value="Hot">🔴 Hot</option><option value="Warm">🟠 Warm</option><option value="Cold">🔵 Cold</option></select></div>
                             
@@ -458,6 +465,53 @@
                     </div>
                 </div>
                 <div id="footer-contact" class="hidden"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lost Reason Modal -->
+    <div id="lostReasonModal" class="fixed inset-0 z-50 hidden flex items-center justify-center" role="dialog" aria-modal="true">
+        <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"></div>
+        <div class="relative bg-white rounded-2xl shadow-2xl w-96 p-6">
+            <h3 class="text-lg font-bold text-slate-800 mb-4">Why Was This Lead Lost?</h3>
+            <p class="text-sm text-slate-600 mb-6">Select the reason for marking this lead as lost.</p>
+            
+            <div class="space-y-3 mb-6">
+                <label class="flex items-center p-3 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50 transition">
+                    <input type="radio" name="lostReason" value="Price too high" class="w-4 h-4 text-primary" onchange="app.toggleOtherReasonInput(false)">
+                    <span class="ml-3 text-sm text-slate-700 font-medium">Price too high</span>
+                </label>
+                <label class="flex items-center p-3 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50 transition">
+                    <input type="radio" name="lostReason" value="Not interested" class="w-4 h-4 text-primary" onchange="app.toggleOtherReasonInput(false)">
+                    <span class="ml-3 text-sm text-slate-700 font-medium">Not interested</span>
+                </label>
+                <label class="flex items-center p-3 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50 transition">
+                    <input type="radio" name="lostReason" value="Competitor" class="w-4 h-4 text-primary" onchange="app.toggleOtherReasonInput(false)">
+                    <span class="ml-3 text-sm text-slate-700 font-medium">Chose competitor</span>
+                </label>
+                <label class="flex items-center p-3 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50 transition">
+                    <input type="radio" name="lostReason" value="Invalid Number" class="w-4 h-4 text-primary" onchange="app.toggleOtherReasonInput(false)">
+                    <span class="ml-3 text-sm text-slate-700 font-medium">Invalid number</span>
+                </label>
+                <label class="flex items-center p-3 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50 transition">
+                    <input type="radio" name="lostReason" value="Duplicate" class="w-4 h-4 text-primary" onchange="app.toggleOtherReasonInput(false)">
+                    <span class="ml-3 text-sm text-slate-700 font-medium">Duplicate lead</span>
+                </label>
+                <label class="flex items-center p-3 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50 transition">
+                    <input type="radio" name="lostReason" value="Other" class="w-4 h-4 text-primary" onchange="app.toggleOtherReasonInput(true)">
+                    <span class="ml-3 text-sm text-slate-700 font-medium">Other reason</span>
+                </label>
+            </div>
+
+            <!-- Custom reason input (hidden by default) -->
+            <div id="customReasonContainer" class="hidden mb-6">
+                <label class="block text-sm font-semibold text-slate-700 mb-2">Please specify the reason:</label>
+                <textarea id="customReasonInput" class="w-full bg-white border border-slate-200 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary outline-none resize-none" rows="3" placeholder="Enter the reason for loss..."></textarea>
+            </div>
+            
+            <div class="flex gap-3">
+                <button type="button" onclick="app.closeLostReasonModal()" class="flex-1 bg-slate-200 text-slate-700 font-bold py-2.5 rounded-lg hover:bg-slate-300 transition">Cancel</button>
+                <button type="button" onclick="app.confirmLostReason()" class="flex-1 bg-primary text-white font-bold py-2.5 rounded-lg hover:bg-indigo-600 transition">Confirm</button>
             </div>
         </div>
     </div>
@@ -785,6 +839,7 @@
                                                             <td class="pl-4 py-2 font-bold"><span class="inline-flex items-center gap-2">${this.escapeHtml(lead.name)}${showTaskWarning ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-bold bg-red-100 text-red-700" title="Active lead with no pending task"><i class="ph-bold ph-warning"></i> No Action</span>` : ''}</span></td>
                                                             <td class="py-2">${this.escapeHtml(lead.phone || '')}<br><span class="text-xs text-slate-400">${this.escapeHtml(lead.email || '')}</span></td>
                                                             <td class="py-2">${this.escapeHtml(lead.status)}</td>
+                                                            <td class="py-2">${lead.status === 'Lost' && lead.lostReason ? `<span class="px-2 py-1 bg-red-100 text-red-700 text-xs rounded font-medium">${this.escapeHtml(lead.lostReason)}</span>` : '-'}</td>
                                                             <td class="py-2">${this.escapeHtml(lead.interest)}</td>
                                                             <td class="py-2">${this.escapeHtml(lead.source)}</td>
                                                             <td class="py-2">${this.escapeHtml(this.getUserName(lead.assignedTo))}</td>
@@ -1440,6 +1495,11 @@
                 alert('Saved & Synced');
             }
 
+            checkDuplicatePhone(phoneNumber) {
+                const duplicateLead = this.store.state.find(l => l.phone === phoneNumber);
+                return duplicateLead || null;
+            }
+
             handleFormSubmit(e) {
                 e.preventDefault();
                 const f = e.target;
@@ -1466,6 +1526,31 @@
                     if (err) err.remove();
                 }
 
+                // Check if status is being changed to "Lost" and intercept
+                const newStatus = f.status.value;
+                const leadId = f.leadId.value;
+                if (leadId && newStatus === 'Lost') {
+                    const currentLead = this.store.state.find(l => l.id === leadId);
+                    if (currentLead && currentLead.status !== 'Lost') {
+                        // Status is changing TO Lost - show the reason modal
+                        this._pendingFormData = {
+                            leadId: leadId,
+                            name: f.name.value,
+                            interest: f.interest.value,
+                            value: parseFloat(f.value.value) || 0,
+                            temperature: f.temperature.value,
+                            email: f.email.value,
+                            location: f.location.value,
+                            source: f.source.value,
+                            assignedTo: f.assignedTo.value,
+                            phone: fullPhone,
+                            notes: f.notes.value
+                        };
+                        this.showLostReasonModal(leadId);
+                        return;
+                    }
+                }
+
                 const d = {
                     name: f.name.value,
                     interest: f.interest.value,
@@ -1477,7 +1562,9 @@
                     source: f.source.value,
                     assignedTo: f.assignedTo.value,
                     phone: fullPhone,
-                    notes: f.notes.value
+                    notes: f.notes.value,
+                    // Clear lostReason if status is not "Lost"
+                    lostReason: f.status.value === 'Lost' ? undefined : ''
                 };
                 let prevAssignedTo = null;
                 if (f.leadId.value) {
@@ -1485,6 +1572,12 @@
                     prevAssignedTo = oldLead ? oldLead.assignedTo : null;
                     this.store.update(f.leadId.value, d, this.currentUser);
                 } else {
+                    // Check for duplicate phone number before adding new lead
+                    const duplicateLead = this.checkDuplicatePhone(fullPhone);
+                    if (duplicateLead) {
+                        alert(`⚠️ Duplicate Lead\n\nLead already exists:\n📛 ${duplicateLead.name}\n📞 ${duplicateLead.phone}\n📊 Status: ${duplicateLead.status}`);
+                        return;
+                    }
                     this.store.add(d, this.currentUser);
                     // For new leads, prevAssignedTo is null
                 }
@@ -1496,6 +1589,69 @@
                 if(window.app && typeof window.app.renderLeaderboard==='function'){window.app.renderLeaderboard();}
                 ui.toggleModal(false);
             }
+
+            showLostReasonModal(leadId) {
+                this._pendingLostLeadId = leadId;
+                document.getElementById('lostReasonModal').classList.remove('hidden');
+            }
+
+            closeLostReasonModal() {
+                document.getElementById('lostReasonModal').classList.add('hidden');
+                this._pendingLostLeadId = null;
+                // Clear radio selection
+                document.querySelectorAll('input[name="lostReason"]').forEach(r => r.checked = false);
+                // Clear custom input
+                document.getElementById('customReasonInput').value = '';
+                document.getElementById('customReasonContainer').classList.add('hidden');
+            }
+
+            toggleOtherReasonInput(show) {
+                const container = document.getElementById('customReasonContainer');
+                if (show) {
+                    container.classList.remove('hidden');
+                    document.getElementById('customReasonInput').focus();
+                } else {
+                    container.classList.add('hidden');
+                    document.getElementById('customReasonInput').value = '';
+                }
+            }
+
+            confirmLostReason() {
+                const selectedReason = document.querySelector('input[name="lostReason"]:checked')?.value;
+                if (!selectedReason) {
+                    alert('Please select a reason for the loss');
+                    return;
+                }
+
+                // If "Other" is selected, require custom input
+                let finalReason = selectedReason;
+                if (selectedReason === 'Other') {
+                    const customReason = document.getElementById('customReasonInput').value.trim();
+                    if (!customReason) {
+                        alert('Please specify the reason for the loss');
+                        document.getElementById('customReasonInput').focus();
+                        return;
+                    }
+                    finalReason = `Other: ${customReason}`;
+                }
+
+                if (this._pendingLostLeadId) {
+                    // If we have pending form data, use it (came from form edit)
+                    if (this._pendingFormData) {
+                        const formData = { ...this._pendingFormData, status: 'Lost', lostReason: finalReason };
+                        this.store.update(this._pendingLostLeadId, formData, this.currentUser);
+                        this._pendingFormData = null;
+                    } else {
+                        // Came from drag-drop
+                        this.store.update(this._pendingLostLeadId, { status: 'Lost', lostReason: finalReason }, this.currentUser);
+                    }
+                    this.closeLostReasonModal();
+                    if (typeof this.renderCards === 'function') this.renderCards();
+                    if (typeof this.renderTable === 'function') this.renderTable(this.store.state);
+                    if(window.app && typeof window.app.renderLeaderboard==='function'){window.app.renderLeaderboard();}
+                }
+            }
+
             handleAddActivity(e) {
                 e.preventDefault();
                 const f = e.target;
@@ -1559,7 +1715,24 @@
                     countDisplay.classList.remove('text-amber-600');
                 }
             }
-            moveLead(id, s) { this.store.updateStatus(id, s, this.currentUser); }
+            moveLead(id, s) { 
+                // If moving to "Lost", show the reason modal
+                if (s === 'Lost') {
+                    const lead = this.store.state.find(l => l.id === id);
+                    if (lead && lead.status !== 'Lost') {
+                        this.showLostReasonModal(id);
+                        return;
+                    }
+                } else {
+                    // If moving away from "Lost", clear the lostReason
+                    const lead = this.store.state.find(l => l.id === id);
+                    if (lead && lead.status === 'Lost') {
+                        this.store.update(id, { status: s, lostReason: '' }, this.currentUser);
+                        return;
+                    }
+                }
+                this.store.updateStatus(id, s, this.currentUser); 
+            }
             deleteLead(id) { 
                 if(this.currentUser.role==='agent') return alert('Access Denied');
                 if(confirm('Delete?')) this.store.delete(id, this.currentUser); 
@@ -1601,6 +1774,15 @@
                 // Interests tags
                 this.selectedInterests = (lead.interest || '').split(',').filter(x=>x.trim()).map(i=>({name:i.trim(),value:0}));
                 this.renderInterestTags();
+                // Show lost reason if status is "Lost"
+                const lostReasonDisplay = document.getElementById('lostReasonDisplay');
+                const lostReasonText = document.getElementById('lostReasonText');
+                if (lead.status === 'Lost' && lead.lostReason) {
+                    lostReasonDisplay.classList.remove('hidden');
+                    lostReasonText.textContent = lead.lostReason;
+                } else {
+                    lostReasonDisplay.classList.add('hidden');
+                }
                 // Show modal
                 ui.toggleModal(true);
                 // Switch tab if specified
@@ -1657,7 +1839,7 @@
                     `<div class="flex flex-wrap gap-1 mb-2">${interests.slice(0, 2).map(i => `<span class="text-[10px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded border border-primary/20">${this.escapeHtml(i)}</span>`).join('')}${interests.length > 2 ? `<span class="text-[10px] text-slate-400">+${interests.length - 2}</span>` : ''}</div>` : '';
 
                 return `
-                    <div onclick="app.editLead('${lead.id}')" class="bg-white p-4 rounded-xl shadow-sm border ${showTaskWarning ? 'border-red-300 bg-red-50/30' : 'border-slate-100'} active:scale-[0.99] transition-transform cursor-pointer">
+                    <div onclick="app.editLead('${lead.id}')" class="bg-white p-4 rounded-xl shadow-sm border ${showTaskWarning ? 'border-red-300 bg-red-50/30' : 'border-slate-100'} active:scale-[0.99] transition-transform cursor-pointer ${lead.status === 'Lost' ? 'grayscale opacity-60' : ''}">
                         <div class="flex justify-between items-start mb-2">
                             <h3 class="font-bold text-slate-800 line-clamp-1 text-lg">${this.escapeHtml(lead.name)}</h3>
                             <div class="flex gap-1 -mr-2 -mt-2">${showTaskWarning ? `<span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700 whitespace-nowrap"><i class="ph-bold ph-warning"></i> No Action</span>` : ''}${delBtn}</div>
