@@ -73,6 +73,50 @@
             .kanban-column { display: none; }
             .kanban-column.active-mobile { display: flex; }
             .modal-content { transform: translateY(100%); border-radius: 1.5rem 1.5rem 0 0; height: 90vh; margin-top: auto; }
+            #appContent { padding-bottom: 80px; }
+            main { padding-bottom: 0; }
+            #mobileBottomNav { display: flex; }
+            .mobile-fab-adjusted { bottom: 5.5rem !important; }
+            #mobileBottomNav .active { background-color: #f1f5f9; color: #4f46e5; }
+            #mobileBottomNav .active i { color: #4f46e5; }
+            #fabMenu { animation: scaleIn 0.2s ease-out; }
+            #fabMenu.hidden { display: none; }
+            /* Better touch targets on mobile */
+            button, a { min-height: 44px; min-width: 44px; }
+            button > *, a > * { pointer-events: none; }
+            
+            /* Mobile Kanban Tabs - Pill Style */
+            #kanbanTabs { padding: 0.75rem 1rem; background: white; border-bottom: 1px solid #f3f4f6; }
+            #mobileTabs { display: flex; gap: 0.5rem; overflow-x: auto; -ms-overflow-style: none; scrollbar-width: none; }
+            #mobileTabs::-webkit-scrollbar { display: none; }
+            .mobile-tab-btn { background: white; border: 1px solid #e5e7eb; border-radius: 9999px !important; padding: 0.5rem 1.25rem !important; font-size: 0.875rem; font-weight: 600; color: #4b5563; white-space: nowrap; cursor: pointer; transition: all 0.2s ease; outline: none; border-bottom: none !important; }
+            .mobile-tab-btn.active { background-color: #1f2937 !important; color: white !important; border-color: #1f2937 !important; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+            #kanbanView .mobile-tab-btn:hover { border-color: #d1d5db; }
+            #kanbanView .mobile-tab-btn.active { background-color: #1f2937 !important; color: white !important; border-color: #1f2937 !important; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+            #kanbanView .mobile-tab-btn i { display: none !important; }
+        }
+        
+        @keyframes scaleIn {
+            from { transform: scale(0.8) translateY(10px); opacity: 0; }
+            to { transform: scale(1) translateY(0); opacity: 1; }
+        }
+        
+        /* Card swipe gestures */
+        .card-swipe-container {
+            position: relative;
+            overflow: hidden;
+        }
+        .card-swipe-container > div {
+            transition: transform 0.3s ease-out;
+        }
+        .card-swipe-left { animation: swipeLeft 0.3s ease-out forwards; }
+        .card-swipe-right { animation: swipeRight 0.3s ease-out forwards; }
+        
+        @keyframes swipeLeft {
+            to { transform: translateX(-100%); opacity: 0; }
+        }
+        @keyframes swipeRight {
+            to { transform: translateX(100%); opacity: 0; }
         }
     </style>
     <script>
@@ -355,7 +399,49 @@
             </div>
         </main>
 
-        <button onclick="ui.toggleModal(true)" class="fixed bottom-6 right-6 md:bottom-8 md:right-8 bg-primary hover:bg-indigo-600 text-white w-14 h-14 rounded-full shadow-lg shadow-indigo-500/30 flex items-center justify-center transition transform active:scale-95 z-30"><i class="ph-bold ph-plus text-2xl"></i></button>
+        <!-- MOBILE BOTTOM NAVIGATION (hidden on desktop) -->
+        <nav id="mobileBottomNav" class="fixed bottom-0 left-0 right-0 md:hidden bg-white border-t border-slate-200 px-2 py-2 flex justify-around items-center gap-1 z-40 h-20">
+            <button onclick="app.switchViewMode('kanban'); ui.updateMobileNav()" id="navKanban" class="flex flex-col items-center justify-center gap-1 px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition w-16">
+                <i class="ph-bold ph-kanban text-2xl"></i>
+                <span class="text-xs font-semibold">Board</span>
+            </button>
+            <button onclick="app.switchViewMode('table'); ui.updateMobileNav()" id="navTable" class="flex flex-col items-center justify-center gap-1 px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition w-16">
+                <i class="ph-bold ph-table text-2xl"></i>
+                <span class="text-xs font-semibold">Leads</span>
+            </button>
+            <button onclick="app.switchViewMode('reports'); ui.updateMobileNav()" id="navReports" class="flex flex-col items-center justify-center gap-1 px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition w-16">
+                <i class="ph-bold ph-chart-bar text-2xl"></i>
+                <span class="text-xs font-semibold">Reports</span>
+            </button>
+            <button onclick="ui.toggleMenu(true)" id="navMenu" class="flex flex-col items-center justify-center gap-1 px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition w-16">
+                <i class="ph-bold ph-gear text-2xl"></i>
+                <span class="text-xs font-semibold">More</span>
+            </button>
+        </nav>
+
+        <!-- FAB Button with menu (with padding to not overlap mobile nav) -->
+        <div class="fixed bottom-6 right-6 md:bottom-8 md:right-8 mobile-fab-adjusted z-30">
+            <!-- FAB Menu (hidden by default) -->
+            <div id="fabMenu" class="absolute bottom-20 right-0 bg-white rounded-2xl shadow-2xl p-2 hidden flex-col gap-2 w-48">
+                <button onclick="ui.toggleModal(true); document.getElementById('fabMenu').classList.add('hidden')" class="w-full text-left px-4 py-3 rounded-lg hover:bg-slate-100 flex items-center gap-3 transition text-slate-700">
+                    <i class="ph-bold ph-plus text-lg text-primary"></i>
+                    <span class="font-semibold text-sm">New Lead</span>
+                </button>
+                <button onclick="app.notify('Scan feature coming soon', 'info'); document.getElementById('fabMenu').classList.add('hidden')" class="w-full text-left px-4 py-3 rounded-lg hover:bg-slate-100 flex items-center gap-3 transition text-slate-700">
+                    <i class="ph-bold ph-qr-code text-lg text-blue-600"></i>
+                    <span class="font-semibold text-sm">Scan QR</span>
+                </button>
+                <button onclick="app.notify('Import feature coming soon', 'info'); document.getElementById('fabMenu').classList.add('hidden')" class="w-full text-left px-4 py-3 rounded-lg hover:bg-slate-100 flex items-center gap-3 transition text-slate-700">
+                    <i class="ph-bold ph-upload-simple text-lg text-green-600"></i>
+                    <span class="font-semibold text-sm">Import CSV</span>
+                </button>
+            </div>
+            
+            <!-- Primary FAB Button -->
+            <button onclick="const menu = document.getElementById('fabMenu'); menu.classList.toggle('hidden')" class="bg-primary hover:bg-indigo-600 text-white w-14 h-14 rounded-full shadow-lg shadow-indigo-500/30 flex items-center justify-center transition transform active:scale-95 focus:outline-none" title="Quick actions">
+                <i id="fabIcon" class="ph-bold ph-plus text-2xl"></i>
+            </button>
+        </div>
     </div>
 
     <!-- SIDE MENU -->
@@ -930,7 +1016,7 @@
                                                                                     switchTab(tabId) {
                                                                                         this.activeMobileTab = tabId;
                                                                                         this.render(this.store.state);
-                                                                                        this.renderTabs();
+                                                                                        ui.updateKanbanTabs();
                                                                                     }
                                                                         // --- LEADERBOARD RENDERING ---
                                                                         renderLeaderboard() {
@@ -1189,36 +1275,45 @@
                                     // Switch between Kanban and Table views
                                     switchViewMode(mode) {
                                         this.activeView = mode;
+                                        this.currentView = mode; // Store for mobile nav update
                                         const kanban = document.getElementById('kanbanView');
                                         const table = document.getElementById('tableView');
                                         const agentTable = document.getElementById('agentTableView');
                                         const reports = document.getElementById('reportsView');
+                                        const kanbanTabs = document.getElementById('kanbanTabs');
+                                        
                                         if (mode === 'kanban') {
                                             kanban.classList.remove('hidden');
                                             table.classList.add('hidden');
                                             agentTable.classList.add('hidden');
                                             reports.classList.add('hidden');
+                                            if (kanbanTabs) kanbanTabs.classList.remove('hidden'); // Show tabs for Kanban
                                             this.render(this.store.state);
+                                            ui.updateKanbanTabs(); // Update Kanban mobile tabs
                                         } else if (mode === 'table') {
                                             kanban.classList.add('hidden');
                                             table.classList.remove('hidden');
                                             agentTable.classList.add('hidden');
                                             reports.classList.add('hidden');
+                                            if (kanbanTabs) kanbanTabs.classList.add('hidden'); // Hide tabs for Table
                                             this.render(this.store.state);
                                         } else if (mode === 'agentTable') {
                                             kanban.classList.add('hidden');
                                             table.classList.add('hidden');
                                             agentTable.classList.remove('hidden');
                                             reports.classList.add('hidden');
+                                            if (kanbanTabs) kanbanTabs.classList.add('hidden'); // Hide tabs for Agent Table
                                             this.renderAgentTable();
                                         } else if (mode === 'reports') {
                                             kanban.classList.add('hidden');
                                             table.classList.add('hidden');
                                             agentTable.classList.add('hidden');
                                             reports.classList.remove('hidden');
+                                            if (kanbanTabs) kanbanTabs.classList.add('hidden'); // Hide tabs for Reports
                                             this.renderReports();
                                         }
                                         this.renderLeaderboard();
+                                        ui.updateMobileNav(); // Update mobile nav indicator
                                     }
 
                                     renderAgentTable() {
@@ -1618,7 +1713,10 @@
             async init() {
                 this.applyConfig();
                 this.updateUserUI();
-                this.renderTabs();
+                // Update Kanban tabs with safe check
+                if (ui && typeof ui.updateKanbanTabs === 'function') {
+                    ui.updateKanbanTabs();
+                }
                 this.render(this.store.state);
 
                 this.initInterestLogic();
@@ -2009,7 +2107,6 @@
                 // Switch tab if specified
                 if (tab) this.switchModalTab(tab);
             }
-            renderTabs() { document.getElementById('mobileTabs').innerHTML = this.statusConfig.map(s => `<button onclick="app.switchTab('${s.id}')" class="px-4 py-2 rounded-full text-sm font-semibold border ${this.activeMobileTab === s.id ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-600 border-slate-200'}">${s.id}</button>`).join(''); }
             
             render(leads) {
                 // Filter for agent/user: only show assigned leads
@@ -2037,6 +2134,85 @@
                         </div>`;
                 });
                 this.renderLeaderboard();
+                // Initialize swipe gestures on mobile
+                if (window.innerWidth < 768) {
+                    this.initMobileSwipeGestures();
+                }
+            }
+
+            initMobileSwipeGestures() {
+                const boardContainer = document.getElementById('boardContainer');
+                if (!boardContainer) return;
+                
+                let touchStartX = 0;
+                let touchEndX = 0;
+                
+                const handleSwipe = () => {
+                    const diff = touchStartX - touchEndX;
+                    const threshold = 50;
+                    
+                    if (Math.abs(diff) < threshold) return;
+                    
+                    const currentIdx = this.statusConfig.findIndex(s => s.id === this.activeMobileTab);
+                    let nextIdx = currentIdx;
+                    
+                    if (diff > 0) { // Swiped left - go to next column
+                        nextIdx = (currentIdx + 1) % this.statusConfig.length;
+                    } else { // Swiped right - go to previous column
+                        nextIdx = (currentIdx - 1 + this.statusConfig.length) % this.statusConfig.length;
+                    }
+                    
+                    this.activeMobileTab = this.statusConfig[nextIdx].id;
+                    this.render(this.store.state);
+                    ui.updateKanbanTabs();
+                };
+                
+                boardContainer.addEventListener('touchstart', (e) => { touchStartX = e.changedTouches[0].screenX; }, false);
+                boardContainer.addEventListener('touchend', (e) => { touchEndX = e.changedTouches[0].screenX; handleSwipe(); }, false);
+                
+                // Initialize card swipe gestures
+                this.initCardSwipeGestures();
+            }
+            
+            initCardSwipeGestures() {
+                const cards = document.querySelectorAll('.card-swipe-container');
+                cards.forEach(card => {
+                    let touchStartX = 0;
+                    let touchStartY = 0;
+                    
+                    card.addEventListener('touchstart', (e) => {
+                        touchStartX = e.changedTouches[0].screenX;
+                        touchStartY = e.changedTouches[0].screenY;
+                    }, false);
+                    
+                    card.addEventListener('touchend', (e) => {
+                        const touchEndX = e.changedTouches[0].screenX;
+                        const touchEndY = e.changedTouches[0].screenY;
+                        const diffX = touchStartX - touchEndX;
+                        const diffY = Math.abs(touchStartY - touchEndY);
+                        const threshold = 50;
+                        
+                        // Only process horizontal swipes (vertical movement < horizontal)
+                        if (Math.abs(diffX) < threshold || diffY > diffX) return;
+                        
+                        const leadId = card.dataset.leadId;
+                        const lead = this.store.state.find(l => l.id === leadId);
+                        if (!lead) return;
+                        
+                        const cardDiv = card.querySelector('div');
+                        if (diffX > 0) { // Swiped left - DELETE
+                            cardDiv.classList.add('card-swipe-left');
+                            setTimeout(() => {
+                                this.deleteLead(leadId);
+                            }, 300);
+                        } else { // Swiped right - EDIT
+                            cardDiv.classList.add('card-swipe-right');
+                            setTimeout(() => {
+                                this.editLead(leadId);
+                            }, 300);
+                        }
+                    }, false);
+                });
             }
 
             generateReportData() {
@@ -2252,26 +2428,28 @@
                     `<div class="flex flex-wrap gap-1 mb-2">${interests.slice(0, 2).map(i => `<span class="text-[10px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded border border-primary/20">${this.escapeHtml(i)}</span>`).join('')}${interests.length > 2 ? `<span class="text-[10px] text-slate-400">+${interests.length - 2}</span>` : ''}</div>` : '';
 
                 return `
-                    <div onclick="app.editLead('${lead.id}')" class="bg-white p-4 rounded-xl shadow-sm border ${showTaskWarning ? 'border-red-300 bg-red-50/30' : 'border-slate-100'} active:scale-[0.99] transition-transform cursor-pointer ${lead.status === 'Lost' ? 'grayscale opacity-60' : ''}">
-                        <div class="flex justify-between items-start mb-2">
-                            <h3 class="font-bold text-slate-800 line-clamp-1 text-lg">${this.escapeHtml(lead.name)}</h3>
-                            <div class="flex gap-1 -mr-2 -mt-2">${showTaskWarning ? `<span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700 whitespace-nowrap"><i class="ph-bold ph-warning"></i> No Action</span>` : ''}${delBtn}</div>
-                        </div>
-                        ${lead.assignedTo ? `<div class="text-xs font-semibold text-primary bg-primary/10 px-2 py-1 rounded mb-2 w-fit">${this.escapeHtml(this.getUserName(lead.assignedTo))}</div>` : ''}
-                        <div class="flex items-center gap-2 mb-2">
-                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold ${scores.tempColor}"><i class="ph-bold ${scores.tempIcon}"></i> ${scores.temp || 'Not Set'}</span>
-                        </div>
-                        ${interestHTML}
-                        <div class="text-slate-500 font-medium text-sm mb-3">${this.formatCurrency(lead.value)}</div>
-                        <div class="flex flex-wrap gap-2 mb-3">
-                            <button onclick="event.stopPropagation(); app.editLead('${lead.id}', 'activity')" class="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-indigo-50 text-indigo-600 text-xs rounded-lg border border-indigo-100 active:bg-indigo-100 font-medium transition-colors"><i class="ph-bold ph-chat"></i> Activity</button>
-                            <button onclick="event.stopPropagation(); app.editLead('${lead.id}', 'task')" class="inline-flex items-center gap-1.5 px-2.5 py-1.5 ${showTaskWarning ? 'bg-red-100 text-red-600 border-red-200' : 'bg-amber-50 text-amber-600 border-amber-100'} text-xs rounded-lg border active:bg-opacity-75 font-medium transition-colors"><i class="ph-bold ph-plus"></i> Task</button>
-                            ${lead.phone ? `<a href="tel:${lead.phone.replace(/\s+/g,'')}" onclick="event.stopPropagation()" class="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-50 text-slate-600 text-xs rounded-lg border border-slate-200 active:bg-slate-200"><i class="ph-fill ph-phone"></i> Call</a><a href="https://wa.me/${lead.phone.replace(/\D/g,'')}" target="_blank" onclick="event.stopPropagation()" class="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-50 text-slate-600 text-xs rounded-lg border border-slate-200 active:bg-slate-200 hover:text-green-600 hover:bg-green-50 hover:border-green-200 transition-colors"><i class="ph-fill ph-whatsapp-logo text-green-600"></i> WhatsApp</a>` : ''}
-                        </div>
-                        ${lead.notes ? `<div class="text-xs text-slate-500 bg-slate-50 p-2 rounded-lg mb-3 line-clamp-2">${this.escapeHtml(lead.notes)}</div>` : ''}
-                        <div class="flex gap-2 mt-2 pt-2 border-t border-slate-50">
-                            ${prev ? `<button onclick="event.stopPropagation(); app.moveLead('${lead.id}', '${prev}')" class="flex-1 py-2 bg-slate-100 text-slate-600 rounded-lg text-sm font-semibold hover:bg-slate-200 transition"><i class="ph-bold ph-arrow-left"></i></button>` : '<div class="flex-1"></div>'}
-                            ${next ? `<button onclick="event.stopPropagation(); app.moveLead('${lead.id}', '${next}')" class="flex-1 py-2 bg-primary/10 text-primary rounded-lg text-sm font-semibold hover:bg-primary/20 transition"><i class="ph-bold ph-arrow-right"></i></button>` : '<div class="flex-1"></div>'}
+                    <div class="card-swipe-container" data-lead-id="${lead.id}">
+                        <div onclick="app.editLead('${lead.id}')" class="bg-white p-4 rounded-xl shadow-sm border ${showTaskWarning ? 'border-red-300 bg-red-50/30' : 'border-slate-100'} active:scale-[0.99] transition-transform cursor-pointer ${lead.status === 'Lost' ? 'grayscale opacity-60' : ''}">
+                            <div class="flex justify-between items-start mb-2">
+                                <h3 class="font-bold text-slate-800 line-clamp-1 text-lg">${this.escapeHtml(lead.name)}</h3>
+                                <div class="flex gap-1 -mr-2 -mt-2">${showTaskWarning ? `<span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700 whitespace-nowrap"><i class="ph-bold ph-warning"></i> No Action</span>` : ''}${delBtn}</div>
+                            </div>
+                            ${lead.assignedTo ? `<div class="text-xs font-semibold text-primary bg-primary/10 px-2 py-1 rounded mb-2 w-fit">${this.escapeHtml(this.getUserName(lead.assignedTo))}</div>` : ''}
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold ${scores.tempColor}"><i class="ph-bold ${scores.tempIcon}"></i> ${scores.temp || 'Not Set'}</span>
+                            </div>
+                            ${interestHTML}
+                            <div class="text-slate-500 font-medium text-sm mb-3">${this.formatCurrency(lead.value)}</div>
+                            <div class="flex flex-wrap gap-2 mb-3">
+                                <button onclick="event.stopPropagation(); app.editLead('${lead.id}', 'activity')" class="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-indigo-50 text-indigo-600 text-xs rounded-lg border border-indigo-100 active:bg-indigo-100 font-medium transition-colors"><i class="ph-bold ph-chat"></i> Activity</button>
+                                <button onclick="event.stopPropagation(); app.editLead('${lead.id}', 'task')" class="inline-flex items-center gap-1.5 px-2.5 py-1.5 ${showTaskWarning ? 'bg-red-100 text-red-600 border-red-200' : 'bg-amber-50 text-amber-600 border-amber-100'} text-xs rounded-lg border active:bg-opacity-75 font-medium transition-colors"><i class="ph-bold ph-plus"></i> Task</button>
+                                ${lead.phone ? `<a href="tel:${lead.phone.replace(/\s+/g,'')}" onclick="event.stopPropagation()" class="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-50 text-slate-600 text-xs rounded-lg border border-slate-200 active:bg-slate-200"><i class="ph-fill ph-phone"></i> Call</a><a href="https://wa.me/${lead.phone.replace(/\D/g,'')}" target="_blank" onclick="event.stopPropagation()" class="inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-50 text-slate-600 text-xs rounded-lg border border-slate-200 active:bg-slate-200 hover:text-green-600 hover:bg-green-50 hover:border-green-200 transition-colors"><i class="ph-fill ph-whatsapp-logo text-green-600"></i> WhatsApp</a>` : ''}
+                            </div>
+                            ${lead.notes ? `<div class="text-xs text-slate-500 bg-slate-50 p-2 rounded-lg mb-3 line-clamp-2">${this.escapeHtml(lead.notes)}</div>` : ''}
+                            <div class="flex gap-2 mt-2 pt-2 border-t border-slate-50">
+                                ${prev ? `<button onclick="event.stopPropagation(); app.moveLead('${lead.id}', '${prev}')" class="flex-1 py-2 bg-slate-100 text-slate-600 rounded-lg text-sm font-semibold hover:bg-slate-200 transition"><i class="ph-bold ph-arrow-left"></i></button>` : '<div class="flex-1"></div>'}
+                                ${next ? `<button onclick="event.stopPropagation(); app.moveLead('${lead.id}', '${next}')" class="flex-1 py-2 bg-primary/10 text-primary rounded-lg text-sm font-semibold hover:bg-primary/20 transition"><i class="ph-bold ph-arrow-right"></i></button>` : '<div class="flex-1"></div>'}
+                            </div>
                         </div>
                     </div>`;
             }
@@ -2455,6 +2633,22 @@
                                             count.style.display = 'none';
                                         }
                                     },
+                                    updateMobileNav: () => {
+                                        const currentView = app.currentView || 'kanban';
+                                        ['kanban', 'table', 'reports'].forEach(view => {
+                                            const btn = document.getElementById(`nav${view.charAt(0).toUpperCase() + view.slice(1)}`);
+                                            if (btn) btn.classList.toggle('active', view === currentView);
+                                        });
+                                    },
+                                    updateKanbanTabs: () => {
+                                        const container = document.getElementById('mobileTabs');
+                                        if (!container) return;
+                                        const tabs = app.statusConfig.map(s => {
+                                            const isActive = s.id === app.activeMobileTab ? 'active' : '';
+                                            return `<button onclick="app.activeMobileTab='${s.id}'; app.render(app.store.state)" class="mobile-tab-btn ${isActive}">${s.id}</button>`;
+                                        }).join('');
+                                        container.innerHTML = tabs;
+                                    },
                         hideNotification: () => {
                             const tray = document.getElementById('notificationTray');
                             tray.classList.add('opacity-0', 'pointer-events-none');
@@ -2476,10 +2670,36 @@
                         document.getElementById('tab-btn-contact').disabled=true; 
                     } 
                     m.classList.remove('hidden'); requestAnimationFrame(()=>m.classList.add('open')); 
+                    // Add swipe-down handler for mobile
+                    if (window.innerWidth < 768) {
+                        ui.initModalSwipeClose(m);
+                    }
                 } else { 
                     m.classList.remove('open'); 
                     setTimeout(()=>{m.classList.add('hidden'); document.getElementById('leadForm').reset(); document.getElementById('leadIdInput').value='';},300); 
                 } 
+            },
+            initModalSwipeClose: (modal) => {
+                if (!modal) return;
+                const content = modal.querySelector('.modal-content');
+                if (!content) return;
+                
+                let touchStartY = 0;
+                let touchEndY = 0;
+                
+                const handleSwipeDown = () => {
+                    const diff = touchEndY - touchStartY;
+                    if (diff > 80) { // Swiped down more than 80px
+                        ui.toggleModal(false);
+                    }
+                };
+                
+                // Remove previous listeners to avoid duplicates
+                content.replaceWith(content.cloneNode(true));
+                const newContent = modal.querySelector('.modal-content');
+                
+                newContent.addEventListener('touchstart', (e) => { touchStartY = e.changedTouches[0].screenY; }, false);
+                newContent.addEventListener('touchend', (e) => { touchEndY = e.changedTouches[0].screenY; handleSwipeDown(); }, false);
             },
             toggleMenu: (s) => { const m = document.getElementById('sideMenu'); if(s) { try { window.app.renderFollowUps(); } catch(e){} m.classList.remove('hidden'); requestAnimationFrame(()=>m.classList.add('open')); } else { m.classList.remove('open'); setTimeout(()=>m.classList.add('hidden'),300); } },
             toggleAdminMenu: () => { const menu = document.getElementById('adminMenuDropdown'); if(menu) menu.classList.toggle('hidden'); },
