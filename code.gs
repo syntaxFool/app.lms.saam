@@ -9,7 +9,7 @@ function doGet() {
   const logs = readSheet(ss.getSheetByName('Logs'));
   const interests = readSheet(ss.getSheetByName('Interests'));
   
-  // Read Settings Sheet (Col 1 = Location, Col 2 = Source, Col 3 = ScriptURL, Col 4 = AppTitle, Col 5 = TaskTitles, Col 6 = KillSwitchToken)
+  // Read Settings Sheet (Col 1 = Location, Col 2 = Source, Col 3 = ScriptURL, Col 4 = AppTitle, Col 5 = TaskTitles)
   const settingsSheet = ss.getSheetByName('Settings');
   const settingsData = settingsSheet ? settingsSheet.getDataRange().getValues() : [];
   let locations = [];
@@ -17,21 +17,16 @@ function doGet() {
   let taskTitles = [];
   let scriptUrl = '';
   let appTitle = '';
-  let killSwitchToken = '';
   if (settingsData.length > 0) {
     const headers = settingsData[0];
     const scriptUrlCol = headers.indexOf('ScriptURL');
     const appTitleCol = headers.indexOf('AppTitle');
     const taskTitlesCol = headers.indexOf('TaskTitles');
-    const killSwitchTokenCol = headers.indexOf('KillSwitchToken');
     if (scriptUrlCol !== -1 && settingsData.length > 1) {
       scriptUrl = settingsData[1][scriptUrlCol] || '';
     }
     if (appTitleCol !== -1 && settingsData.length > 1) {
       appTitle = settingsData[1][appTitleCol] || '';
-    }
-    if (killSwitchTokenCol !== -1 && settingsData.length > 1) {
-      killSwitchToken = settingsData[1][killSwitchTokenCol] || '';
     }
     for (let i = 1; i < settingsData.length; i++) {
       if (settingsData[i][0]) locations.push(settingsData[i][0]);
@@ -52,7 +47,7 @@ function doGet() {
     users: users,
     logs: logs,
     interests: interests,
-    settings: { locations: locations, sources: sources, taskTitles: taskTitles, killSwitchToken: killSwitchToken, scriptUrl: scriptUrl },
+    settings: { locations: locations, sources: sources, taskTitles: taskTitles, scriptUrl: scriptUrl },
     config: { appTitle: appTitle }
   })).setMimeType(ContentService.MimeType.JSON);
 }
@@ -92,34 +87,6 @@ function doPost(e) {
       
       return ContentService.createTextOutput(JSON.stringify({ status: 'success' })).setMimeType(ContentService.MimeType.JSON);
     }
-    // Kill Switch: Update global session token
-    if (data.action === 'kill_switch') {
-      const settingsSheet = ss.getSheetByName('Settings');
-      let settingsData = settingsSheet.getDataRange().getValues();
-      // Ensure header row
-      if (settingsData.length === 0) {
-        settingsSheet.appendRow(['Locations', 'Sources', 'ScriptURL', 'AppTitle', 'TaskTitles', 'KillSwitchToken']);
-        settingsData = settingsSheet.getDataRange().getValues();
-      }
-      const headers = settingsData[0];
-      let killSwitchCol = headers.indexOf('KillSwitchToken');
-      if (killSwitchCol === -1) {
-        killSwitchCol = headers.length;
-        headers.push('KillSwitchToken');
-        settingsSheet.getRange(1, 1, 1, headers.length).setValues([headers]);
-      }
-      // Ensure at least one data row
-      if (settingsData.length < 2) {
-        const row = [];
-        for (let i = 0; i < headers.length; i++) row.push('');
-        settingsSheet.appendRow(row);
-      }
-      // Set KillSwitchToken to current timestamp
-      const timestamp = new Date().toISOString();
-      settingsSheet.getRange(2, killSwitchCol + 1).setValue(timestamp);
-      return ContentService.createTextOutput(JSON.stringify({ status: 'success', killSwitchToken: timestamp })).setMimeType(ContentService.MimeType.JSON);
-    }
-    
     // New: Save ScriptURL and AppName to Settings
     if (data.action === 'save_script_url' && (data.scriptUrl || data.appTitle)) {
       const settingsSheet = ss.getSheetByName('Settings');
