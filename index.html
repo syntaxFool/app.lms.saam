@@ -175,6 +175,25 @@
                     </table>
                 </div>
             </div>
+            <div id="agentTableView" class="h-full w-full hidden overflow-auto bg-white">
+                <div class="min-w-[800px] p-6">
+                    <h2 class="text-xl font-bold mb-4">Agent Table</h2>
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-slate-200 text-slate-500 text-xs uppercase tracking-wider">
+                                <th class="pb-3 font-bold pl-4">Agent/User</th>
+                                <th class="pb-3 font-bold">Role</th>
+                                <th class="pb-3 font-bold">Assigned Leads</th>
+                            </tr>
+                        </thead>
+                        <tbody id="agentTableBody" class="text-sm text-slate-700 divide-y divide-slate-100"></tbody>
+                    </table>
+                </div>
+            </div>
+                        <tbody id="tableBody" class="text-sm text-slate-700 divide-y divide-slate-100"></tbody>
+                    </table>
+                </div>
+            </div>
         </main>
 
         <button onclick="ui.toggleModal(true)" class="fixed bottom-6 right-6 md:bottom-8 md:right-8 bg-primary hover:bg-indigo-600 text-white w-14 h-14 rounded-full shadow-lg shadow-indigo-500/30 flex items-center justify-center transition transform active:scale-95 z-30"><i class="ph-bold ph-plus text-2xl"></i></button>
@@ -194,6 +213,7 @@
                     <div class="space-y-1">
                         <button onclick="app.switchViewMode('kanban')" class="w-full text-left px-4 py-2.5 rounded-lg flex items-center gap-3 hover:bg-slate-50 transition text-slate-700"><i class="ph-bold ph-kanban text-lg"></i> <span class="font-medium">Kanban Board</span></button>
                         <button onclick="app.switchViewMode('table')" class="w-full text-left px-4 py-2.5 rounded-lg flex items-center gap-3 hover:bg-slate-50 transition text-slate-700"><i class="ph-bold ph-table text-lg"></i> <span class="font-medium">Leads Table</span></button>
+                        <button id="agentTableBtn" style="display:none" onclick="app.switchViewMode('agentTable')" class="w-full text-left px-4 py-2.5 rounded-lg flex items-center gap-3 hover:bg-slate-50 transition text-slate-700"><i class="ph-bold ph-users text-lg"></i> <span class="font-medium">Agent Table</span></button>
                     </div>
                 </div>
                 <div>
@@ -630,15 +650,56 @@
                                         this.activeView = mode;
                                         const kanban = document.getElementById('kanbanView');
                                         const table = document.getElementById('tableView');
+                                        const agentTable = document.getElementById('agentTableView');
                                         if (mode === 'kanban') {
                                             kanban.classList.remove('hidden');
                                             table.classList.add('hidden');
+                                            agentTable.classList.add('hidden');
+                                            this.render(this.store.state);
                                         } else if (mode === 'table') {
                                             kanban.classList.add('hidden');
                                             table.classList.remove('hidden');
+                                            agentTable.classList.add('hidden');
+                                            this.render(this.store.state);
+                                        } else if (mode === 'agentTable') {
+                                            kanban.classList.add('hidden');
+                                            table.classList.add('hidden');
+                                            agentTable.classList.remove('hidden');
+                                            this.renderAgentTable();
                                         }
-                                        this.render(this.store.state);
                                         this.renderLeaderboard();
+                                    }
+
+                                    renderAgentTable() {
+                                        const tbody = document.getElementById('agentTableBody');
+                                        if (!tbody) return;
+                                        // Only show for admin/superuser
+                                        if (!this.currentUser || (this.currentUser.role !== 'admin' && this.currentUser.role !== 'superuser')) {
+                                            tbody.innerHTML = '<tr><td colspan="3" class="text-center py-6 text-slate-400">Access denied</td></tr>';
+                                            return;
+                                        }
+                                        // Get all users (admin, agent, user)
+                                        const users = this.store.users.filter(u => u.role === 'admin' || u.role === 'agent' || u.role === 'user');
+                                        const leads = this.store.state || [];
+                                        
+                                        if (users.length === 0) {
+                                            tbody.innerHTML = '<tr><td colspan="3" class="text-center py-6 text-slate-400">No users found</td></tr>';
+                                            return;
+                                        }
+                                        
+                                        tbody.innerHTML = users.map(user => {
+                                            const assignedLeads = leads.filter(lead => {
+                                                const leadAssigned = lead.assignedTo ? String(lead.assignedTo).toLowerCase() : '';
+                                                const userName = user.username ? String(user.username).toLowerCase() : '';
+                                                const userId = user.id ? String(user.id).toLowerCase() : '';
+                                                return leadAssigned === userName || leadAssigned === userId;
+                                            });
+                                            return `<tr class="table-row-hover">
+                                                <td class="pl-4 py-2 font-bold">${this.escapeHtml(user.name || user.username || user.id)}</td>
+                                                <td class="py-2">${this.escapeHtml(user.role)}</td>
+                                                <td class="py-2">${assignedLeads.length > 0 ? assignedLeads.map(l => `<span class="inline-block bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs mr-1">${this.escapeHtml(l.name)}</span>`).join('') : '<span class="text-slate-400 italic">None</span>'}</td>
+                                            </tr>`;
+                                        }).join('');
                                     }
                         // Render the activity timeline for a lead in the modal
                         renderTimeline(lead) {
@@ -869,6 +930,15 @@
                     document.getElementById('loginScreen').classList.add('hidden');
                     document.getElementById('appContent').classList.remove('hidden');
                     document.getElementById('appContent').classList.add('flex');
+                    // Show Agent Table button only for admin/superuser
+                    const agentTableBtn = document.getElementById('agentTableBtn');
+                    if (agentTableBtn) {
+                        if (this.currentUser.role === 'admin' || this.currentUser.role === 'superuser') {
+                            agentTableBtn.style.display = '';
+                        } else {
+                            agentTableBtn.style.display = 'none';
+                        }
+                    }
                     this.init();
                 } else {
                     document.getElementById('loginError').classList.remove('hidden');
