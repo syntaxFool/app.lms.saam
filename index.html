@@ -390,6 +390,9 @@
 
                             <div class="grid grid-cols-2 gap-4"><div><label class="block text-sm font-semibold text-slate-700 mb-1.5">Value</label><div class="relative"><span class="absolute left-4 top-3.5 text-slate-400">₹</span><input type="number" name="value" id="leadValue" min="0" step="0.01" class="w-full bg-white border-slate-200 border rounded-xl pl-8 pr-4 py-3 focus:ring-2 focus:ring-primary outline-none" placeholder="0"></div></div><div><label class="block text-sm font-semibold text-slate-700 mb-1.5">Status</label><select name="status" id="formStatusSelect" class="w-full bg-white border-slate-200 border rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary outline-none appearance-none"></select></div></div>
                             
+                            <!-- TEMPERATURE (Manual) -->
+                            <div><label class="block text-sm font-semibold text-slate-700 mb-1.5">Temperature</label><select name="temperature" id="temperatureSelect" class="w-full bg-white border-slate-200 border rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary outline-none appearance-none"><option value="">Not Set</option><option value="Hot">🔴 Hot</option><option value="Warm">🟠 Warm</option><option value="Cold">🔵 Cold</option></select></div>
+                            
                             <!-- LOCATION (Autocomplete) -->
                             <div>
                                 <label class="block text-sm font-semibold text-slate-700 mb-1.5">Location</label>
@@ -705,27 +708,23 @@
                                                                         }
                                                             // --- LEAD SCORING & TEMPERATURE ---
                                                             getLeadScores(lead) {
-                                                                // Quality: based on value, interest, assignedTo, etc.
-                                                                let quality = 0;
-                                                                if (lead.value && lead.value > 100000) quality += 3;
-                                                                else if (lead.value && lead.value > 50000) quality += 2;
-                                                                else if (lead.value && lead.value > 0) quality += 1;
-                                                                if (lead.interest && lead.interest.length > 0) quality += 1;
-                                                                if (lead.assignedTo) quality += 1;
-                                                                // Engagement: based on activities (calls, WhatsApp, follow-ups)
-                                                                let engagement = 0;
-                                                                if (Array.isArray(lead.activities)) {
-                                                                    engagement += lead.activities.filter(a => a.type === 'call').length * 2;
-                                                                    engagement += lead.activities.filter(a => a.type === 'whatsapp').length * 2;
-                                                                    engagement += lead.activities.filter(a => a.type === 'follow_up').length;
-                                                                    engagement += lead.activities.length * 0.5; // general activity
+                                                                // Temperature: Manual assignment (Hot, Warm, Cold)
+                                                                let temp = lead.temperature || '';
+                                                                let tempColor = 'bg-slate-200 text-slate-700';
+                                                                let tempIcon = 'ph-thermometer';
+                                                                
+                                                                if (temp === 'Hot') {
+                                                                    tempColor = 'bg-red-200 text-red-700';
+                                                                    tempIcon = 'ph-thermometer-hot';
+                                                                } else if (temp === 'Warm') {
+                                                                    tempColor = 'bg-amber-200 text-amber-700';
+                                                                    tempIcon = 'ph-thermometer-simple';
+                                                                } else if (temp === 'Cold') {
+                                                                    tempColor = 'bg-blue-200 text-blue-700';
+                                                                    tempIcon = 'ph-thermometer-cold';
                                                                 }
-                                                                // Temperature: Hot, Warm, Cold
-                                                                let temp = 'Cold', tempColor = 'bg-blue-200 text-blue-700', tempIcon = 'ph-thermometer-cold';
-                                                                const total = quality + engagement;
-                                                                if (total >= 7) { temp = 'Hot'; tempColor = 'bg-red-200 text-red-700'; tempIcon = 'ph-thermometer-hot'; }
-                                                                else if (total >= 4) { temp = 'Warm'; tempColor = 'bg-amber-200 text-amber-700'; tempIcon = 'ph-thermometer-simple'; }
-                                                                return { quality, engagement, temp, tempColor, tempIcon };
+                                                                
+                                                                return { temp, tempColor, tempIcon };
                                                             }
                                                 // Render the leads table view
                                                 renderTable(leads) {
@@ -1571,6 +1570,7 @@
                 document.getElementById('leadForm').interest.value = lead.interest || '';
                 document.getElementById('leadForm').value.value = lead.value || '';
                 document.getElementById('leadForm').status.value = lead.status || '';
+                document.getElementById('leadForm').temperature.value = lead.temperature || '';
                 document.getElementById('leadForm').email.value = lead.email || '';
                 document.getElementById('leadForm').location.value = lead.location || '';
                 document.getElementById('leadForm').source.value = lead.source || '';
@@ -1651,8 +1651,7 @@
                         </div>
                         ${lead.assignedTo ? `<div class="text-xs font-semibold text-primary bg-primary/10 px-2 py-1 rounded mb-2 w-fit">${this.escapeHtml(this.getUserName(lead.assignedTo))}</div>` : ''}
                         <div class="flex items-center gap-2 mb-2">
-                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold ${scores.tempColor}"><i class="ph-bold ${scores.tempIcon}"></i> ${scores.temp}</span>
-                            <span class="text-xs text-slate-400">Q:${scores.quality} E:${scores.engagement}</span>
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold ${scores.tempColor}"><i class="ph-bold ${scores.tempIcon}"></i> ${scores.temp || 'Not Set'}</span>
                         </div>
                         ${interestHTML}
                         <div class="text-slate-500 font-medium text-sm mb-3">${this.formatCurrency(lead.value)}</div>
