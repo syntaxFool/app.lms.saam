@@ -331,9 +331,21 @@
             <!-- Reports / Analytics Dashboard -->
             <div id="reportsView" class="h-full w-full hidden overflow-auto bg-slate-50">
                 <div class="p-6 space-y-6">
-                    <div>
-                        <h1 class="text-3xl font-bold text-slate-800 mb-2">📊 Analytics Dashboard</h1>
-                        <p class="text-slate-500">Pipeline performance, conversion metrics, and agent leaderboard</p>
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                        <div>
+                            <h1 class="text-3xl font-bold text-slate-800 mb-2">📊 Analytics Dashboard</h1>
+                            <p class="text-slate-500">Pipeline performance, conversion metrics, and agent leaderboard</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <label class="text-slate-600 font-medium">Filter by:</label>
+                            <select id="dateFilterDropdown" class="px-4 py-2 border border-slate-300 rounded-lg bg-white text-slate-800 font-medium cursor-pointer hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="till-date">Till Date</option>
+                                <option value="this-day">This Day</option>
+                                <option value="this-week">This Week</option>
+                                <option value="this-month">This Month</option>
+                                <option value="this-year">This Year</option>
+                            </select>
+                        </div>
                     </div>
 
                     <!-- KPI Cards -->
@@ -1305,6 +1317,7 @@
                                             reports.classList.remove('hidden');
                                             if (kanbanTabs) kanbanTabs.classList.add('hidden'); // Hide tabs for Reports
                                             this.renderReports();
+                                            this.setupDateFilter(); // Setup date filter for Reports view
                                         }
                                         this.renderLeaderboard();
                                         ui.updateMobileNav(); // Update mobile nav indicator
@@ -1527,6 +1540,8 @@
                 this.selectedInterests = [];
                 this.sortColumn = null;
                 this.sortDirection = 'asc';
+                this.dateFilter = 'till-date';
+                this.chartInstances = {};
                 this.filters = {
                     search: '',
                     status: '',
@@ -2209,8 +2224,42 @@
                 });
             }
 
+            filterLeadsByDate(leads) {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                
+                return leads.filter(lead => {
+                    if (!lead.createdAt) return false;
+                    const leadDate = new Date(lead.createdAt);
+                    leadDate.setHours(0, 0, 0, 0);
+                    
+                    switch (this.dateFilter) {
+                        case 'this-day':
+                            return leadDate.getTime() === today.getTime();
+                        case 'this-week': {
+                            const weekStart = new Date(today);
+                            weekStart.setDate(today.getDate() - today.getDay());
+                            const weekEnd = new Date(weekStart);
+                            weekEnd.setDate(weekStart.getDate() + 6);
+                            return leadDate >= weekStart && leadDate <= weekEnd;
+                        }
+                        case 'this-month':
+                            return leadDate.getMonth() === today.getMonth() && leadDate.getFullYear() === today.getFullYear();
+                        case 'this-year':
+                            return leadDate.getFullYear() === today.getFullYear();
+                        case 'till-date':
+                        default:
+                            return true;
+                    }
+                });
+            }
+
             generateReportData() {
-                const leads = this.store.state;
+                let leads = this.store.state;
+                
+                // Apply date filter
+                leads = this.filterLeadsByDate(leads);
+                
                 const totalLeads = leads.length;
                 const totalValue = leads.reduce((sum, l) => sum + (l.value || 0), 0);
                 const wonLeads = leads.filter(l => l.status === 'Won').length;
@@ -2253,12 +2302,36 @@
             }
 
             renderReports() {
+                // Destroy existing charts before re-rendering
+                this.destroyCharts();
+                
                 const data = this.generateReportData();
                 this.renderReportKPIs(data);
                 this.renderPipelineFunnelChart(data);
                 this.renderLostReasonsChart(data);
                 this.renderTemperatureChart(data);
                 this.renderAgentLeaderboard(data);
+            }
+
+            destroyCharts() {
+                Object.keys(this.chartInstances).forEach(key => {
+                    if (this.chartInstances[key]) {
+                        this.chartInstances[key].destroy();
+                        delete this.chartInstances[key];
+                    }
+                });
+            }
+
+            setupDateFilter() {
+                const dropdown = document.getElementById('dateFilterDropdown');
+                if (dropdown) {
+                    dropdown.removeEventListener('change', this.dateFilterHandler);
+                    this.dateFilterHandler = (e) => {
+                        this.dateFilter = e.target.value;
+                        this.renderReports();
+                    };
+                    dropdown.addEventListener('change', this.dateFilterHandler);
+                }
             }
 
             renderReportKPIs(data) {
@@ -2311,7 +2384,7 @@
                 const values = labels.map(label => data.pipelineData[label] || 0);
                 const colors = this.statusConfig.map(s => s.color.replace('bg-', '').split('-')[0]);
                 
-                new Chart(ctx, {
+                this.chartInstances.pipelineFunnelChart = new Chart(ctx, {
                     type: 'bar',
                     data: {
                         labels: labels,
@@ -2341,7 +2414,7 @@
                 const values = Object.values(data.lostReasonsData);
                 const colors = ['#ef4444', '#f97316', '#eab308', '#84cc16', '#22c55e', '#06b6d4'];
                 
-                new Chart(ctx, {
+                this.chartInstances.lostReasonsChart = new Chart(ctx, {
                     type: 'pie',
                     data: {
                         labels: reasons,
@@ -2369,7 +2442,7 @@
                 const labels = ['Hot', 'Warm', 'Cold', 'Not Set'];
                 const values = labels.map(label => data.temperatureData[label] || 0);
                 
-                new Chart(ctx, {
+                this.chartInstances.temperatureChart = new Chart(ctx, {
                     type: 'bar',
                     data: {
                         labels: labels,
