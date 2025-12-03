@@ -508,7 +508,11 @@
                     console.log('Backend config:', cloudData.config);
                     // Always sync appTitle from backend config if present
                     if (cloudData.config && cloudData.config.appTitle) this.config.appTitle = cloudData.config.appTitle;
-                    this.saveLocal(); 
+                    this.saveLocal();
+                    // Check if Kill Switch was activated on another device
+                    if (window.app && typeof window.app.validateSessionToken === 'function') {
+                        window.app.validateSessionToken();
+                    }
                     if(window.app && typeof window.app.applyConfig==='function'){window.app.applyConfig();}
                     if(window.app && typeof window.app.renderLeaderboard==='function'){window.app.renderLeaderboard();}
                 } catch (e) { 
@@ -1314,6 +1318,10 @@
                 const user = this.store.users.find(x => String(x.username) === String(u) && String(x.password) === String(p));
                 if (user) {
                     this.currentUser = user;
+                    // Store killSwitchToken for session validation
+                    if (this.store.settings && this.store.settings.killSwitchToken) {
+                        localStorage.setItem('killSwitchToken', this.store.settings.killSwitchToken);
+                    }
                     document.getElementById('loginScreen').classList.add('hidden');
                     document.getElementById('appContent').classList.remove('hidden');
                     document.getElementById('appContent').classList.add('flex');
@@ -1333,6 +1341,23 @@
             }
 
             logout() { location.reload(); }
+
+            validateSessionToken() {
+                // Check if Kill Switch was activated on another device
+                const storedToken = localStorage.getItem('killSwitchToken');
+                const serverToken = this.store.settings && this.store.settings.killSwitchToken ? this.store.settings.killSwitchToken : null;
+                
+                // If tokens don't match, session has been invalidated
+                if (storedToken && serverToken && storedToken !== serverToken) {
+                    console.warn('Session invalidated by Kill Switch on another device');
+                    alert('Your session has been invalidated by an admin. Redirecting to login...');
+                    localStorage.clear();
+                    sessionStorage.clear();
+                    location.reload();
+                    return false;
+                }
+                return true;
+            }
 
             async init() {
                 this.applyConfig();
@@ -1445,6 +1470,17 @@
             }
 
             killSwitch() {
+                // Update Kill Switch token on backend
+                if (this.store.config.dbUrl) {
+                    try {
+                        fetch(this.store.config.dbUrl, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'text/plain' },
+                            body: JSON.stringify({ action: 'kill_switch' })
+                        }).catch(e => console.error('Kill Switch update failed', e));
+                    } catch (e) { console.error('Kill Switch update failed', e); }
+                }
+                
                 // Clear all sessions and local storage
                 localStorage.clear();
                 sessionStorage.clear();
@@ -1903,6 +1939,10 @@
         
         // Always update login card/app title on page load
         document.addEventListener('DOMContentLoaded', function() {
+            // Validate session token on page load
+            if (window.app && typeof window.app.validateSessionToken === 'function') {
+                window.app.validateSessionToken();
+            }
             if (window.app && typeof window.app.applyConfig === 'function') {
                 window.app.applyConfig();
             }
