@@ -176,13 +176,13 @@
                         <thead>
                             <tr class="border-b border-slate-200 text-slate-500 text-xs uppercase tracking-wider">
                                 <th class="pb-3 font-bold pl-4"><input type="checkbox" id="selectAllCheckbox" onchange="app.toggleSelectAll(this.checked)" class="w-4 h-4 rounded"></th>
-                                <th class="pb-3 font-bold pl-4">Name</th>
-                                <th class="pb-3 font-bold">Contact</th>
-                                <th class="pb-3 font-bold">Status</th>
-                                <th class="pb-3 font-bold">Interest</th>
-                                <th class="pb-3 font-bold">Source</th>
-                                <th class="pb-3 font-bold">Assigned</th>
-                                <th class="pb-3 font-bold text-right pr-4">Value</th>
+                                <th class="pb-3 font-bold pl-4 cursor-pointer hover:text-slate-700" onclick="app.sortTable('name')">Name <span id="sort-name" class="ml-1"></span></th>
+                                <th class="pb-3 font-bold cursor-pointer hover:text-slate-700" onclick="app.sortTable('phone')">Contact <span id="sort-phone" class="ml-1"></span></th>
+                                <th class="pb-3 font-bold cursor-pointer hover:text-slate-700" onclick="app.sortTable('status')">Status <span id="sort-status" class="ml-1"></span></th>
+                                <th class="pb-3 font-bold cursor-pointer hover:text-slate-700" onclick="app.sortTable('interest')">Interest <span id="sort-interest" class="ml-1"></span></th>
+                                <th class="pb-3 font-bold cursor-pointer hover:text-slate-700" onclick="app.sortTable('source')">Source <span id="sort-source" class="ml-1"></span></th>
+                                <th class="pb-3 font-bold cursor-pointer hover:text-slate-700" onclick="app.sortTable('assignedTo')">Assigned <span id="sort-assignedTo" class="ml-1"></span></th>
+                                <th class="pb-3 font-bold text-right pr-4 cursor-pointer hover:text-slate-700" onclick="app.sortTable('value')">Value <span id="sort-value" class="ml-1"></span></th>
                                 <th class="pb-3 font-bold w-10"></th>
                             </tr>
                         </thead>
@@ -641,6 +641,8 @@
                                                     if (this.currentUser && (this.currentUser.role === 'agent' || this.currentUser.role === 'user')) {
                                                         filteredLeads = leads.filter(lead => lead.assignedTo === this.currentUser.username || lead.assignedTo === this.currentUser.id);
                                                     }
+                                                    // Apply sorting
+                                                    filteredLeads = this.getSortedLeads(filteredLeads);
                                                     // Populate bulk assign dropdown if admin/superuser
                                                     if (this.currentUser && (this.currentUser.role === 'admin' || this.currentUser.role === 'superuser')) {
                                                         const assignSelect = document.getElementById('bulkAssignSelect');
@@ -673,6 +675,61 @@
                                                     `).join('');
                                                     // Reset bulk actions bar
                                                     this.updateBulkActionsBar();
+                                                }
+
+                                                // Sort table by column
+                                                sortTable(column) {
+                                                    // Toggle sort direction if same column clicked
+                                                    if (this.sortColumn === column) {
+                                                        this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+                                                    } else {
+                                                        this.sortColumn = column;
+                                                        this.sortDirection = 'asc';
+                                                    }
+                                                    
+                                                    // Clear all sort indicators
+                                                    document.querySelectorAll('[id^="sort-"]').forEach(el => el.textContent = '');
+                                                    
+                                                    // Add sort indicator to current column
+                                                    const indicator = document.getElementById(`sort-${column}`);
+                                                    if (indicator) {
+                                                        indicator.textContent = this.sortDirection === 'asc' ? '▲' : '▼';
+                                                    }
+                                                    
+                                                    // Re-render with sorted data
+                                                    this.render(this.store.state);
+                                                }
+
+                                                // Get sorted leads
+                                                getSortedLeads(leads) {
+                                                    if (!this.sortColumn) return leads;
+                                                    
+                                                    const sorted = [...leads].sort((a, b) => {
+                                                        let aVal = a[this.sortColumn];
+                                                        let bVal = b[this.sortColumn];
+                                                        
+                                                        // Handle null/undefined
+                                                        if (aVal == null && bVal == null) return 0;
+                                                        if (aVal == null) return this.sortDirection === 'asc' ? 1 : -1;
+                                                        if (bVal == null) return this.sortDirection === 'asc' ? -1 : 1;
+                                                        
+                                                        // For numbers (like value)
+                                                        if (typeof aVal === 'number' && typeof bVal === 'number') {
+                                                            return this.sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
+                                                        }
+                                                        
+                                                        // For strings
+                                                        aVal = String(aVal).toLowerCase();
+                                                        bVal = String(bVal).toLowerCase();
+                                                        
+                                                        if (this.sortDirection === 'asc') {
+                                                            return aVal.localeCompare(bVal);
+                                                        } else {
+                                                            return bVal.localeCompare(aVal);
+                                                        }
+                                                    });
+                                                    
+                                                    return sorted;
                                                 }
                                     // Switch between Kanban and Table views
                                     switchViewMode(mode) {
@@ -913,7 +970,9 @@
                 this.activeMobileTab = this.statusConfig[0].id;
                 this.currentModalTab = 'info';
                 this.activeView = 'kanban'; 
-                this.selectedInterests = []; 
+                this.selectedInterests = [];
+                this.sortColumn = null;
+                this.sortDirection = 'asc';
                 // Always update login card/app title on construction
                 if (typeof this.applyConfig === 'function') this.applyConfig();
                 this.store.subscribe((data) => {
