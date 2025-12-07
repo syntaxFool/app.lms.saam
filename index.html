@@ -101,23 +101,7 @@
             to { transform: scale(1) translateY(0); opacity: 1; }
         }
         
-        /* Card swipe gestures */
-        .card-swipe-container {
-            position: relative;
-            overflow: hidden;
-        }
-        .card-swipe-container > div {
-            transition: transform 0.3s ease-out;
-        }
-        .card-swipe-left { animation: swipeLeft 0.3s ease-out forwards; }
-        .card-swipe-right { animation: swipeRight 0.3s ease-out forwards; }
-        
-        @keyframes swipeLeft {
-            to { transform: translateX(-100%); opacity: 0; }
-        }
-        @keyframes swipeRight {
-            to { transform: translateX(100%); opacity: 0; }
-        }
+
     </style>
     <script>
         tailwind.config = { theme: { extend: { colors: { primary: '#4f46e5', secondary: '#64748b', } } } }
@@ -2221,86 +2205,10 @@
                         </div>`;
                 });
                 this.renderLeaderboard();
-                // Initialize swipe gestures on mobile
-                if (window.innerWidth < 768) {
-                    this.initMobileSwipeGestures();
-                }
+
             }
 
-            initMobileSwipeGestures() {
-                const boardContainer = document.getElementById('boardContainer');
-                if (!boardContainer) return;
-                
-                let touchStartX = 0;
-                let touchEndX = 0;
-                
-                const handleSwipe = () => {
-                    const diff = touchStartX - touchEndX;
-                    const threshold = 50;
-                    
-                    if (Math.abs(diff) < threshold) return;
-                    
-                    const currentIdx = this.statusConfig.findIndex(s => s.id === this.activeMobileTab);
-                    let nextIdx = currentIdx;
-                    
-                    if (diff > 0) { // Swiped left - go to next column
-                        nextIdx = (currentIdx + 1) % this.statusConfig.length;
-                    } else { // Swiped right - go to previous column
-                        nextIdx = (currentIdx - 1 + this.statusConfig.length) % this.statusConfig.length;
-                    }
-                    
-                    this.activeMobileTab = this.statusConfig[nextIdx].id;
-                    this.render(this.store.state);
-                    ui.updateKanbanTabs();
-                };
-                
-                boardContainer.addEventListener('touchstart', (e) => { touchStartX = e.changedTouches[0].screenX; }, false);
-                boardContainer.addEventListener('touchend', (e) => { touchEndX = e.changedTouches[0].screenX; handleSwipe(); }, false);
-                
-                // Initialize card swipe gestures
-                this.initCardSwipeGestures();
-            }
-            
-            initCardSwipeGestures() {
-                const cards = document.querySelectorAll('.card-swipe-container');
-                cards.forEach(card => {
-                    let touchStartX = 0;
-                    let touchStartY = 0;
-                    
-                    card.addEventListener('touchstart', (e) => {
-                        touchStartX = e.changedTouches[0].screenX;
-                        touchStartY = e.changedTouches[0].screenY;
-                    }, false);
-                    
-                    card.addEventListener('touchend', (e) => {
-                        const touchEndX = e.changedTouches[0].screenX;
-                        const touchEndY = e.changedTouches[0].screenY;
-                        const diffX = touchStartX - touchEndX;
-                        const diffY = Math.abs(touchStartY - touchEndY);
-                        const threshold = 50;
-                        
-                        // Only process horizontal swipes (vertical movement < horizontal)
-                        if (Math.abs(diffX) < threshold || diffY > diffX) return;
-                        
-                        const leadId = card.dataset.leadId;
-                        const lead = this.store.state.find(l => l.id === leadId);
-                        if (!lead) return;
-                        
-                        const cardDiv = card.querySelector('div');
-                        if (diffX > 0) { // Swiped left - DELETE
-                            cardDiv.classList.add('card-swipe-left');
-                            setTimeout(() => {
-                                this.deleteLead(leadId);
-                            }, 300);
-                        } else { // Swiped right - EDIT
-                            cardDiv.classList.add('card-swipe-right');
-                            setTimeout(() => {
-                                this.editLead(leadId);
-                            }, 300);
-                        }
-                    }, false);
-                });
-            }
+
 
             filterLeadsByDate(leads) {
                 const today = new Date();
@@ -2573,8 +2481,7 @@
                     `<div class="flex flex-wrap gap-1 mb-2">${interests.slice(0, 2).map(i => `<span class="text-[10px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded border border-primary/20">${this.escapeHtml(i)}</span>`).join('')}${interests.length > 2 ? `<span class="text-[10px] text-slate-400">+${interests.length - 2}</span>` : ''}</div>` : '';
 
                 return `
-                    <div class="card-swipe-container" data-lead-id="${lead.id}">
-                        <div onclick="app.editLead('${lead.id}')" class="bg-white p-4 rounded-xl shadow-sm border ${showTaskWarning ? 'border-red-300 bg-red-50/30' : 'border-slate-100'} active:scale-[0.99] transition-transform cursor-pointer ${lead.status === 'Lost' ? 'grayscale opacity-60' : ''}">
+                    <div onclick="app.editLead('${lead.id}')" class="bg-white p-4 rounded-xl shadow-sm border ${showTaskWarning ? 'border-red-300 bg-red-50/30' : 'border-slate-100'} active:scale-[0.99] transition-transform cursor-pointer ${lead.status === 'Lost' ? 'grayscale opacity-60' : ''}">
                             <div class="flex justify-between items-start mb-2">
                                 <h3 class="font-bold text-slate-800 line-clamp-1 text-lg">${this.escapeHtml(lead.name)}</h3>
                                 <div class="flex gap-1 -mr-2 -mt-2">${showTaskWarning ? `<span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700 whitespace-nowrap"><i class="ph-bold ph-warning"></i> No Action</span>` : ''}${delBtn}</div>
@@ -2595,8 +2502,7 @@
                                 ${prev ? `<button onclick="event.stopPropagation(); app.moveLead('${lead.id}', '${prev}')" class="flex-1 py-2 bg-slate-100 text-slate-600 rounded-lg text-sm font-semibold hover:bg-slate-200 transition"><i class="ph-bold ph-arrow-left"></i></button>` : '<div class="flex-1"></div>'}
                                 ${next ? `<button onclick="event.stopPropagation(); app.moveLead('${lead.id}', '${next}')" class="flex-1 py-2 bg-primary/10 text-primary rounded-lg text-sm font-semibold hover:bg-primary/20 transition"><i class="ph-bold ph-arrow-right"></i></button>` : '<div class="flex-1"></div>'}
                             </div>
-                        </div>
-                    </div>`;
+                        </div>`;
             }
 
             renderFollowUps() {
