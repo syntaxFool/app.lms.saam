@@ -66,7 +66,7 @@ function doGet() {
   const serverTime = new Date().getTime();
   const lastUpdate = parseInt(PropertiesService.getScriptProperties().getProperty('LAST_UPDATE') || 0);
 
-  return ContentService.createTextOutput(JSON.stringify({
+  const output = JSON.stringify({
     leads: leads,
     users: users,
     logs: logs,
@@ -75,7 +75,13 @@ function doGet() {
     config: { appTitle: appTitle },
     serverTime: serverTime,
     lastUpdate: lastUpdate
-  })).setMimeType(ContentService.MimeType.JSON);
+  });
+
+  return ContentService.createTextOutput(output)
+    .setMimeType(ContentService.MimeType.JSON)
+    .setHeader('Access-Control-Allow-Origin', '*')
+    .setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+    .setHeader('Access-Control-Allow-Headers', 'Content-Type');
 }
 
 function doPost(e) {
@@ -85,10 +91,10 @@ function doPost(e) {
   // Use LockService to prevent race conditions during concurrent writes
   const lock = LockService.getScriptLock();
   if (!lock.tryLock(10000)) {
-    return ContentService.createTextOutput(JSON.stringify({ 
+    return createCORSResponse(JSON.stringify({ 
       status: 'error', 
       message: 'Server busy. Please try again.' 
-    })).setMimeType(ContentService.MimeType.JSON);
+    }));
   }
   
   try {
@@ -123,7 +129,7 @@ function doPost(e) {
       // Update the LAST_UPDATE timestamp after successful save
       updateLastModified();
       
-      return ContentService.createTextOutput(JSON.stringify({ status: 'success' })).setMimeType(ContentService.MimeType.JSON);
+      return createCORSResponse(JSON.stringify({ status: 'success' }));
     }
     // New: Save ScriptURL and AppName to Settings
     if (data.action === 'save_script_url' && (data.scriptUrl || data.appTitle)) {
@@ -161,10 +167,10 @@ function doPost(e) {
       // Update the LAST_UPDATE timestamp
       updateLastModified();
       
-      return ContentService.createTextOutput(JSON.stringify({ status: 'success' })).setMimeType(ContentService.MimeType.JSON);
+      return createCORSResponse(JSON.stringify({ status: 'success' }));
     }
   } catch (error) {
-    return ContentService.createTextOutput(JSON.stringify({ status: 'error', message: error.toString() })).setMimeType(ContentService.MimeType.JSON);
+    return createCORSResponse(JSON.stringify({ status: 'error', message: error.toString() }));
   } finally {
     lock.releaseLock();
   }
@@ -210,4 +216,12 @@ function writeSheet(sheet, data, headers) {
 
 function updateLastModified() {
   PropertiesService.getScriptProperties().setProperty('LAST_UPDATE', new Date().getTime().toString());
+}
+
+function createCORSResponse(jsonString) {
+  return ContentService.createTextOutput(jsonString)
+    .setMimeType(ContentService.MimeType.JSON)
+    .setHeader('Access-Control-Allow-Origin', '*')
+    .setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
+    .setHeader('Access-Control-Allow-Headers', 'Content-Type');
 }
