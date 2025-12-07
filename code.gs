@@ -2,9 +2,6 @@ function doGet() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   setupSheets(ss);
   
-  // Check if this is a lightweight sync check request
-  const urlParams = new URLSearchParams(PropertiesService.getScriptProperties().getProperty('url_params') || '');
-  
   const leads = readSheet(ss.getSheetByName('Leads'));
   const activities = readSheet(ss.getSheetByName('Activities'));
   const tasks = readSheet(ss.getSheetByName('Tasks'));
@@ -77,11 +74,12 @@ function doGet() {
     lastUpdate: lastUpdate
   });
 
-  return ContentService.createTextOutput(output)
-    .setMimeType(ContentService.MimeType.JSON)
-    .setHeader('Access-Control-Allow-Origin', '*')
-    .setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-    .setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  const response = ContentService.createTextOutput(output);
+  response.setMimeType(ContentService.MimeType.JSON);
+  response.setHeader('Access-Control-Allow-Origin', '*');
+  response.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  response.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  return response;
 }
 
 function doPost(e) {
@@ -219,9 +217,10 @@ function updateLastModified() {
 }
 
 function createCORSResponse(jsonString) {
-  return ContentService.createTextOutput(jsonString)
-    .setMimeType(ContentService.MimeType.JSON)
-    .setHeader('Access-Control-Allow-Origin', '*')
-    .setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
-    .setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  const response = ContentService.createTextOutput(jsonString);
+  response.setMimeType(ContentService.MimeType.JSON);
+  response.setHeader('Access-Control-Allow-Origin', '*');
+  response.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  response.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  return response;
 }
