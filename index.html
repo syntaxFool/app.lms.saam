@@ -974,7 +974,25 @@
                                                                                                                             console.log('Auto-refreshing data from server...');
                                                                                                                             await this.store.syncWithCloud();
                                                                                                                             this.render(this.store.state);
-                                                                                                                            this.notify('✓ Synced with team', 'success');
+                                                                                                                            
+                                                                                                                            // Get recent changes summary
+                                                                                                                            const recentLogs = data.logs ? data.logs.slice(0, 3) : [];
+                                                                                                                            let notification = 'Data updated from other users';
+                                                                                                                            if (recentLogs.length > 0) {
+                                                                                                                                const changes = recentLogs.map(log => {
+                                                                                                                                    const match = log.message.match(/^(.+?):\s+(.+)$/);
+                                                                                                                                    if (match) {
+                                                                                                                                        return `${match[2].substring(0, 50)}`;
+                                                                                                                                    }
+                                                                                                                                    return log.message.substring(0, 50);
+                                                                                                                                }).filter(Boolean);
+                                                                                                                                
+                                                                                                                                if (changes.length > 0) {
+                                                                                                                                    notification = changes.slice(0, 2).join(', ');
+                                                                                                                                    if (recentLogs.length > 2) notification += ', +more';
+                                                                                                                                }
+                                                                                                                            }
+                                                                                                                            this.notify(notification, 'success');
                                                                                                                         }
                                                                                                                         // Update local tracking
                                                                                                                         this.lastServerUpdate = data.lastUpdate;
