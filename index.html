@@ -974,7 +974,7 @@
                                                                                                                             console.log('Auto-refreshing data from server...');
                                                                                                                             await this.store.syncWithCloud();
                                                                                                                             this.render(this.store.state);
-                                                                                                                            this.notify('Data updated from other users', 'success');
+                                                                                                                            this.notify('✓ Synced with team', 'success');
                                                                                                                         }
                                                                                                                         // Update local tracking
                                                                                                                         this.lastServerUpdate = data.lastUpdate;
