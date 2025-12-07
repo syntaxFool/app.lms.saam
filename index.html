@@ -450,7 +450,7 @@
                 <div>
                     <div class="flex items-center justify-between mb-4">
                         <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2"><i class="ph-bold ph-calendar-check"></i> Follow Ups</h3>
-                        <select id="followUpAgentFilter" onchange="app.renderFollowUps()" class="bg-white border border-slate-200 rounded px-2 py-1 text-xs text-slate-600 focus:ring-2 focus:ring-primary outline-none">
+                        <select id="followUpAgentFilter" style="display:none" onchange="app.renderFollowUps()" class="bg-white border border-slate-200 rounded px-2 py-1 text-xs text-slate-600 focus:ring-2 focus:ring-primary outline-none">
                             <option value="">All Agents</option>
                         </select>
                     </div>
@@ -2622,28 +2622,36 @@
                 const filterSelect = document.getElementById('followUpAgentFilter');
                 const selectedAgent = filterSelect ? filterSelect.value : '';
                 
-                // Populate agent filter dropdown (only populate once)
-                if (filterSelect && filterSelect.options.length === 1) {
-                    const agents = new Set();
-                    this.store.state.forEach(l => {
-                        if (l.assignedTo) agents.add(l.assignedTo);
-                    });
-                    // Sort agents and add to dropdown
-                    Array.from(agents).sort().forEach(agent => {
-                        const agentName = this.getUserName(agent);
-                        const opt = document.createElement('option');
-                        opt.value = agent;
-                        opt.textContent = agentName;
-                        filterSelect.appendChild(opt);
-                    });
+                // Show filter only for admin/superuser
+                if (filterSelect) {
+                    if (this.currentUser && (this.currentUser.role === 'admin' || this.currentUser.role === 'superuser')) {
+                        filterSelect.style.display = 'block';
+                        // Populate agent filter dropdown (only populate once)
+                        if (filterSelect.options.length === 1) {
+                            const agents = new Set();
+                            this.store.state.forEach(l => {
+                                if (l.assignedTo) agents.add(l.assignedTo);
+                            });
+                            // Sort agents and add to dropdown
+                            Array.from(agents).sort().forEach(agent => {
+                                const agentName = this.getUserName(agent);
+                                const opt = document.createElement('option');
+                                opt.value = agent;
+                                opt.textContent = agentName;
+                                filterSelect.appendChild(opt);
+                            });
+                        }
+                    } else {
+                        filterSelect.style.display = 'none';
+                    }
                 }
                 
                 // Filter for agent/user: only show follow-ups for assigned leads
                 let leads = this.store.state;
                 if (this.currentUser && (this.currentUser.role === 'agent' || this.currentUser.role === 'user')) {
                     leads = leads.filter(lead => lead.assignedTo === this.currentUser.username || lead.assignedTo === this.currentUser.id);
-                } else if (selectedAgent) {
-                    // Admin can filter by selected agent
+                } else if (selectedAgent && this.currentUser && (this.currentUser.role === 'admin' || this.currentUser.role === 'superuser')) {
+                    // Admin/Superuser can filter by selected agent
                     leads = leads.filter(lead => lead.assignedTo === selectedAgent);
                 }
                 
