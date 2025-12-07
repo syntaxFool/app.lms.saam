@@ -76,9 +76,6 @@ function doGet() {
 
   const response = ContentService.createTextOutput(output);
   response.setMimeType(ContentService.MimeType.JSON);
-  response.setHeader('Access-Control-Allow-Origin', '*');
-  response.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  response.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   return response;
 }
 
@@ -219,8 +216,5 @@ function updateLastModified() {
 function createCORSResponse(jsonString) {
   const response = ContentService.createTextOutput(jsonString);
   response.setMimeType(ContentService.MimeType.JSON);
-  response.setHeader('Access-Control-Allow-Origin', '*');
-  response.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  response.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   return response;
 }
