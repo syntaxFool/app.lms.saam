@@ -1,719 +1,540 @@
-# Customization Guide - Adapting Shanuzz LMS for Other Departments
+# Customization Guide - Adapting the App for Different Businesses
 
-This guide explains how to customize the Shanuzz Academy LMS for use in different departments or business units beyond Lead Management. Whether you're using it for HR, Sales, Support, Inventory, or any other department, this document provides step-by-step instructions.
-
-## Table of Contents
-1. [General Customization Steps](#general-customization-steps)
-2. [Department-Specific Examples](#department-specific-examples)
-3. [UI/Branding Changes](#uibranding-changes)
-4. [Database Schema Changes](#database-schema-changes)
-5. [Field Customization](#field-customization)
-6. [Status Workflow Customization](#status-workflow-customization)
-7. [Role & Permissions Customization](#role--permissions-customization)
+This guide explains how to customize the Shanuzz Academy LMS for other businesses (Salon, Coaching, Real Estate, etc.). The app architecture remains the same—only configuration and branding change.
 
 ---
 
-## General Customization Steps
+## Overview: What Stays the Same vs. What Changes
 
-### Step 1: Backup Your Current Setup
-```bash
-git clone https://github.com/syntaxFool/app-shanuzzacademy-lmsv9.git app-[new-department]
-```
-Create a new folder/branch for your department-specific version.
+### ✅ What STAYS THE SAME (No Code Changes Required)
+- Frontend code (`index.html`) - 100% reusable
+- Backend code (`code.gs`) - 100% reusable
+- Database structure (7 Google Sheets tabs)
+- All functionality (Kanban, Table, Reports, Sync)
+- User roles and permissions
+- Mobile responsiveness
 
-### Step 2: Update App Name & Branding
-Search and replace in `index.html`:
-- Find: `Shanuzz Academy LMS` → Replace: `[Department Name] Management System`
-- Find: `LeadFlow` → Replace: `[Department Name]`
-- Find: Primary color variables
-
-### Step 3: Identify Core Entities
-Instead of "Leads," your app might manage:
-- **HR Department**: Employees, Job Candidates, Contractors
-- **Sales Department**: Customers, Opportunities, Orders
-- **Support Department**: Tickets, Issues, Service Requests
-- **Inventory Department**: Items, Orders, Suppliers
-- **Marketing Department**: Campaigns, Contacts, Subscribers
-
-### Step 4: Customize Google Sheets Structure
-Rename and restructure sheets based on your needs (see [Database Schema Changes](#database-schema-changes)).
-
-### Step 5: Test Thoroughly
-Test all CRUD operations, views, and filters with your new data model.
+### 🔧 What CHANGES (Configuration Only)
+- Google Sheet name and location
+- Business-specific field names
+- Dropdown options (Interests, Sources, Locations)
+- Branding (title, colors, logo)
+- Lead data structure (optional custom fields)
 
 ---
 
-## Department-Specific Examples
+## Step-by-Step: Adapting for a New Business
 
-### Example 1: HR Department - Employee Management System
+### Example: Converting from Shanuzz Academy LMS → Shanuzz Salon LMS
 
-#### What Changes
+---
 
-| Aspect | Lead Management | HR Management |
-|--------|-----------------|---------------|
-| **Main Entity** | Lead | Employee |
-| **Status Values** | New, Contacted, Proposal, Won, Lost | Active, Inactive, On Leave, Terminated |
-| **Key Fields** | Name, Phone, Email, Value | Name, ID, Department, Salary, Joining Date |
-| **Activities** | Follow-ups, Calls, Meetings | Reviews, Meetings, Training, Performance Notes |
-| **Tasks** | Follow-up Tasks | Training, Certifications, Performance Reviews |
+## Phase 1: Create New Google Sheet Infrastructure
 
-#### Implementation Steps
+### Step 1: Create a Fresh Google Sheet for Your Business
 
-**Step 1: Update Google Sheet**
+1. Go to **Google Sheets** (sheets.google.com)
+2. Click **"+ Create"** → **"Blank Spreadsheet"**
+3. Rename the sheet: **"Shanuzz Salon LMS"** (or your business name)
+4. Share it: Click **Share** → **"Anyone with the link"** → **"Editor"**
+
+### Step 2: Create the 7 Required Tabs (Sheet Tabs)
+
+At the bottom of the sheet, you'll see "Sheet1". We need to create 7 tabs with exact names:
+
+**Tab names (Case Sensitive)**:
+1. `Leads`
+2. `Activities`
+3. `Tasks`
+4. `Users`
+5. `Logs`
+6. `Interests`
+7. `Settings`
+
+**How to rename/create tabs**:
+- Right-click the sheet tab → **"Rename"** or **"Insert sheet"**
+
+---
+
+## Phase 2: Set Up the Database Schema
+
+### Tab 1: "Leads" Sheet
+
+This is your main data table. Create these columns in Row 1:
+
+| Column | Data Type | Example (Academy) | Example (Salon) |
+|--------|-----------|-------------------|-----------------|
+| id | Text | UUID (auto-generated) | UUID (auto-generated) |
+| name | Text | Student name | Client name |
+| phone | Text | 9876543210 | 9876543210 |
+| email | Email | student@email.com | client@email.com |
+| status | Text (Dropdown) | New/Contacted/Proposal/Won/Lost | Inquiry/Booked/In-Progress/Completed/Cancelled |
+| value | Number | 50000 | 5000 |
+| source | Text (Dropdown) | Website/Referral/Social/Walk-in | Google/Instagram/Referral/Walk-in |
+| interest | Text (Dropdown) | Full Stack/Python/UI Design | Hair Cut/Facial/Massage/Bridal |
+| assignedTo | Text | agent_username | staff_username |
+| lostReason | Text | Budget/Changed Mind | Not Interested/Budget |
+| createdAt | Date | (auto-filled) | (auto-filled) |
+| updatedAt | Date | (auto-filled) | (auto-filled) |
+
+**Academy Version**:
 ```
-Sheets to keep:
-- Employees (renamed from Leads)
-- Activities (keep same)
-- Tasks (keep same)
-- Users (keep same)
-- Logs (keep same)
-- Departments (new - for dropdown)
-- Salaries (new - for payroll reference)
-```
-
-**Step 2: Update Employee Sheet Columns**
-```
-Old Columns (Leads):    New Columns (Employees):
-id                      id
-name                    name
-phone                   phone
-email                   email
-status          →       status (Active/Inactive/On Leave/Terminated)
-value           →       salary (monthly amount)
-source          →       department (HR, Sales, IT, etc.)
-interest        →       designation (Manager, Developer, etc.)
-assignedTo      →       reportingManager (who supervises)
-lostReason      →       terminationReason (if applicable)
-createdAt       →       joiningDate
-updatedAt       →       updatedAt
-```
-
-**Step 3: Update in `index.html`**
-
-Find and replace column references:
-```javascript
-// Find: lead.status
-// Replace: employee.status
-
-// Find: lead.value
-// Replace: employee.salary
-
-// Find: "Lead" (in strings)
-// Replace: "Employee"
-
-// Find: Phone/Email columns
-// Keep the same (universal fields)
+id | name | phone | email | status | value | source | interest | assignedTo | lostReason | createdAt | updatedAt
 ```
 
-**Step 4: Update Status Values**
-```javascript
-// Find this in index.html:
-this.statusConfig = [
-  { id: 'New', color: 'bg-slate-400' },
-  { id: 'Contacted', color: 'bg-blue-400' },
-  { id: 'Proposal', color: 'bg-yellow-400' },
-  { id: 'Won', color: 'bg-green-400' },
-  { id: 'Lost', color: 'bg-red-400' }
-];
-
-// Replace with:
-this.statusConfig = [
-  { id: 'Active', color: 'bg-green-400' },
-  { id: 'Inactive', color: 'bg-slate-400' },
-  { id: 'On Leave', color: 'bg-yellow-400' },
-  { id: 'Terminated', color: 'bg-red-400' }
-];
+**Salon Version**:
 ```
-
-**Step 5: Update Google Apps Script (code.gs)**
-```javascript
-// Find: const leads = getSheetData('Leads');
-// Replace: const employees = getSheetData('Employees');
-
-// Update all sheet.getRange() calls to use 'Employees' instead of 'Leads'
-```
-
-**Step 6: Update UI Labels**
-```javascript
-// Find: renderTable() function
-// In column headers, replace:
-// "Name" → "Employee Name"
-// "Value" → "Salary"
-// "Source" → "Department"
-// "Interest" → "Designation"
+id | name | phone | email | status | value | source | service | assignedTo | cancelledReason | createdAt | updatedAt
 ```
 
 ---
 
-### Example 2: Sales Department - Customer & Order Management
+### Tab 2: "Activities" Sheet
 
-#### What Changes
+Tracks interactions (calls, notes, follow-ups).
 
-| Aspect | Lead Management | Order Management |
-|--------|-----------------|-----------------|
-| **Main Entity** | Lead | Order/Customer |
-| **Status Values** | New, Contacted, Proposal, Won, Lost | Pending, Processing, Shipped, Delivered, Cancelled |
-| **Key Fields** | Name, Phone, Email, Value | Order ID, Customer Name, Total, Delivery Date |
-| **Activities** | Follow-ups, Calls | Order Updates, Shipping, Delivery Confirmations |
-| **Tasks** | Follow-up Tasks | Fulfillment, QC, Packing |
+| Column | Purpose |
+|--------|---------|
+| leadId | References the lead ID |
+| type | follow_up / call / note / meeting |
+| note | Activity description |
+| timestamp | When it happened |
+| user | Which staff member logged it |
+| changes | (Optional) JSON tracking what changed |
 
-#### Implementation Steps
+**No changes needed** - use as-is for any business.
 
-**Step 1: Update Google Sheet**
+---
+
+### Tab 3: "Tasks" Sheet
+
+Action items and reminders.
+
+| Column | Purpose |
+|--------|---------|
+| leadId | References the lead |
+| title | Task description |
+| dueDate | When due |
+| status | pending / completed / dropped |
+| note | Additional details |
+
+**No changes needed** - use as-is.
+
+---
+
+### Tab 4: "Users" Sheet
+
+Your team members (staff, agents, admins).
+
+| Column | Purpose |
+|--------|---------|
+| id | Unique identifier |
+| username | Login name (e.g., "riya_salon", "john_realtor") |
+| password | Password (plain text for demo) |
+| name | Full name |
+| email | Email address |
+| role | superuser / admin / agent / user |
+
+**Add your team members here**:
 ```
-Sheets:
-- Orders (renamed from Leads)
-- Customers (new - customer master data)
-- Activities (keep same - for order updates)
-- Tasks (keep same - for fulfillment tasks)
-- Inventory (new - product stock levels)
-```
-
-**Step 2: Update Orders Sheet Columns**
-```
-id                      orderId
-name                    customerName
-phone                   customerPhone
-email                   customerEmail
-status          →       orderStatus (Pending/Processing/Shipped/Delivered/Cancelled)
-value           →       totalAmount
-source          →       paymentMethod (UPI/Card/Cash/Cheque)
-interest        →       productCategory
-assignedTo      →       assignedWarehouse
-lostReason      →       cancellationReason
-createdAt       →       orderDate
-updatedAt       →       lastUpdatedDate
-```
-
-**Step 3: Update Status Workflow**
-```javascript
-this.statusConfig = [
-  { id: 'Pending', color: 'bg-slate-400' },
-  { id: 'Processing', color: 'bg-blue-400' },
-  { id: 'Shipped', color: 'bg-yellow-400' },
-  { id: 'Delivered', color: 'bg-green-400' },
-  { id: 'Cancelled', color: 'bg-red-400' }
-];
+id | username | password | name | email | role
+1 | riya_sharma | pass123 | Riya Sharma | riya@salon.com | superuser
+2 | priya_singh | pass123 | Priya Singh | priya@salon.com | agent
+3 | deepak_manager | pass123 | Deepak Kumar | deepak@salon.com | admin
 ```
 
 ---
 
-### Example 3: Support Department - Ticket Management System
+### Tab 5: "Logs" Sheet
 
-#### What Changes
+Audit trail (auto-populated by backend).
 
-| Aspect | Lead Management | Ticket Management |
-|--------|-----------------|------------------|
-| **Main Entity** | Lead | Ticket/Issue |
-| **Status Values** | New, Contacted, Proposal, Won, Lost | Open, In Progress, Waiting, Resolved, Closed |
-| **Priority** | None | High, Medium, Low |
-| **Key Fields** | Name, Phone, Email, Value | Ticket ID, Subject, Category, Priority, SLA |
-| **Activities** | Follow-ups, Calls | Support Responses, Escalations, Updates |
-| **Tasks** | Follow-up Tasks | Resolution Steps, Follow-up Actions |
+| Column | Purpose |
+|--------|---------|
+| timestamp | When action happened |
+| user | Who did it |
+| action | Create / Update / Delete |
+| message | Description |
 
-#### Implementation Steps
-
-**Step 1: Add Priority Field**
-```
-Add a new column to the Tickets sheet:
-- priority (dropdown: High, Medium, Low)
-- slaDeadline (when ticket must be resolved)
-- category (Bug, Feature Request, Support, Billing)
-```
-
-**Step 2: Update Status Config**
-```javascript
-this.statusConfig = [
-  { id: 'Open', color: 'bg-red-400' },
-  { id: 'In Progress', color: 'bg-blue-400' },
-  { id: 'Waiting', color: 'bg-yellow-400' },
-  { id: 'Resolved', color: 'bg-green-400' },
-  { id: 'Closed', color: 'bg-slate-400' }
-];
-```
-
-**Step 3: Add Priority Styling**
-```javascript
-// In renderTable() or renderKanbanCard():
-const priorityColors = {
-  'High': 'bg-red-100 text-red-800',
-  'Medium': 'bg-yellow-100 text-yellow-800',
-  'Low': 'bg-blue-100 text-blue-800'
-};
-
-// Display priority badge:
-<span class="${priorityColors[ticket.priority]}">${ticket.priority}</span>
-```
+**No setup needed** - backend fills this automatically.
 
 ---
 
-## UI/Branding Changes
+### Tab 6: "Interests" Sheet
 
-### 1. Update App Title & Logo
-**File**: `index.html`
+Dropdown options for services/products (Business-specific!).
 
-Find and replace:
-```html
-<!-- Line ~140 -->
+**For Academy**:
+| Name | Value |
+|------|-------|
+| Full Stack | 50000 |
+| Python | 30000 |
+| Web Development | 45000 |
+| UI Design | 35000 |
+| Data Science | 60000 |
+
+**For Salon**:
+| Name | Value |
+|------|-------|
+| Hair Cut | 500 |
+| Hair Coloring | 2000 |
+| Facial | 1500 |
+| Massage | 3000 |
+| Bridal Package | 15000 |
+| Pedicure | 800 |
+
+**For Real Estate**:
+| Name | Value |
+|------|-------|
+| 1 BHK Apartment | 5000000 |
+| 2 BHK Apartment | 8000000 |
+| 3 BHK Villa | 15000000 |
+| Commercial Space | 10000000 |
+
+---
+
+### Tab 7: "Settings" Sheet
+
+App configuration (dropdown options for Location and Source).
+
+**For Academy**:
+| Location | Source |
+|----------|--------|
+| Delhi | Google |
+| Mumbai | Instagram |
+| Bangalore | Referral |
+| Pune | Walk-in |
+| Hyderabad | Facebook |
+
+**For Salon**:
+| Location | Source |
+|----------|--------|
+| Delhi Downtown | Google |
+| Delhi East | Instagram |
+| Mumbai Central | Facebook |
+| Mumbai Suburbs | Referral |
+| Bangalore | Walk-in |
+
+**For Real Estate**:
+| Location | Source |
+|----------|--------|
+| Delhi South | Google |
+| Delhi North | Facebook |
+| Gurgaon | LinkedIn |
+| Noida | Referral |
+| Mumbai | Walk-in |
+
+---
+
+## Phase 3: Deploy Backend (Same Code, Different Sheet)
+
+### Step 1: Open Google Apps Script Editor
+
+1. In your **new Google Sheet**, click **Extensions** → **Apps Script**
+2. Delete any existing code
+3. Paste the entire `code.gs` code (from your academy version)
+4. **No code changes needed** - it works for any business!
+
+### Step 2: Deploy as Web App
+
+1. Click **Deploy** → **New Deployment**
+2. Configuration:
+   - Type: **Web App**
+   - Description: **"Shanuzz Salon LMS API"** (update name)
+   - Execute as: **Me**
+   - Who has access: **Anyone**
+3. Click **Deploy**
+4. **Copy the Web App URL** (ends in `/exec`)
+
+---
+
+## Phase 4: Configure Frontend (index.html)
+
+The frontend code remains **100% the same**. But you need to update:
+
+### Option A: Change Business Name in UI (Simple)
+
+Find and replace these text strings in `index.html`:
+
+#### 1. Change App Title
+```javascript
+// Find this line (around line 160):
 <h1 class="text-2xl font-bold text-slate-800" id="loginTitle">LeadFlow</h1>
 
-<!-- Replace with: -->
-<h1 class="text-2xl font-bold text-slate-800" id="loginTitle">[Your Department Name]</h1>
+// Change to:
+<h1 class="text-2xl font-bold text-slate-800" id="loginTitle">Shanuzz Salon</h1>
 ```
 
-### 2. Change Primary Color
-**File**: `index.html`
+#### 2. Change App Name in Settings/Header
+Find lines with "Shanuzz Academy" and replace with your business name.
 
-Find (around line 108):
+#### 3. Update Field Names (Optional, for clarity)
+
+Search for these and replace if needed:
+
+| Current (Academy) | New (Salon) | Search in index.html |
+|------------------|-------------|---------------------|
+| "interest" | "service" | Search "Interest" and change labels |
+| "value" | "price" | Search "Value" and change labels |
+| "lostReason" | "cancelledReason" | Search "lostReason" and change labels |
+
+**Example change**:
 ```javascript
-tailwind.config = { 
-  theme: { 
-    extend: { 
-      colors: { 
-        primary: '#4f46e5',  // Current indigo
-        secondary: '#64748b' 
-      } 
-    } 
-  } 
-}
+// Before:
+<label>Interest</label>
+<select name="interest">...</select>
+
+// After:
+<label>Service</label>
+<select name="service">...</select>
 ```
 
-Replace with your department colors:
+### Option B: Change Branding Colors
+
+Find these color codes and replace with your brand colors:
+
 ```javascript
-// HR Department (Green)
-primary: '#059669'
+// Primary color (blue)
+'primary: #4f46e5'  → Change to your brand color hex
 
-// Sales Department (Blue)
-primary: '#2563eb'
-
-// Support Department (Purple)
-primary: '#7c3aed'
-
-// Inventory (Orange)
-primary: '#ea580c'
-```
-
-### 3. Update Menu Labels
-**File**: `index.html`
-
-Find the sidebar menu labels and update:
-```javascript
-// Find and replace in renderMenu() or similar
-"Kanban Board" → "Status Board" / "Ticket Board"
-"Leads Table" → "Employees Table" / "Orders Table" / "Tickets Table"
-"Reports" → "Analytics" / "Performance"
-"Follow Ups" → "Follow Ups" / "SLA Tracking" / "Pending Tasks"
-```
-
-### 4. Update Icon Semantics
-Keep the icons but adjust context:
-```html
-<!-- Current -->
-<i class="ph-bold ph-users"></i> <!-- Agent Table -->
-
-<!-- Change label to match department -->
-<i class="ph-bold ph-users"></i> <!-- Department Heads / Managers / Support Team -->
+// Find and replace:
+text-blue-600 → text-[your-color]-600
+bg-blue-600 → bg-[your-color]-600
 ```
 
 ---
 
-## Database Schema Changes
+## Phase 5: Connect Frontend to New Backend
 
-### Step-by-Step Schema Redesign
+### Step 1: Open index.html in Browser
 
-#### Step 1: Identify Your Main Entity
-```
-Lead Management:  Leads
-HR:              Employees
-Sales:           Customers / Orders
-Support:         Tickets
-Inventory:       Items / Stock
-Marketing:       Campaigns / Contacts
-```
+1. Double-click `index.html` to open in browser
+2. You'll see the login screen
 
-#### Step 2: Define Core Fields
-Every system needs:
-```
-✅ Unique ID
-✅ Name/Title
-✅ Status
-✅ Date Fields (created, updated)
-✅ Owner/Assigned To
-✅ Notes/Description
+### Step 2: Configure Web App URL
 
-❓ Optional:
-  - Value/Amount
-  - Category/Type
-  - Priority
-  - Deadline
-  - Custom fields
-```
+1. Login with **any credentials** (or create superuser on first login)
+2. Click **Menu (≡)** → **Settings > SYS Config**
+3. Paste your **new Google Apps Script Web App URL** into the field
+4. Click **Save & Sync**
+5. Wait for data to load
 
-#### Step 3: Create New Sheet Headers
-**Example for HR System:**
+**Done!** Your app is now connected to the new Google Sheet.
+
+---
+
+## Quick Reference: What to Change for Each Business Type
+
+### For Salon Business
+
 ```
-Google Sheet "Employees":
-A: id (unique identifier)
-B: name (full name)
-C: email (work email)
-D: phone (contact number)
-E: employeeId (company ID)
-F: department (Sales, HR, IT, etc.)
-G: designation (Manager, Developer, etc.)
-H: salary (monthly amount)
-I: status (Active, Inactive, On Leave, Terminated)
-J: reportingManager (supervisor username)
-K: joiningDate (when hired)
-L: updatedAt (last modified)
+Field Changes:
+- "interest" → "service" (Hair, Facial, Massage, etc.)
+- "value" → "price" (₹500-₹15000 per service)
+- "status" → "Inquiry / Booked / In-Progress / Completed / Cancelled"
+- "lostReason" → "cancelledReason"
+
+Interests Tab (Services):
+- Hair Cut (₹500)
+- Hair Coloring (₹2000)
+- Facial (₹1500)
+- Massage (₹3000)
+- Bridal Package (₹15000)
+
+Users (Staff):
+- Receptionist (admin)
+- Hair Stylist (agent)
+- Beautician (agent)
+- Massage Therapist (agent)
 ```
 
-#### Step 4: Update Code.gs
-```javascript
-// In doGet():
-function doGet(e) {
-  const data = {
-    employees: getSheetData('Employees'),  // Changed from 'Leads'
-    activities: getSheetData('Activities'),
-    tasks: getSheetData('Tasks'),
-    users: getSheetData('Users'),
-    logs: getSheetData('Logs'),
-    departments: getSheetData('Departments'),  // New
-    lastModified: PropertiesService.getScriptProperties().getProperty('LAST_UPDATE')
-  };
-  // ... rest of function
-}
+### For Real Estate Business
 
-// In doPost():
-// Update writeSheet() to use 'Employees' instead of 'Leads'
-const targetSheet = 'Employees';  // Was 'Leads'
+```
+Field Changes:
+- "interest" → "property_type" (Apartment, Villa, Commercial)
+- "value" → "price" (₹50L - ₹5Cr)
+- "status" → "Lead / Site Visit / Negotiation / Deal / Cancelled"
+
+Interests Tab (Properties):
+- 1 BHK Apartment (₹50,00,000)
+- 2 BHK Apartment (₹80,00,000)
+- 3 BHK Villa (₹1,50,00,000)
+- Commercial Space (₹1,00,00,000)
+
+Users (Sales Team):
+- Sales Manager (admin)
+- Sales Agent 1 (agent)
+- Sales Agent 2 (agent)
+```
+
+### For Coaching Center
+
+```
+Field Changes:
+- "interest" → "course" (Python, Java, Web Dev, etc.)
+- "value" → "fees" (₹10,000 - ₹50,000)
+- "status" → "Inquiry / Demo / Enrolled / Completed / Dropped"
+
+Interests Tab (Courses):
+- Python Programming (₹15,000)
+- Web Development (₹20,000)
+- Data Science (₹30,000)
+- Mobile Development (₹25,000)
+- Advanced Java (₹18,000)
+
+Users (Staff):
+- Director (superuser)
+- Admission Manager (admin)
+- Instructor 1 (agent)
+- Instructor 2 (agent)
 ```
 
 ---
 
-## Field Customization
+## Checklist: Deploying for New Business
 
-### Adding New Fields
+### Google Sheet Setup
+- [ ] Create new Google Sheet
+- [ ] Create 7 tabs (Leads, Activities, Tasks, Users, Logs, Interests, Settings)
+- [ ] Add column headers to each tab
+- [ ] Populate Interests (Services/Courses/Products)
+- [ ] Populate Settings (Locations, Sources)
+- [ ] Populate Users (Team members with login credentials)
+- [ ] Share sheet with Editor access
 
-#### Example: Adding "Priority" to Support Tickets
+### Backend Deployment
+- [ ] Open Google Apps Script
+- [ ] Paste code.gs
+- [ ] Deploy as Web App
+- [ ] Copy Web App URL
+- [ ] Note down the URL
 
-**Step 1: Add Column to Google Sheet**
-```
-Tickets sheet, Column J: priority
-Add dropdown validation: High | Medium | Low
-```
+### Frontend Configuration
+- [ ] Update app title in index.html (optional)
+- [ ] Update field names if needed (optional)
+- [ ] Update colors if needed (optional)
+- [ ] Open index.html in browser
+- [ ] Login and go to Settings
+- [ ] Paste Web App URL and Save
+- [ ] Wait for data sync
+- [ ] Create test lead to verify
 
-**Step 2: Update Modal Form in index.html**
-```html
-<!-- Find the lead modal form -->
-<!-- Add new field: -->
-<div>
-  <label class="text-xs font-semibold text-slate-600">Priority</label>
-  <select name="priority" class="w-full border border-slate-300 rounded px-3 py-2">
-    <option value="">Select Priority</option>
-    <option value="High">High</option>
-    <option value="Medium">Medium</option>
-    <option value="Low">Low</option>
-  </select>
-</div>
-```
-
-**Step 3: Update Table Display**
-```javascript
-// In renderTable() function:
-<td class="px-3 py-2">
-  <span class="px-2 py-1 rounded text-xs font-medium ${getPriorityClass(lead.priority)}">
-    ${lead.priority || '-'}
-  </span>
-</td>
-
-// Add helper function:
-getPriorityClass(priority) {
-  const classes = {
-    'High': 'bg-red-100 text-red-700',
-    'Medium': 'bg-yellow-100 text-yellow-700',
-    'Low': 'bg-blue-100 text-blue-700'
-  };
-  return classes[priority] || 'bg-slate-100 text-slate-700';
-}
-```
-
-**Step 4: Update Code.gs**
-```javascript
-// In doPost(), add 'priority' to headers:
-const headers = ['id', 'name', 'email', 'phone', 'status', 'priority', ...];
-```
-
-### Removing Unused Fields
-
-**Example: Remove "Source" field if not needed**
-
-1. Remove from Google Sheet columns
-2. Remove from modal form in index.html
-3. Remove from table columns in renderTable()
-4. Remove from code.gs headers array
-5. Test that saves still work
+### Testing
+- [ ] Test creating a lead
+- [ ] Test editing a lead
+- [ ] Test switching between Kanban/Table/Reports views
+- [ ] Test on mobile (use browser DevTools)
+- [ ] Test multi-user sync (open in 2 tabs)
+- [ ] Test follow-ups and activities
 
 ---
 
-## Status Workflow Customization
+## Advanced: Custom Fields for Your Business
 
-### Current Status Workflow (Lead Management)
-```
-New → Contacted → Proposal → Won/Lost
-```
+If you need additional fields beyond the standard ones, you can add them to the Leads sheet.
 
-### Custom Workflows for Other Departments
+### Example: Add "Budget" field for Real Estate
 
-#### HR Department Workflow
+**Step 1**: Add column in Google Sheet
 ```
-Active (main status)
-├─ Active (working)
-├─ On Leave (temporary)
-└─ Terminated (ended)
+Column M: "budget" (in Leads sheet header)
 ```
 
-#### Support Ticket Workflow
-```
-Open → In Progress → Resolved → Closed
-       ↓
-    Waiting (customer response)
-```
-
-#### Sales Order Workflow
-```
-Pending → Processing → Shipped → Delivered
-        ↓
-     Cancelled
-```
-
-#### Implementation
+**Step 2**: Update backend (`code.gs`)
 ```javascript
-// Find statusConfig in index.html:
-this.statusConfig = [
-  { id: 'New', color: 'bg-slate-400', order: 1 },
-  { id: 'Contacted', color: 'bg-blue-400', order: 2 },
-  { id: 'Proposal', color: 'bg-yellow-400', order: 3 },
-  { id: 'Won', color: 'bg-green-400', order: 4 },
-  { id: 'Lost', color: 'bg-red-400', order: 5 }
-];
-
-// Replace with your workflow:
-this.statusConfig = [
-  { id: 'Open', color: 'bg-red-400', order: 1 },
-  { id: 'In Progress', color: 'bg-blue-400', order: 2 },
-  { id: 'Waiting', color: 'bg-yellow-400', order: 3 },
-  { id: 'Resolved', color: 'bg-green-400', order: 4 },
-  { id: 'Closed', color: 'bg-slate-400', order: 5 }
-];
-```
-
----
-
-## Role & Permissions Customization
-
-### Current Roles
-```
-Superuser → Full access
-Admin      → Manage leads, users, settings
-Agent      → Manage own leads only
-User       → View only (read-only access)
-```
-
-### Department-Specific Roles
-
-#### HR Department
-```
-HR Manager     → Full access (hire, terminate, manage all employees)
-Department Head → Manage department employees only
-Employee       → View own profile, request leave
-```
-
-#### Support Department
-```
-Support Manager → Assign tickets, manage team, view reports
-Support Agent   → Respond to tickets assigned to them
-Admin          → Overall system management
-```
-
-### Implementation in index.html
-
-Find role-checking code:
-```javascript
-// Current:
-if (this.currentUser.role === 'admin' || this.currentUser.role === 'superuser') {
-  // Show admin features
-}
+// Find this line in doPost function:
+const headers = ['id', 'name', 'phone', 'email', 'status', 'value', 'source', 'interest', 'assignedTo', 'lostReason', 'createdAt', 'updatedAt'];
 
 // Change to:
-if (this.currentUser.role === 'hr_manager' || this.currentUser.role === 'superuser') {
-  // Show HR features
-}
+const headers = ['id', 'name', 'phone', 'email', 'status', 'value', 'source', 'interest', 'assignedTo', 'lostReason', 'budget', 'createdAt', 'updatedAt'];
 ```
 
-Update role definitions in Users sheet:
-```
-Instead of:  superuser, admin, agent, user
-Use:         superuser, hr_manager, department_head, employee, guest
-            OR
-             superuser, support_manager, support_agent, customer, guest
-```
-
----
-
-## Testing Checklist
-
-After customizing, test each item:
-
-### Functionality Tests
-- [ ] Login with different roles works
-- [ ] Create new record works
-- [ ] Edit record works
-- [ ] Delete record works (if allowed)
-- [ ] View switches work (Board/Table/Reports)
-- [ ] Search/Filter works with new fields
-- [ ] Sorting works on all columns
-- [ ] Bulk operations work
-
-### Data Tests
-- [ ] New fields save to Google Sheet
-- [ ] Status workflow transitions correctly
-- [ ] Dropdowns populate from Settings sheet
-- [ ] Date fields format correctly
-- [ ] Currency/Numbers display correctly
-
-### Mobile Tests
-- [ ] Mobile responsive on all screen sizes
-- [ ] Touch buttons work (not too small)
-- [ ] Bottom nav works
-- [ ] Modal opens/closes on mobile
-- [ ] Tables scroll horizontally if needed
-
-### Multi-User Tests
-- [ ] Real-time sync works (10-second updates)
-- [ ] Changes from User A appear for User B
-- [ ] Notifications show updates
-- [ ] No data conflicts when editing simultaneously
-
-### UI Tests
-- [ ] Colors match department branding
-- [ ] Labels match new terminology
-- [ ] No broken references to old field names
-- [ ] Icons still make sense in context
-
----
-
-## Quick Reference: Common Customizations
-
-### 1. Change "Lead" to "Employee" Everywhere
-```bash
-# In code editor, use Find & Replace:
-Find: lead
-Replace: employee
-
-Find: Lead
-Replace: Employee
-
-Find: leads
-Replace: employees
-
-Find: Leads
-Replace: Employees
-```
-
-### 2. Change Status Column Name
+**Step 3**: Update frontend (`index.html`)
 ```javascript
-// In renderTable() header:
-Find: "Status"
-Replace: "Current State" / "Progress" / "Ticket Status"
+// Find the form in Lead Modal and add:
+<div>
+  <label class="text-xs font-semibold">Budget</label>
+  <input type="number" name="budget" placeholder="Enter budget">
+</div>
+
+// Update renderTable() to display budget column:
+<td>${lead.budget || '-'}</td>
 ```
 
-### 3. Add New Dropdown Options
-1. Go to Google Sheet > Settings tab
-2. Add new column: e.g., "Categories"
-3. In index.html, find setupAutocomplete()
-4. Add new field mapping
-
-### 4. Change Table View Columns
-```javascript
-// In renderTable() function:
-// Hide column:
-<td class="hidden md:table-cell">Column</td>
-
-// Show column on all sizes:
-<td class="p-3">Column</td>
-
-// Remove column entirely:
-// Delete the <td> line
-```
-
-### 5. Create Department-Specific Reports
-```javascript
-// Find renderReports() function
-// Add new section:
-
-// Employees by Department
-// Tickets by Priority
-// Orders by Status
-// etc.
-```
+**Redeploy** and test.
 
 ---
 
-## Migration Path: From Lead Management to New Department
+## Important Notes
 
-### Phase 1: Backup & Setup (1-2 hours)
-- [ ] Clone current setup to new folder
-- [ ] Create backup of original Google Sheet
-- [ ] Create new Google Sheet for new department
+### Database Independence
+- Each Google Sheet is **completely independent**
+- Changing one doesn't affect the others
+- You can run multiple instances simultaneously
 
-### Phase 2: Schema Design (2-3 hours)
-- [ ] List all required fields
-- [ ] Design Google Sheets structure
-- [ ] Define status workflow
-- [ ] Plan role hierarchy
+### Code Reusability
+- The same `index.html` and `code.gs` work for **any business**
+- No need to maintain multiple versions
+- Updates to logic apply to all instances automatically
 
-### Phase 3: Code Customization (4-6 hours)
-- [ ] Update Google Sheet tabs
-- [ ] Update index.html labels and forms
-- [ ] Update code.gs sheet references
-- [ ] Change color scheme and branding
+### Data Migration (Copying an Existing Instance)
+If you want to copy an existing instance:
 
-### Phase 4: Testing (2-4 hours)
-- [ ] Functionality testing
-- [ ] Data testing
-- [ ] Mobile testing
-- [ ] Multi-user testing
-- [ ] Performance testing
-
-### Phase 5: Launch (1 hour)
-- [ ] Deploy to web
-- [ ] Share with team
-- [ ] Train users
-- [ ] Monitor for issues
+1. Open existing Google Sheet
+2. **File** → **Make a copy**
+3. Rename the copy (e.g., "Salon LMS")
+4. Update data in Interests/Settings/Users tabs
+5. Deploy new Apps Script
+6. Update Web App URL in frontend
 
 ---
 
-## Need Help?
+## Troubleshooting Customization
 
-### For Code Questions
-- Refer to `DEVELOPER.md` for technical details
-- Check git commit history for similar changes
-- Use browser DevTools (F12) to debug
+### Issue: "Dropdowns are empty"
+- **Solution**: Verify data exists in Interests and Settings tabs
+- Click refresh icon in header to force sync
 
-### For Setup Questions
-- Refer to `summary.md` for setup instructions
-- Verify Google Sheet permissions
-- Check Google Apps Script logs
+### Issue: "New field not showing in table"
+- **Solution**: Make sure you added column to Google Sheet AND updated code.gs headers array
+- Redeploy Apps Script
 
-### For Department-Specific Customizations
-1. Identify your main entity and fields
-2. Update Google Sheets schema
-3. Customize code using examples in this guide
-4. Test thoroughly before launch
-5. Train your team on usage
+### Issue: "Cannot save data"
+- **Solution**: Verify Google Sheet is shared with "Editor" access
+- Check that column headers match exactly (case-sensitive)
+
+### Issue: "Web App URL not connecting"
+- **Solution**: Ensure deployment is set to "Anyone" access
+- Copy URL exactly from deployment URL (not the script page URL)
+
+---
+
+## Summary: Core Principle
+
+**The app is architecture-agnostic.** It works for ANY business because:
+
+1. **Frontend** - Generic lead management UI (name, phone, email, status, value, source, interest, assigned-to)
+2. **Backend** - Generic CRUD operations (Create, Read, Update, Delete)
+3. **Database** - Standardized 7-tab structure
+
+Only **business-specific values** change (Interests, Locations, Sources, user names, field labels).
+
+---
+
+## Next Steps
+
+1. Create new Google Sheet for your business
+2. Set up the 7 tabs with business-specific data
+3. Deploy Apps Script from existing code.gs
+4. Configure frontend with new Web App URL
+5. Test with your team
+6. Go live!
+
+For detailed code documentation, see `DEVELOPER.md`.
+For user guide, see `summary.md`.
 
 ---
 
 **Last Updated**: December 8, 2025  
-**For Version**: Shanuzz Academy LMS v9  
-**Status**: Complete & Ready for Customization
+**Version**: 1.0
