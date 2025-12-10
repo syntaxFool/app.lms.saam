@@ -23,7 +23,7 @@
             margin: 0;
             padding: 0;
             width: 100%;
-            height: 100%;
+            height: 100dvh;
             overflow: hidden;
             background-color: var(--bg-color);
             transition: background-color 0.3s ease;
@@ -31,7 +31,9 @@
             justify-content: center;
             align-items: center;
             touch-action: none; 
-            cursor: crosshair; 
+            cursor: crosshair;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
         }
 
         /* CRT Vignette (Dark Corners) */
@@ -82,14 +84,22 @@
             user-select: none;
             transform-origin: center center;
             will-change: transform;
-            /* Allow glitch transform */
             position: relative;
+            contain: layout paint;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
         }
 
         /* ANIMATION DEFINITION: Data Flux */
         @keyframes flux {
             0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
+            50% { opacity: 0.8; }
+        }
+        
+        @media (max-width: 768px) {
+            .bit-on {
+                animation: none !important;
+            }
         }
 
         /* ANIMATION DEFINITION: The Glitch */
@@ -116,8 +126,9 @@
             color: var(--bit-on);
             font-weight: 900;
             text-shadow: var(--glow);
-            transition: transform 0.1s, color 0.3s; 
+            transition: transform 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94), color 0.3s; 
             animation: flux 3s infinite ease-in-out;
+            transform: translateZ(0);
         }
 
         /* The "0"s (The Background) */
@@ -125,12 +136,13 @@
             display: inline-block; 
             color: var(--bit-off);
             font-weight: 100;
-            transition: transform 0.1s, color 0.3s;
+            transition: transform 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94), color 0.3s;
+            transform: translateZ(0);
         }
 
         /* INTERACTIVITY: MAGNIFICATION EFFECT */
         .bit-on:hover, .bit-off:hover {
-            transform: scale(2.5) translateZ(20px); /* Pop out in 3D */
+            transform: scale(2.5) translateZ(20px);
             z-index: 10; 
             position: relative;
             background-color: var(--bg-color); 
@@ -138,6 +150,14 @@
             font-weight: 900;
             color: var(--bit-on);
             animation-play-state: paused;
+        }
+        
+        @media (hover: none) and (pointer: coarse) {
+            .bit-on:hover, .bit-off:hover {
+                transform: none;
+                animation-play-state: running;
+                box-shadow: none;
+            }
         }
 
         .title-overlay {
@@ -172,6 +192,23 @@
                 border-width: 1px;
             }
             .title-overlay { bottom: 8%; }
+            
+            #ascii-container {
+                font-size: 7px;
+                line-height: 7px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.2rem;
+                letter-spacing: 0.1rem;
+            }
+            
+            #ascii-container {
+                font-size: 6px;
+                line-height: 6px;
+            }
         }
     </style>
 </head>
@@ -230,20 +267,26 @@
 
             const data = ctx.getImageData(0, 0, widthResolution, heightResolution).data;
             let asciiBuffer = [];
+            
+            // Performance optimization: on mobile, don't wrap 0s in spans
+            const useLiteMode = isMobile;
 
             for (let y = 0; y < heightResolution; y++) {
                 for (let x = 0; x < widthResolution; x++) {
                     const offset = (y * widthResolution + x) * 4;
                     const brightness = (data[offset] * 0.299 + data[offset + 1] * 0.587 + data[offset + 2] * 0.114);
 
-                    // Random animation delay to create "shimmer" effect
-                    const delay = (Math.random() * 5).toFixed(2);
-                    const style = `style="animation-delay: ${delay}s"`;
-
                     if (brightness < 240) {
+                        const delay = (Math.random() * 5).toFixed(2);
+                        const style = `style="animation-delay: ${delay}s"`;
                         asciiBuffer.push(`<span class="bit-on" ${style}>1</span>`);
                     } else {
-                        asciiBuffer.push('<span class="bit-off">0</span>');
+                        // On mobile: plain text; on desktop: wrapped for hover effect
+                        if (useLiteMode) {
+                            asciiBuffer.push('0');
+                        } else {
+                            asciiBuffer.push('<span class="bit-off">0</span>');
+                        }
                     }
                 }
                 asciiBuffer.push("<br>");
@@ -285,6 +328,55 @@
                 isTiltUpdatePending = true;
             }
         });
+        
+        // Touch support for tilt on mobile
+        document.addEventListener('touchmove', (e) => {
+            if (e.touches.length > 0) {
+                const touch = e.touches[0];
+                mouseX = (touch.clientX / window.innerWidth - 0.5) * 2;
+                mouseY = (touch.clientY / window.innerHeight - 0.5) * 2;
+                
+                if (!isTiltUpdatePending) {
+                    requestAnimationFrame(updateTilt);
+                    isTiltUpdatePending = true;
+                }
+            }
+        }, { passive: true });
+        
+        // Device orientation support for gyroscope-enabled devices
+        function handleDeviceOrientation(event) {
+            if (!event.gamma || !event.beta) return;
+            
+            const maxTilt = 8;
+            let tiltX = event.gamma;
+            let tiltY = event.beta;
+            
+            if (Math.abs(tiltX) > maxTilt) tiltX = tiltX > 0 ? maxTilt : -maxTilt;
+            if (Math.abs(tiltY) > maxTilt) tiltY = tiltY > 0 ? maxTilt : -maxTilt;
+            
+            mouseX = (tiltX / maxTilt) * 0.5;
+            mouseY = (tiltY / maxTilt) * 0.5;
+            
+            if (!isTiltUpdatePending) {
+                requestAnimationFrame(updateTilt);
+                isTiltUpdatePending = true;
+            }
+        }
+        
+        // Request permission for iOS 13+
+        if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+            document.addEventListener('click', () => {
+                DeviceOrientationEvent.requestPermission()
+                    .then(response => {
+                        if (response === 'granted') {
+                            window.addEventListener('deviceorientation', handleDeviceOrientation);
+                        }
+                    })
+                    .catch(() => {});
+            }, { once: true });
+        } else {
+            window.addEventListener('deviceorientation', handleDeviceOrientation);
+        }
 
         function updateTilt() {
             // Max rotation degrees
