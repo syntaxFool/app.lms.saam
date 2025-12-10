@@ -1811,8 +1811,8 @@
                 document.getElementById('leadForm').value.value = lead.value || '';
                 document.getElementById('leadForm').status.value = lead.status || '';
                 document.getElementById('leadForm').email.value = lead.email || '';
-                document.getElementById('leadForm').location.value = lead.location || '';
-                document.getElementById('leadForm').source.value = lead.source || '';
+                document.getElementById('leadForm').querySelector('input[name="location"]').value = lead.location || '';
+                document.getElementById('leadForm').querySelector('input[name="source"]').value = lead.source || '';
                 // Assigned To select
                 this.populateAssignedToDropdown();
                 const assignedToSelect = document.getElementById('assignedToSelect');
@@ -1983,14 +1983,7 @@
             initSettingsAutocomplete() {
                 // Only initialize once to avoid duplicate event listeners
                 if (this.settingsAutocompleteInitialized) {
-                    // Just clear the input values
-                    const clearInput = (inputId) => {
-                        const input = document.getElementById(inputId);
-                        if (input) input.value = '';
-                    };
-                    clearInput('locationInput');
-                    clearInput('sourceInput');
-                    clearInput('taskInput');
+                    // Don't clear inputs - they may have been populated from editLead()
                     return;
                 }
 
@@ -2211,8 +2204,8 @@
                             value: parseFloat(f.value.value) || 0,
                             temperature: f.temperature.value,
                             email: f.email.value,
-                            location: f.location.value,
-                            source: f.source.value,
+                            location: f.querySelector('input[name="location"]').value,
+                            source: f.querySelector('input[name="source"]').value,
                             assignedTo: f.assignedTo.value,
                             phone: fullPhone,
                             notes: f.notes.value
@@ -2229,8 +2222,8 @@
                     status: f.status.value,
                     temperature: f.temperature.value,
                     email: f.email.value,
-                    location: f.location.value,
-                    source: f.source.value,
+                    location: f.querySelector('input[name="location"]').value,
+                    source: f.querySelector('input[name="source"]').value,
                     assignedTo: f.assignedTo.value,
                     phone: fullPhone,
                     notes: f.notes.value,
@@ -2423,8 +2416,8 @@
                 document.getElementById('leadForm').status.value = lead.status || '';
                 document.getElementById('leadForm').temperature.value = lead.temperature || '';
                 document.getElementById('leadForm').email.value = lead.email || '';
-                document.getElementById('leadForm').location.value = lead.location || '';
-                document.getElementById('leadForm').source.value = lead.source || '';
+                document.getElementById('leadForm').querySelector('input[name="location"]').value = lead.location || '';
+                document.getElementById('leadForm').querySelector('input[name="source"]').value = lead.source || '';
                 // Assigned To select
                 this.populateAssignedToDropdown();
                 const assignedToSelect = document.getElementById('assignedToSelect');
@@ -3086,7 +3079,10 @@
                              window.app.renderInterestTags();
                         }
                         document.getElementById('tab-btn-activity').disabled=true; 
-                        document.getElementById('tab-btn-contact').disabled=true; 
+                        document.getElementById('tab-btn-contact').disabled=true;
+                        // Clear task input for new leads only
+                        const taskInput = document.getElementById('taskInput');
+                        if (taskInput) taskInput.value = '';
                     }
                     // Setup autocompletes when modal opens
                     if (window.app && typeof window.app.initSettingsAutocomplete === 'function') {
