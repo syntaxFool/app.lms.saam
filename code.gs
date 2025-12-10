@@ -19,12 +19,12 @@ function doGet() {
   let appTitle = '';
   
   if (settingsData.length > 0) {
-    const headers = settingsData[0];
-    const locationsCol = headers.indexOf('Locations');
-    const sourcesCol = headers.indexOf('Sources');
-    const scriptUrlCol = headers.indexOf('ScriptURL');
-    const appTitleCol = headers.indexOf('AppTitle');
-    const taskTitlesCol = headers.indexOf('TaskTitles');
+    const headers = settingsData[0].map(h => h.toLowerCase().trim());
+    const locationsCol = headers.indexOf('locations');
+    const sourcesCol = headers.indexOf('sources');
+    const scriptUrlCol = headers.indexOf('scripturl');
+    const appTitleCol = headers.indexOf('apptitle');
+    const taskTitlesCol = headers.indexOf('tasktitles');
     
     if (scriptUrlCol !== -1 && settingsData.length > 1) {
       scriptUrl = settingsData[1][scriptUrlCol] || '';
@@ -184,7 +184,7 @@ function readSheet(sheet) {
   const range = sheet.getDataRange();
   const values = range.getValues();
   if (values.length < 2) return [];
-  const headers = values.shift();
+  const headers = values.shift().map(h => h.toLowerCase().trim()); // Normalize headers to lowercase
   return values.map(row => {
     const obj = {};
     headers.forEach((h, i) => obj[h] = row[i]);
@@ -198,9 +198,11 @@ function writeSheet(sheet, data, headers) {
     sheet.appendRow(headers);
     return;
   }
-  const output = [headers];
+  // Normalize headers to lowercase for consistent key matching
+  const normalizedHeaders = headers.map(h => h.toLowerCase().trim());
+  const output = [headers]; // Write original headers to sheet
   data.forEach(item => {
-    const row = headers.map(h => {
+    const row = normalizedHeaders.map(h => {
       const val = item[h];
       return val === undefined || val === null ? '' : val;
     });

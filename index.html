@@ -886,8 +886,8 @@
                                                                                                                             this._notifications.unshift({ 
                                                                                                                                 msg, 
                                                                                                                                 type,
-                                                                                                                                ts: timestamp.toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit'}),
-                                                                                                                                fullTs: timestamp.toLocaleString()
+                                                                                                                                ts: this.formatDateTime(timestamp.toISOString()),
+                                                                                                                                fullTs: this.formatDateTime(timestamp.toISOString())
                                                                                                                             });
                                                                                                                             if (this._notifications.length > 20) this._notifications.pop();
                                                                                                                             this.renderNotificationBox();
@@ -1774,7 +1774,7 @@
                                         <div class="w-2 h-2 rounded-full bg-primary"></div>
                                     </div>
                                     <div class="flex flex-col gap-1">
-                                        <div class="text-xs text-slate-500">${a.timestamp ? new Date(a.timestamp).toLocaleString() : ''}</div>
+                                        <div class="text-xs text-slate-500">${a.timestamp ? this.formatDateTime(a.timestamp) : ''}</div>
                                         <div class="text-sm font-medium text-slate-800">${this.escapeHtml(a.type || '')}${a.note ? ': ' + this.escapeHtml(a.note) : ''}</div>
                                         <div class="text-xs text-slate-400">${a.createdBy ? this.escapeHtml(a.createdBy) : ''}${a.role ? ' (' + this.escapeHtml(a.role) + ')' : ''}</div>
                                     </div>
@@ -2352,7 +2352,7 @@
                         if(!lead.tasks) lead.tasks = [];
                         lead.tasks.push({ id: this.store.generateId(), title, note: taskNote, dueDate, status: 'pending', createdAt: new Date().toISOString() });
                         // Add activity log for task creation
-                        const activityNote = `Task created: Pending: ${title}${taskNote ? ' - ' + taskNote : ''}${dueDate ? ' (Due: ' + new Date(dueDate).toLocaleDateString('en-IN') + ')' : ''}`;
+                        const activityNote = `Task created: Pending: ${title}${taskNote ? ' - ' + taskNote : ''}${dueDate ? ' (Due: ' + this.formatDate(dueDate) + ')' : ''}`;
                         this.store.addActivity(id, { type: 'task', note: activityNote }, this.currentUser);
                         // Add follow-up activity if due date exists
                         if(dueDate) {
@@ -2797,7 +2797,13 @@
             }
 
             renderFollowUps() {
-                const today = new Date().toISOString().split('T')[0];
+                // Use local date (YYYY-MM-DD) to avoid timezone issues
+                const today = new Date();
+                const todayStr = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+                
+                const futureDate = new Date(today);
+                futureDate.setDate(futureDate.getDate() + 7);
+                const sevenDaysFromNow = futureDate.getFullYear() + '-' + String(futureDate.getMonth() + 1).padStart(2, '0') + '-' + String(futureDate.getDate()).padStart(2, '0');
                 let od=[], td=[], uc=[];
                 
                 // Get selected agent filter
@@ -2844,10 +2850,14 @@
                     const f = l.activities?.find(a => a.type==='follow_up');
                     if(f && f.note) {
                         const d = { ...l, followUpDate: f.note };
-                        if(f.note < today) od.push(d); else if(f.note === today) td.push(d); else uc.push(d);
+                        // Extract date part only (handles both YYYY-MM-DD and ISO datetime formats)
+                        const dateStr = f.note.substring(0, 10);
+                        if(dateStr < todayStr) od.push(d); 
+                        else if(dateStr === todayStr) td.push(d); 
+                        else if(dateStr <= sevenDaysFromNow) uc.push(d);
                     }
                 });
-                const ri = (l) => `<button onclick="app.openLeadFromMenu('${l.id}')" class="w-full text-left px-4 py-3 hover:bg-slate-50 flex justify-between items-center group"><div><div class="font-bold text-slate-700 text-sm group-hover:text-primary">${this.escapeHtml(l.name)}</div><div class="text-xs text-slate-400 mt-0.5">${l.followUpDate}</div></div><i class="ph-bold ph-caret-right text-slate-300"></i></button>`;
+                const ri = (l) => `<button onclick="app.openLeadFromMenu('${l.id}')" class="w-full text-left px-4 py-3 hover:bg-slate-50 flex justify-between items-center group"><div><div class="font-bold text-slate-700 text-sm group-hover:text-primary">${this.escapeHtml(l.name)}</div><div class="text-xs text-slate-400 mt-0.5">${this.formatDate(l.followUpDate)}</div></div><i class="ph-bold ph-caret-right text-slate-300"></i></button>`;
                 document.getElementById('count-overdue').textContent = od.length; document.getElementById('list-overdue').innerHTML = od.map(ri).join('');
                 document.getElementById('count-today').textContent = td.length; document.getElementById('list-today').innerHTML = td.map(ri).join('');
                 document.getElementById('count-upcoming').textContent = uc.length; document.getElementById('list-upcoming').innerHTML = uc.map(ri).join('');
@@ -2856,7 +2866,7 @@
             renderLogs() {
                 const c = document.getElementById('logsContainer');
                 if(this.store.logs.length === 0) return c.innerHTML = '<div class="p-8 text-center text-slate-400"><p class="text-sm">No logs</p></div>';
-                c.innerHTML = this.store.logs.map(l => `<div class="px-6 py-4 flex gap-3 hover:bg-white"><div class="flex-col pt-1"><div class="w-2 h-2 rounded-full bg-slate-300"></div></div><div><div class="text-xs text-slate-400 mb-0.5">${new Date(l.timestamp).toLocaleString()}</div><div class="text-sm text-slate-700 font-medium">${this.escapeHtml(l.message)}</div></div></div>`).join('');
+                c.innerHTML = this.store.logs.map(l => `<div class="px-6 py-4 flex gap-3 hover:bg-white"><div class="flex-col pt-1"><div class="w-2 h-2 rounded-full bg-slate-300"></div></div><div><div class="text-xs text-slate-400 mb-0.5">${this.formatDateTime(l.timestamp)}</div><div class="text-sm text-slate-700 font-medium">${this.escapeHtml(l.message)}</div></div></div>`).join('');
             }
 
             switchModalTab(t) {
@@ -2896,7 +2906,7 @@
                             ${task.note ? `<p class="text-xs text-slate-600 mt-1 break-words">${this.escapeHtml(task.note)}</p>` : ''}
                             <div class="flex gap-3 items-center mt-2 text-xs text-slate-500">
                                 <span class="px-2 py-1 rounded-full ${task.status === 'completed' ? 'bg-green-100 text-green-700' : task.status === 'dropped' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'} font-medium">${task.status || 'pending'}</span>
-                                <span>${task.dueDate ? new Date(task.dueDate).toLocaleDateString('en-IN') : ''}</span>
+                                <span>${task.dueDate ? this.formatDate(task.dueDate) : ''}</span>
                             </div>
                         </div>
                         <button onclick="event.stopPropagation(); app.deleteTask('${lead.id}', ${i})" class="text-slate-400 hover:text-red-500 transition p-1 shrink-0" title="Delete task"><i class="ph ph-trash text-lg"></i></button>
@@ -2912,7 +2922,7 @@
                 document.getElementById('taskDetailTitle').textContent = this.escapeHtml(task.title);
                 document.getElementById('taskDetailInfo').innerHTML = `
                     <div><strong>Status:</strong> ${task.status || 'pending'}</div>
-                    <div><strong>Due Date:</strong> ${task.dueDate ? new Date(task.dueDate).toLocaleDateString('en-IN') : 'No due date'}</div>
+                    <div><strong>Due Date:</strong> ${task.dueDate ? this.formatDate(task.dueDate) : 'No due date'}</div>
                 `;
                 document.getElementById('taskNoteBox').value = task.note || '';
                 document.getElementById('taskDetailForm').classList.remove('hidden');
@@ -2993,6 +3003,31 @@
 
             openLeadFromMenu(id) { ui.toggleMenu(false); setTimeout(() => this.editLead(id, 'activity'), 150); }
             formatCurrency(v) { return new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(v||0); }
+            formatDate(dateString) {
+                if (!dateString) return '';
+                const date = new Date(dateString);
+                if (isNaN(date.getTime())) return dateString;
+                const day = String(date.getDate()).padStart(2, '0');
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const year = date.getFullYear();
+                return `${day}/${month}/${year}`;
+            }
+
+            formatDateTime(dateString) {
+                if (!dateString) return '';
+                const date = new Date(dateString);
+                if (isNaN(date.getTime())) return dateString;
+                const day = String(date.getDate()).padStart(2, '0');
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const year = date.getFullYear();
+                let hours = date.getHours();
+                const minutes = String(date.getMinutes()).padStart(2, '0');
+                const ampm = hours >= 12 ? 'PM' : 'AM';
+                hours = hours % 12;
+                hours = hours ? hours : 12;
+                return `${day}/${month}/${year} ${hours}:${minutes} ${ampm}`;
+            }
+
             escapeHtml(s) { if(!s) return ''; return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;"); }
         }
 
