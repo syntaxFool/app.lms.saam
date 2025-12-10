@@ -18,9 +18,12 @@ A lightweight, mobile-first Lead Management System designed for educational acad
 - Log follow-ups and activities
 - Manage tasks with due dates and priorities
 - View activity timeline for each lead
+- Display phone number when lead name is missing
+- Filter leads with "No Action" status (no pending tasks)
 
 ### Mobile Optimization
 - Mobile-first responsive design (sm:, md:, lg: breakpoints)
+- Desktop-optimized Kanban cards with responsive spacing (md:p-5)
 - Bottom navigation for easy thumb access
 - Touch-friendly buttons and inputs (44px minimum)
 - Optimized table columns (hidden/visible by screen size)
@@ -127,14 +130,18 @@ A lightweight, mobile-first Lead Management System designed for educational acad
 
 ### Table Features
 - **Sort**: Click column header to sort
-- **Filter**: Use search and status/agent filters
+- **Filter**: Use search, status, agent, and "No Action" filters
+- **No Action Filter**: Shows leads with no pending tasks on active stages
 - **Bulk Select**: Check boxes to select multiple leads
 - **Bulk Assign**: Select multiple leads and assign to agent
+- **Name Fallback**: Displays phone number if lead name is missing
 
 ### Kanban Board
-- Cards show lead name, status, and value
+- Cards show lead name, status, and value (responsive sizing for desktop)
 - Mobile tabs for easy status switching
 - Status categories: New, Contacted, Proposal, Won, Lost
+- Optimized spacing and padding for larger desktop screens
+- Displays phone number if lead name is unavailable
 
 ### Reports
 - View pipeline metrics (total, won, conversion rate, revenue)

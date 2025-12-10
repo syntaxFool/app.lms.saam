@@ -28,7 +28,13 @@
 
 ## 3. Architecture & Data Flow
 
-### 3.1 Polling Architecture
+### Recent Improvements (v9.1)
+- ✅ **Kanban Card Optimization**: Desktop-responsive sizing with md: breakpoints for better spacing
+- ✅ **Name Fallback Display**: Shows phone number if lead.name is missing (improves data quality visibility)
+- ✅ **No Action Filter**: New checkbox filter to show leads with no pending tasks on active stages
+- ✅ **Task/Activity Deletion**: Verified deletion logic maintains referential integrity
+
+### 3.1 Polling Architecture (Real-Time Multi-User Sync)
 The app uses a **10-second heartbeat polling system** to simulate real-time collaboration:
 
 ```
@@ -39,6 +45,7 @@ The app uses a **10-second heartbeat polling system** to simulate real-time coll
 ┌─────────────────────────────┐
 │  Backend (code.gs)          │
 │  Updates LAST_UPDATE Time   │
+│  LockService (safe concurrency)   │
 └─────────────────────────────┘
       ↑
 ┌─────────────┐
@@ -46,8 +53,15 @@ The app uses a **10-second heartbeat polling system** to simulate real-time coll
 └─────────────┘
       ↓
  If Server Time > Local Time → Refresh Data
- Display: "Data updated from other users"
+ Display: "New data available..."
+ Smart check: Won't interrupt if user is editing (modal open)
 ```
+
+**Key Features**:
+- All actions (add/edit/delete leads/tasks/users) synced globally
+- LockService prevents race conditions during concurrent writes
+- Max sync delay: ~10 seconds (next heartbeat interval)
+- Automatic data refresh without interrupting user edits
 
 ### 3.2 Component Architecture
 

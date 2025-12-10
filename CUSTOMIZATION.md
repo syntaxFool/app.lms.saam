@@ -1,6 +1,8 @@
 # Customization Guide - Adapting the App for Different Businesses
 
-This guide explains how to customize the Shanuzz Academy LMS for other businesses (Salon, Coaching, Real Estate, etc.). The app architecture remains the same—only configuration and branding change.
+This guide explains how to customize the Shanuzz Academy LMS v9 for other businesses (Salon, Coaching, Real Estate, etc.). The app architecture remains the same—only configuration and branding change.
+
+**Latest Version**: v9.1 includes enhanced Kanban card optimization, smart name fallback display, No Action filtering, and verified data integrity.
 
 ---
 
@@ -12,7 +14,10 @@ This guide explains how to customize the Shanuzz Academy LMS for other businesse
 - Database structure (7 Google Sheets tabs)
 - All functionality (Kanban, Table, Reports, Sync)
 - User roles and permissions
-- Mobile responsiveness
+- Mobile and desktop responsiveness (optimized card spacing)
+- Real-time multi-user sync (10-second heartbeat with LockService)
+- Smart data display (name → phone fallback)
+- No Action filtering for leads requiring attention
 
 ### 🔧 What CHANGES (Configuration Only)
 - Google Sheet name and location
