@@ -803,16 +803,49 @@
             }
             log(msg, user) { const prefix = user ? `${user.name} (${user.role}): ` : 'System: '; this.logs.unshift({ id: this.generateId(), timestamp: new Date().toISOString(), message: prefix + msg }); if (this.logs.length > 50) this.logs.pop(); this.save(); }
             add(data, user) {
-                this.state.push({ id: this.generateId(), createdAt: new Date().toISOString(), activities: [], ...data });
+                const newLead = { id: this.generateId(), createdAt: new Date().toISOString(), activities: [], ...data };
+                this.state.push(newLead);
                 this.log(`Created lead ${data.name}`, user);
+                
+                // Log activity if lead is assigned on creation
+                if (data.assignedTo) {
+                    const agentName = window.app ? window.app.getUserName(data.assignedTo) : data.assignedTo;
+                    newLead.activities.push({
+                        id: this.generateId(),
+                        type: 'assignment',
+                        note: `Lead created and assigned to ${agentName}`,
+                        timestamp: new Date().toISOString(),
+                        createdBy: user ? user.name : 'System',
+                        role: user ? user.role : ''
+                    });
+                }
+                
                 this.save();
                 if(window.app && typeof window.app.renderLeaderboard==='function'){window.app.renderLeaderboard();}
             }
             update(id, data, user) {
                 const idx = this.state.findIndex(l => l.id === id);
                 if (idx !== -1) {
+                    const oldLead = this.state[idx];
                     this.state[idx] = { ...this.state[idx], ...data };
                     this.log(`Updated ${data.name}`, user);
+                    
+                    // Log activity if assignment changed
+                    if (oldLead.assignedTo !== data.assignedTo) {
+                        const oldAgent = oldLead.assignedTo ? (window.app ? window.app.getUserName(oldLead.assignedTo) : oldLead.assignedTo) : 'Unassigned';
+                        const newAgent = data.assignedTo ? (window.app ? window.app.getUserName(data.assignedTo) : data.assignedTo) : 'Unassigned';
+                        
+                        if (!this.state[idx].activities) this.state[idx].activities = [];
+                        this.state[idx].activities.unshift({
+                            id: this.generateId(),
+                            type: 'assignment',
+                            note: `Lead reassigned from ${oldAgent} to ${newAgent}`,
+                            timestamp: new Date().toISOString(),
+                            createdBy: user ? user.name : 'System',
+                            role: user ? user.role : ''
+                        });
+                    }
+                    
                     this.save();
                     if(window.app && typeof window.app.renderLeaderboard==='function'){window.app.renderLeaderboard();}
                 }
