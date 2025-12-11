@@ -2265,8 +2265,7 @@
                             source: f.querySelector('input[name="source"]').value,
                             assignedTo: f.assignedTo.value || currentLead.assignedTo,
                             phone: fullPhone,
-                            notes: f.notes.value,
-                            userRole: this.currentUser.role
+                            notes: f.notes.value
                         };
                         this.showLostReasonModal(leadId);
                         return;
@@ -2501,26 +2500,10 @@
                     // If we have pending form data, use it (came from form edit)
                     if (this._pendingFormData) {
                         const formData = { ...this._pendingFormData, status: 'Lost', lostReason: finalReason };
-                        
-                        // Only allow Admin and Senior Manager to change status to Lost
-                        const userRole = this._pendingFormData.userRole;
-                        if (userRole !== 'admin' && userRole !== 'senior_manager') {
-                            this.notify('You do not have permission to mark leads as Lost', 'error');
-                            this.closeLostReasonModal();
-                            return;
-                        }
-                        
                         this.store.update(this._pendingLostLeadId, formData, this.currentUser);
                         this._pendingFormData = null;
                     } else {
                         // Came from drag-drop
-                        // Only allow Admin and Senior Manager to change status to Lost
-                        if (this.currentUser.role !== 'admin' && this.currentUser.role !== 'senior_manager') {
-                            this.notify('You do not have permission to mark leads as Lost', 'error');
-                            this.closeLostReasonModal();
-                            return;
-                        }
-                        
                         this.store.update(this._pendingLostLeadId, { status: 'Lost', lostReason: finalReason }, this.currentUser);
                     }
                     this.closeLostReasonModal();
@@ -2596,12 +2579,6 @@
             moveLead(id, s) { 
                 // If moving to "Lost", show the reason modal
                 if (s === 'Lost') {
-                    // Only allow Admin and Senior Manager to change status to Lost
-                    if (this.currentUser.role !== 'admin' && this.currentUser.role !== 'senior_manager') {
-                        this.notify('You do not have permission to mark leads as Lost', 'error');
-                        return;
-                    }
-                    
                     const lead = this.store.state.find(l => l.id === id);
                     if (lead && lead.status !== 'Lost') {
                         this.showLostReasonModal(id);
