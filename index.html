@@ -3053,61 +3053,61 @@
                 return `
                     <div onclick="app.editLead('${lead.id}')" class="bg-white rounded-xl shadow-sm border ${isNoAction ? 'border-red-300 bg-red-50/30' : isNoTask ? 'border-amber-300 bg-amber-50/30' : 'border-slate-100'} active:scale-[0.99] transition-transform cursor-pointer ${lead.status === 'Lost' ? 'grayscale opacity-60' : ''} overflow-hidden flex flex-col h-full">
                         <!-- Card Content -->
-                        <div class="p-3 md:p-4 flex flex-col gap-2 flex-1">
-                            <!-- Row 1: Name -->
-                            <div class="flex justify-between items-start gap-2">
-                                <h3 class="font-bold text-slate-800 text-sm md:text-base line-clamp-1 flex-1">${this.escapeHtml(lead.name || lead.phone)}</h3>
-                                <div class="flex gap-1 -mr-1 -mt-1 shrink-0">${badge}${delBtn}</div>
+                        <div class="p-3 flex flex-col gap-1.5 flex-1">
+                            <!-- Row 1: Name + Badge -->
+                            <div class="flex justify-between items-start gap-1">
+                                <h3 class="font-bold text-slate-800 text-xs leading-tight line-clamp-2 flex-1">${this.escapeHtml(lead.name || lead.phone)}</h3>
+                                <div class="flex gap-0.5 shrink-0 text-xs">${badge}</div>
                             </div>
                             
-                            <!-- Row 2: Status | Temperature -->
-                            <div class="flex items-center gap-2 text-xs font-semibold">
-                                <span class="px-2 py-1 rounded-full bg-slate-100 text-slate-700">${this.escapeHtml(lead.status)}</span>
-                                <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full ${scores.tempColor}">
-                                    <i class="ph-bold ${scores.tempIcon}"></i> 
+                            <!-- Row 2: Status + Temp (inline) -->
+                            <div class="flex items-center gap-1.5 text-xs font-medium">
+                                <span class="px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-700 text-[10px] font-bold">${this.escapeHtml(lead.status)}</span>
+                                <span class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold ${scores.tempColor}">
+                                    <i class="ph-bold ${scores.tempIcon} text-xs"></i>
                                     <span class="hidden sm:inline">${scores.temp || 'N/A'}</span>
                                 </span>
                             </div>
                             
-                            <!-- Row 3-4: Interests (max 2 per row) -->
-                            ${interests.length > 0 ? `<div class="flex flex-col gap-1 text-xs">
-                                ${interests.slice(0, 2).map((i, idx) => `<div class="text-slate-600 line-clamp-1">${this.escapeHtml(i)}</div>`).join('')}
-                                ${interests.length > 2 ? `<div class="text-slate-400 text-[10px] font-medium">+${interests.length - 2} more</div>` : ''}
+                            <!-- Row 3-4: Interests (compact) -->
+                            ${interests.length > 0 ? `<div class="text-[11px] text-slate-600 leading-snug">
+                                ${interests.slice(0, interests.length > 2 ? 1 : 2).map(i => `<div class="line-clamp-1">${this.escapeHtml(i)}</div>`).join('')}
+                                ${interests.length > 1 ? `<div class="line-clamp-1">${this.escapeHtml(interests[1])}</div>` : ''}
+                                ${interests.length > 2 ? `<div class="text-slate-400 text-[10px]">+${interests.length - 2}</div>` : ''}
                             </div>` : ''}
                             
                             <!-- Row 5: Value -->
-                            <div class="text-sm md:text-base font-bold text-slate-900 pt-1">${this.formatCurrency(lead.value)}</div>
+                            <div class="text-sm font-bold text-slate-900 mt-0.5">${this.formatCurrency(lead.value)}</div>
                             
-                            <!-- Row 6: Action Buttons (Text or Icon) -->
-                            <div class="flex gap-1.5 flex-wrap pt-2">
-                                <button onclick="event.stopPropagation(); app.editLead('${lead.id}', 'activity')" title="Activity" class="flex items-center justify-center gap-1.5 flex-1 min-w-fit ${needsIconMode ? 'px-2 py-1.5' : 'px-3 py-1.5'} bg-blue-50 text-blue-600 rounded-md border border-blue-200 hover:bg-blue-100 active:bg-blue-200 font-medium text-xs transition-colors whitespace-nowrap">
-                                    <i class="ph-bold ph-chat text-sm"></i>
-                                    ${needsIconMode ? '' : 'Activity'}
+                            <!-- Row 6: Action Buttons (Compact) -->
+                            <div class="flex gap-1 flex-wrap mt-1">
+                                <button onclick="event.stopPropagation(); app.editLead('${lead.id}', 'activity')" title="Activity" class="flex items-center justify-center gap-1 flex-1 min-w-fit px-1.5 py-1 bg-blue-50 text-blue-600 rounded border border-blue-200 hover:bg-blue-100 active:bg-blue-200 font-medium text-[10px] transition-colors">
+                                    <i class="ph-bold ph-chat text-xs"></i>
+                                    ${needsIconMode ? '' : '<span class="hidden sm:inline">Act</span>'}
                                 </button>
-                                <button onclick="event.stopPropagation(); app.editLead('${lead.id}', 'task')" title="Task" class="flex items-center justify-center gap-1.5 flex-1 min-w-fit ${needsIconMode ? 'px-2 py-1.5' : 'px-3 py-1.5'} ${isNoAction ? 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100' : isNoTask ? 'bg-amber-50 text-amber-600 border-amber-200 hover:bg-amber-100' : 'bg-purple-50 text-purple-600 border-purple-200 hover:bg-purple-100'} rounded-md border active:bg-opacity-75 font-medium text-xs transition-colors whitespace-nowrap">
-                                    <i class="ph-bold ph-plus text-sm"></i>
-                                    ${needsIconMode ? '' : 'Task'}
+                                <button onclick="event.stopPropagation(); app.editLead('${lead.id}', 'task')" title="Task" class="flex items-center justify-center gap-1 flex-1 min-w-fit px-1.5 py-1 ${isNoAction ? 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100' : isNoTask ? 'bg-amber-50 text-amber-600 border-amber-200 hover:bg-amber-100' : 'bg-purple-50 text-purple-600 border-purple-200 hover:bg-purple-100'} rounded border active:bg-opacity-75 font-medium text-[10px] transition-colors">
+                                    <i class="ph-bold ph-plus text-xs"></i>
+                                    ${needsIconMode ? '' : '<span class="hidden sm:inline">Task</span>'}
                                 </button>
                                 ${lead.phone ? `
-                                <a href="tel:${lead.phone.replace(/\s+/g,'')}" onclick="event.stopPropagation()" title="Call" class="flex items-center justify-center gap-1.5 flex-1 min-w-fit ${needsIconMode ? 'px-2 py-1.5' : 'px-3 py-1.5'} bg-orange-50 text-orange-600 rounded-md border border-orange-200 hover:bg-orange-100 active:bg-orange-200 font-medium text-xs transition-colors whitespace-nowrap">
-                                    <i class="ph-fill ph-phone text-sm"></i>
-                                    ${needsIconMode ? '' : 'Call'}
+                                <a href="tel:${lead.phone.replace(/\s+/g,'')}" onclick="event.stopPropagation()" title="Call" class="flex items-center justify-center gap-1 flex-1 min-w-fit px-1.5 py-1 bg-orange-50 text-orange-600 rounded border border-orange-200 hover:bg-orange-100 active:bg-orange-200 font-medium text-[10px] transition-colors">
+                                    <i class="ph-fill ph-phone text-xs"></i>
+                                    ${needsIconMode ? '' : '<span class="hidden lg:inline">Call</span>'}
                                 </a>
-                                <a href="https://wa.me/${lead.phone.replace(/\D/g,'')}" target="_blank" onclick="event.stopPropagation()" title="WhatsApp" class="flex items-center justify-center gap-1.5 flex-1 min-w-fit ${needsIconMode ? 'px-2 py-1.5' : 'px-3 py-1.5'} bg-green-50 text-green-600 rounded-md border border-green-200 hover:bg-green-100 active:bg-green-200 font-medium text-xs transition-colors whitespace-nowrap">
-                                    <i class="ph-fill ph-whatsapp-logo text-sm"></i>
-                                    ${needsIconMode ? '' : 'WhatsApp'}
+                                <a href="https://wa.me/${lead.phone.replace(/\D/g,'')}" target="_blank" onclick="event.stopPropagation()" title="WhatsApp" class="flex items-center justify-center gap-1 flex-1 min-w-fit px-1.5 py-1 bg-green-50 text-green-600 rounded border border-green-200 hover:bg-green-100 active:bg-green-200 font-medium text-[10px] transition-colors">
+                                    <i class="ph-fill ph-whatsapp-logo text-xs"></i>
                                 </a>
                                 ` : ''}
                             </div>
                             
-                            <!-- Row 7: Notes -->
-                            ${lead.notes ? `<div class="text-xs text-slate-600 bg-slate-50 p-2 rounded-lg line-clamp-2 mt-1">${this.escapeHtml(lead.notes)}</div>` : ''}
+                            <!-- Row 7: Notes (compact) -->
+                            ${lead.notes ? `<div class="text-[10px] text-slate-600 bg-slate-50 p-1.5 rounded line-clamp-1 mt-1">${this.escapeHtml(lead.notes)}</div>` : ''}
                         </div>
                         
                         <!-- Navigation Buttons -->
-                        <div class="flex gap-2 p-3 md:p-4 pt-2 border-t border-slate-100 bg-slate-50/50 mt-auto">
-                            ${prev ? `<button onclick="event.stopPropagation(); app.moveLead('${lead.id}', '${prev}')" title="Move left" class="flex items-center justify-center flex-1 py-2 bg-slate-200 text-slate-700 rounded-md text-xs font-semibold hover:bg-slate-300 active:bg-slate-400 transition-colors"><i class="ph-bold ph-arrow-left text-sm"></i></button>` : '<div class="flex-1"></div>'}
-                            ${next ? `<button onclick="event.stopPropagation(); app.moveLead('${lead.id}', '${next}')" title="Move right" class="flex items-center justify-center flex-1 py-2 bg-primary/15 text-primary rounded-md text-xs font-semibold hover:bg-primary/25 active:bg-primary/35 transition-colors"><i class="ph-bold ph-arrow-right text-sm"></i></button>` : '<div class="flex-1"></div>'}
+                        <div class="flex gap-1.5 p-2 border-t border-slate-100 bg-slate-50 mt-auto">
+                            ${prev ? `<button onclick="event.stopPropagation(); app.moveLead('${lead.id}', '${prev}')" title="Move left" class="flex items-center justify-center flex-1 py-1.5 bg-slate-200 text-slate-700 rounded text-xs font-semibold hover:bg-slate-300 active:bg-slate-400 transition-colors"><i class="ph-bold ph-arrow-left text-xs"></i></button>` : '<div class="flex-1"></div>'}
+                            ${next ? `<button onclick="event.stopPropagation(); app.moveLead('${lead.id}', '${next}')" title="Move right" class="flex items-center justify-center flex-1 py-1.5 bg-primary/15 text-primary rounded text-xs font-semibold hover:bg-primary/25 active:bg-primary/35 transition-colors"><i class="ph-bold ph-arrow-right text-xs"></i></button>` : '<div class="flex-1"></div>'}
                         </div>
                     </div>`;
             }
