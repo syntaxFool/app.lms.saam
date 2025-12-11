@@ -2248,7 +2248,7 @@
                             email: f.email.value,
                             location: f.querySelector('input[name="location"]').value,
                             source: f.querySelector('input[name="source"]').value,
-                            assignedTo: f.assignedTo.value,
+                            assignedTo: f.assignedTo.value || currentLead.assignedTo,
                             phone: fullPhone,
                             notes: f.notes.value
                         };
@@ -2257,6 +2257,13 @@
                     }
                 }
 
+                // Get the existing lead if editing
+                let existingLead = null;
+                if (f.leadId.value) {
+                    existingLead = this.store.state.find(l => l.id === f.leadId.value);
+                }
+                
+                // Build the update object, preserving existing assignedTo if agent doesn't change it
                 const d = {
                     name: f.name.value,
                     interest: f.interest.value,
@@ -2266,7 +2273,7 @@
                     email: f.email.value,
                     location: f.querySelector('input[name="location"]').value,
                     source: f.querySelector('input[name="source"]').value,
-                    assignedTo: f.assignedTo.value,
+                    assignedTo: f.assignedTo.value || (existingLead ? existingLead.assignedTo : ''),
                     phone: fullPhone,
                     notes: f.notes.value,
                     // Clear lostReason if status is not "Lost"
@@ -2274,8 +2281,7 @@
                 };
                 let prevAssignedTo = null;
                 if (f.leadId.value) {
-                    const oldLead = this.store.state.find(l => l.id === f.leadId.value);
-                    prevAssignedTo = oldLead ? oldLead.assignedTo : null;
+                    prevAssignedTo = existingLead ? existingLead.assignedTo : null;
                     this.store.update(f.leadId.value, d, this.currentUser);
                 } else {
                     // Check for duplicate phone number before adding new lead
