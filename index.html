@@ -1842,6 +1842,8 @@
                 if (!lead) return;
                 // Store current editing lead ID for soft sync detection
                 document.getElementById('leadModal').dataset.leadId = id;
+                // Store lead snapshot for optimistic locking (conflict detection)
+                this._editingLeadSnapshot = JSON.parse(JSON.stringify(lead));
                 // Fill modal form fields
                 document.getElementById('leadIdInput').value = lead.id;
                 document.getElementById('modalTitle').textContent = 'Edit Lead';
@@ -2263,6 +2265,27 @@
                     existingLead = this.store.state.find(l => l.id === f.leadId.value);
                 }
                 
+                // Optimistic Locking: Check for conflicts if editing an existing lead
+                if (f.leadId.value && existingLead && this._editingLeadSnapshot) {
+                    const hasConflict = this._detectLeadConflict(this._editingLeadSnapshot, existingLead);
+                    if (hasConflict) {
+                        this.showConflictDialog(f.leadId.value, this._editingLeadSnapshot, existingLead, {
+                            name: f.name.value,
+                            interest: f.interest.value,
+                            value: parseFloat(f.value.value) || 0,
+                            status: f.status.value,
+                            temperature: f.temperature.value,
+                            email: f.email.value,
+                            location: f.querySelector('input[name="location"]').value,
+                            source: f.querySelector('input[name="source"]').value,
+                            assignedTo: f.assignedTo.value || existingLead.assignedTo,
+                            phone: fullPhone,
+                            notes: f.notes.value
+                        });
+                        return;
+                    }
+                }
+                
                 // Build the update object, preserving existing assignedTo if agent doesn't change it
                 const d = {
                     name: f.name.value,
@@ -2300,6 +2323,117 @@
                 }
                 if(window.app && typeof window.app.renderLeaderboard==='function'){window.app.renderLeaderboard();}
                 ui.toggleModal(false);
+            }
+
+            // Optimistic Locking: Detect if lead was modified by another user
+            _detectLeadConflict(snapshot, current) {
+                // Track which fields have changed since snapshot was taken
+                const fieldsToCheck = ['name', 'email', 'phone', 'status', 'temperature', 'interest', 'value', 'location', 'source', 'assignedTo', 'notes', 'lostReason'];
+                const conflicts = [];
+                
+                fieldsToCheck.forEach(field => {
+                    const snapVal = snapshot[field];
+                    const currVal = current[field];
+                    if (snapVal !== currVal) {
+                        conflicts.push(field);
+                    }
+                });
+                
+                return conflicts.length > 0;
+            }
+
+            // Show conflict resolution dialog
+            showConflictDialog(leadId, snapshot, current, userChanges) {
+                const modal = document.createElement('div');
+                modal.id = 'conflictModal';
+                modal.className = 'fixed inset-0 z-[150] flex items-center justify-center hidden';
+                
+                // Build comparison HTML
+                const changedFields = ['name', 'email', 'phone', 'status', 'temperature', 'interest', 'value', 'location', 'source', 'assignedTo', 'notes'];
+                const conflicts = [];
+                changedFields.forEach(field => {
+                    if (snapshot[field] !== current[field]) {
+                        conflicts.push({
+                            field,
+                            yours: userChanges[field] !== undefined ? userChanges[field] : snapshot[field],
+                            theirs: current[field],
+                            current: current[field]
+                        });
+                    }
+                });
+                
+                let conflictHTML = conflicts.map(c => `
+                    <div class="border-l-4 border-orange-400 bg-orange-50 p-4 rounded-r-lg mb-3">
+                        <div class="font-semibold text-sm text-orange-900 capitalize">${c.field}</div>
+                        <div class="grid grid-cols-2 gap-4 mt-2 text-xs">
+                            <div>
+                                <div class="text-slate-500 font-medium">Your change:</div>
+                                <div class="text-slate-700 font-mono bg-white p-2 rounded mt-1 break-all">${this.escapeHtml(String(c.yours || ''))}</div>
+                            </div>
+                            <div>
+                                <div class="text-slate-500 font-medium">Other user changed to:</div>
+                                <div class="text-slate-700 font-mono bg-white p-2 rounded mt-1 break-all">${this.escapeHtml(String(c.current || ''))}</div>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+                
+                modal.innerHTML = `
+                    <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onclick="document.getElementById('conflictModal').remove()"></div>
+                    <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 p-6 max-h-[90vh] overflow-y-auto">
+                        <h3 class="text-xl font-bold text-slate-800 mb-2 flex items-center gap-2">
+                            <i class="ph-bold ph-warning text-orange-500 text-2xl"></i> Conflict Detected
+                        </h3>
+                        <p class="text-sm text-slate-600 mb-4">
+                            Another user modified this lead while you were editing it. Choose how to resolve the conflict:
+                        </p>
+                        
+                        <div class="bg-slate-50 p-4 rounded-lg mb-6 border border-slate-200">
+                            ${conflictHTML}
+                        </div>
+                        
+                        <div class="flex gap-3">
+                            <button type="button" onclick="document.getElementById('conflictModal').remove()" class="flex-1 bg-slate-200 text-slate-700 font-bold py-2.5 rounded-lg hover:bg-slate-300 transition">
+                                Cancel & Reload
+                            </button>
+                            <button type="button" onclick="window.app._resolveConflict('${leadId}', 'theirs')" class="flex-1 bg-orange-500 text-white font-bold py-2.5 rounded-lg hover:bg-orange-600 transition">
+                                Use Their Changes
+                            </button>
+                            <button type="button" onclick="window.app._resolveConflict('${leadId}', 'yours')" class="flex-1 bg-primary text-white font-bold py-2.5 rounded-lg hover:bg-indigo-600 transition">
+                                Keep My Changes
+                            </button>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(modal);
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            }
+
+            // Resolve conflict by choosing one version
+            _resolveConflict(leadId, choice) {
+                const modal = document.getElementById('conflictModal');
+                if (modal) modal.remove();
+                
+                if (choice === 'theirs') {
+                    // Reload the lead from server and close modal
+                    const freshLead = this.store.state.find(l => l.id === leadId);
+                    if (freshLead) {
+                        this.notify('Conflict resolved: Using other user\'s changes', 'info');
+                        this._editingLeadSnapshot = null;
+                        ui.toggleModal(false);
+                        this.render(this.store.state);
+                    }
+                } else if (choice === 'yours') {
+                    // Re-trigger form submission with current user's changes
+                    const form = document.getElementById('leadForm');
+                    if (form) {
+                        // Update snapshot to current state and retry submit
+                        this._editingLeadSnapshot = this.store.state.find(l => l.id === leadId);
+                        this.handleFormSubmit({ preventDefault: () => {}, target: form });
+                    }
+                }
             }
 
             showLostReasonModal(leadId) {
@@ -3143,7 +3277,7 @@
                     }
                 } else { 
                     m.classList.remove('open'); 
-                    setTimeout(()=>{m.classList.add('hidden'); document.getElementById('leadForm').reset(); document.getElementById('leadIdInput').value=''; m.dataset.leadId = '';},300); 
+                    setTimeout(()=>{m.classList.add('hidden'); document.getElementById('leadForm').reset(); document.getElementById('leadIdInput').value=''; m.dataset.leadId = ''; if(window.app) window.app._editingLeadSnapshot = null;},300); 
                 } 
             },
             initModalSwipeClose: (modal) => {
