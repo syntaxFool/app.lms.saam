@@ -290,6 +290,7 @@
                                 <option value="">Select agent to assign...</option>
                             </select>
                             <button onclick="app.bulkAssignLeads()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-semibold">Assign Selected</button>
+                            <button id="bulkDeleteBtn" onclick="app.bulkDeleteLeads()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm font-semibold hidden">Delete Selected</button>
                             <button onclick="app.clearSelection()" class="bg-slate-300 hover:bg-slate-400 text-slate-700 px-4 py-2 rounded text-sm font-semibold">Clear</button>
                         </div>
                     </div>
@@ -1790,12 +1791,21 @@
                                         const bulkActionsBar = document.getElementById('bulkActionsBar');
                                         const selectedCountEl = document.getElementById('selectedCount');
                                         const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+                                        const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
                                         
                                         if (selectedCount > 0) {
                                             bulkActionsBar.classList.remove('hidden');
                                             selectedCountEl.textContent = `${selectedCount} selected`;
+                                            
+                                            // Show delete button only for admin/superuser
+                                            if (this.currentUser && (this.currentUser.role === 'admin' || this.currentUser.role === 'superuser')) {
+                                                bulkDeleteBtn.classList.remove('hidden');
+                                            } else {
+                                                bulkDeleteBtn.classList.add('hidden');
+                                            }
                                         } else {
                                             bulkActionsBar.classList.add('hidden');
+                                            bulkDeleteBtn.classList.add('hidden');
                                             if (selectAllCheckbox) selectAllCheckbox.checked = false;
                                         }
                                     }
@@ -1869,6 +1879,60 @@
                                         // Clear selection and show success
                                         this.clearSelection();
                                         this.showNotification(`Successfully assigned ${leadIds.length} lead(s)`);
+                                        this.render(this.store.state);
+                                    }
+
+                                    bulkDeleteLeads() {
+                                        // Check if user is admin/superuser
+                                        if (!this.currentUser || (this.currentUser.role !== 'admin' && this.currentUser.role !== 'superuser')) {
+                                            this.notify('Only admin/superuser can delete leads', 'error');
+                                            return;
+                                        }
+
+                                        const checkboxes = document.querySelectorAll('.leadCheckbox:checked');
+                                        const leadIds = Array.from(checkboxes).map(cb => cb.getAttribute('data-leadid'));
+                                        
+                                        if (leadIds.length === 0) {
+                                            this.notify('Please select at least one lead to delete', 'error');
+                                            return;
+                                        }
+
+                                        // Get lead names for confirmation
+                                        const leadNames = leadIds.map(id => {
+                                            const lead = this.store.state.find(l => l.id === id);
+                                            return lead ? lead.name : id;
+                                        }).join(', ');
+
+                                        if (!confirm(`Are you sure you want to delete ${leadIds.length} lead(s)?\n\n${leadNames}\n\nThis action cannot be undone.`)) {
+                                            return;
+                                        }
+
+                                        // Delete selected leads
+                                        let deleteCount = 0;
+                                        leadIds.forEach(leadId => {
+                                            const index = this.store.state.findIndex(l => l.id === leadId);
+                                            if (index !== -1) {
+                                                const deletedLead = this.store.state[index];
+                                                this.store.state.splice(index, 1);
+                                                deleteCount++;
+                                                
+                                                // Log deletion
+                                                this.store.logs.push({
+                                                    timestamp: new Date().toISOString(),
+                                                    user: this.currentUser.name,
+                                                    action: 'Delete',
+                                                    message: `Deleted lead: ${deletedLead.name}`
+                                                });
+                                            }
+                                        });
+
+                                        // Save and sync
+                                        this.store.saveLocal();
+                                        this.store.pushToCloud();
+
+                                        // Clear selection and show success
+                                        this.clearSelection();
+                                        this.notify(`Successfully deleted ${deleteCount} lead(s)`, 'success');
                                         this.render(this.store.state);
                                     }
                         // Render the activity timeline for a lead in the modal
