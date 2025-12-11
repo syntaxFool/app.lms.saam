@@ -2768,12 +2768,14 @@
                     pipelineData[s.id] = leads.filter(l => l.status === s.id).length;
                 });
                 
-                // Lost reasons breakdown
+                // Lost reasons breakdown - extract base reason (before the colon)
                 const lostLeads = leads.filter(l => l.status === 'Lost');
                 const lostReasonsData = {};
                 lostLeads.forEach(l => {
-                    const reason = l.lostReason || 'Unknown';
-                    lostReasonsData[reason] = (lostReasonsData[reason] || 0) + 1;
+                    // Extract base reason (format is "Reason: Details" or just "Reason")
+                    const fullReason = l.lostReason || 'Unknown';
+                    const baseReason = fullReason.split(':')[0].trim();
+                    lostReasonsData[baseReason] = (lostReasonsData[baseReason] || 0) + 1;
                 });
                 
                 // Temperature distribution
@@ -2907,14 +2909,31 @@
                 const ctx = document.getElementById('lostReasonsChart');
                 if (!ctx) return;
                 
+                // Emoji map for lost reasons
+                const emojiMap = {
+                    'Price too high': '💰',
+                    'Not interested': '😕',
+                    'Competitor': '🏆',
+                    'Invalid Number': '📞',
+                    'Duplicate': '🔄',
+                    'Other': '📝',
+                    'Unknown': '❓'
+                };
+                
                 const reasons = Object.keys(data.lostReasonsData);
                 const values = Object.values(data.lostReasonsData);
-                const colors = ['#ef4444', '#f97316', '#eab308', '#84cc16', '#22c55e', '#06b6d4'];
+                const colors = ['#ef4444', '#f97316', '#eab308', '#84cc16', '#22c55e', '#06b6d4', '#9ca3af'];
+                
+                // Add emoji to labels
+                const labels = reasons.map(reason => {
+                    const emoji = emojiMap[reason] || '❓';
+                    return `${emoji} ${reason}`;
+                });
                 
                 this.chartInstances.lostReasonsChart = new Chart(ctx, {
                     type: 'pie',
                     data: {
-                        labels: reasons,
+                        labels: labels,
                         datasets: [{
                             data: values,
                             backgroundColor: colors.slice(0, reasons.length),
