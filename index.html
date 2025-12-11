@@ -1930,6 +1930,7 @@
                 document.getElementById('leadForm').interest.value = lead.interest || '';
                 document.getElementById('leadForm').value.value = lead.value || '';
                 document.getElementById('leadForm').status.value = lead.status || '';
+                document.getElementById('leadForm').temperature.value = lead.temperature || '';
                 document.getElementById('leadForm').email.value = lead.email || '';
                 document.getElementById('leadForm').querySelector('input[name="location"]').value = lead.location || '';
                 document.getElementById('leadForm').querySelector('input[name="source"]').value = lead.source || '';
@@ -1965,6 +1966,15 @@
                 // Interests tags
                 this.selectedInterests = (lead.interest || '').split(',').filter(x=>x.trim()).map(i=>({name:i.trim(),value:0}));
                 this.renderInterestTags();
+                // Show lost reason if status is "Lost"
+                const lostReasonDisplay = document.getElementById('lostReasonDisplay');
+                const lostReasonText = document.getElementById('lostReasonText');
+                if (lead.status === 'Lost' && lead.lostReason) {
+                    lostReasonDisplay.classList.remove('hidden');
+                    lostReasonText.textContent = lead.lostReason;
+                } else {
+                    lostReasonDisplay.classList.add('hidden');
+                }
                 // Show modal
                 ui.toggleModal(true);
                 // Switch tab if specified
@@ -2672,69 +2682,6 @@
             deleteLead(id) { 
                 if(this.currentUser.role==='agent') return this.notify('Access Denied', 'error');
                 if(confirm('Delete?')) this.store.delete(id, this.currentUser); 
-            }
-            editLead(id, tab) {
-                const lead = this.store.state.find(l => l.id === id);
-                if (!lead) return;
-                // Fill modal form fields
-                document.getElementById('leadIdInput').value = lead.id;
-                document.getElementById('modalTitle').textContent = 'Edit Lead';
-                document.getElementById('submitBtn').textContent = 'Update';
-                document.getElementById('tab-btn-activity').disabled = false;
-                document.getElementById('tab-btn-contact').disabled = false;
-                document.getElementById('leadForm').name.value = lead.name || '';
-                document.getElementById('leadForm').interest.value = lead.interest || '';
-                document.getElementById('leadForm').value.value = lead.value || '';
-                document.getElementById('leadForm').status.value = lead.status || '';
-                document.getElementById('leadForm').temperature.value = lead.temperature || '';
-                document.getElementById('leadForm').email.value = lead.email || '';
-                document.getElementById('leadForm').querySelector('input[name="location"]').value = lead.location || '';
-                document.getElementById('leadForm').querySelector('input[name="source"]').value = lead.source || '';
-                // Assigned To select - only editable by admins
-                const isAdminEdit = this.currentUser && (this.currentUser.role === 'admin' || this.currentUser.role === 'superuser');
-                const assignedToSelectEdit = document.getElementById('assignedToSelect');
-                const assignedToDisplayEdit = document.getElementById('assignedToDisplay');
-                if (isAdminEdit) {
-                    // Admin: show editable dropdown
-                    this.populateAssignedToDropdown();
-                    assignedToSelectEdit.classList.remove('hidden');
-                    assignedToDisplayEdit.classList.add('hidden');
-                    if (assignedToSelectEdit) assignedToSelectEdit.value = lead.assignedTo || '';
-                } else {
-                    // Agent: show read-only display
-                    assignedToSelectEdit.classList.add('hidden');
-                    assignedToDisplayEdit.classList.remove('hidden');
-                    assignedToDisplayEdit.textContent = lead.assignedTo ? this.getUserName(lead.assignedTo) : 'Unassigned';
-                }
-                // Phone split
-                let phone = lead.phone || '';
-                let prefix = '+91', number = '';
-                if (phone.startsWith('+')) {
-                    const parts = phone.split(' ');
-                    prefix = parts[0];
-                    number = parts.slice(1).join(' ');
-                } else if (phone) {
-                    number = phone;
-                }
-                document.getElementById('leadForm').phonePrefix.value = prefix;
-                document.getElementById('leadForm').phone.value = number;
-                document.getElementById('leadForm').notes.value = lead.notes || '';
-                // Interests tags
-                this.selectedInterests = (lead.interest || '').split(',').filter(x=>x.trim()).map(i=>({name:i.trim(),value:0}));
-                this.renderInterestTags();
-                // Show lost reason if status is "Lost"
-                const lostReasonDisplay = document.getElementById('lostReasonDisplay');
-                const lostReasonText = document.getElementById('lostReasonText');
-                if (lead.status === 'Lost' && lead.lostReason) {
-                    lostReasonDisplay.classList.remove('hidden');
-                    lostReasonText.textContent = lead.lostReason;
-                } else {
-                    lostReasonDisplay.classList.add('hidden');
-                }
-                // Show modal
-                ui.toggleModal(true);
-                // Switch tab if specified
-                if (tab) this.switchModalTab(tab);
             }
             
             render(leads) {
