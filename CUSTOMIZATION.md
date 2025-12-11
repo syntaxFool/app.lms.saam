@@ -2,7 +2,7 @@
 
 This guide explains how to customize the Shanuzz Academy LMS v9 for other businesses (Salon, Coaching, Real Estate, etc.). The app architecture remains the same—only configuration and branding change.
 
-**Latest Version**: v9.3 includes adaptive polling (5s active / 40s idle), floating sync overlay, lost reason persistence fix, improved Kanban card layout with icon-only action buttons, gradient interest badges, and support for multiple cards per column.
+**Latest Version**: v9.4 includes comprehensive XSS protection, HTML injection prevention in leaderboards, WCAG accessibility compliance, and security hardening. All user inputs are properly escaped before rendering. Previous versions included adaptive polling (5s active / 40s idle), floating sync overlay, lost reason persistence fix, and improved Kanban card layout with icon-only action buttons.
 
 ---
 

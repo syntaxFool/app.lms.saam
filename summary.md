@@ -187,11 +187,19 @@ A lightweight, mobile-first Lead Management System designed for educational acad
 
 ## 🔒 Security Notes
 
+### Implemented Security Measures
+- ✅ **XSS Protection**: All user-controlled fields (names, notifications, timestamps) are HTML-escaped before rendering
+- ✅ **HTML Injection Prevention**: Leaderboard agent names and metrics are escaped using `escapeHtml()` utility
+- ✅ **Notification Sanitization**: Toast notifications use `textContent` (not `innerHTML`) to prevent script injection
+- ✅ **Form Input Validation**: Client-side validation on all user inputs
+
+### Production Readiness
 - This is a demo app with plain-text passwords
 - For production use, implement proper authentication (Firebase, OAuth)
 - Keep your Google Apps Script URL confidential
 - Use HTTPS only in production
 - Regularly backup your Google Sheet
+- Review and test all user input handling
 
 ## 📊 Data Structure
 

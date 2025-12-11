@@ -28,7 +28,15 @@
 
 ## 3. Architecture & Data Flow
 
-### Recent Improvements (v9.3)
+### Recent Improvements (v9.4 - Security Hardening)
+- ✅ **Comprehensive XSS Protection**: All notification fields (msg, ts, fullTs) HTML-escaped using `escapeHtml()` utility
+- ✅ **Leaderboard HTML Injection Fix**: Agent names and metrics in leaderboard table escape all user input
+- ✅ **Notification Safety**: Toast notifications use `textContent` instead of `innerHTML` to prevent script injection
+- ✅ **WCAG Accessibility Compliance**: Viewport meta tag updated to allow pinch/zoom (removed user-scalable=no, maximum-scale=1.0)
+- ✅ **Code Consolidation**: Merged duplicate editLead functions, removed 62 lines of code duplication
+- ✅ **Duplicate DOM Removal**: Eliminated duplicate notification center markup causing getElementById conflicts
+
+### Previous Improvements (v9.3)
 - ✅ **Adaptive Polling**: Smart polling system switches between 5s (active user) and 40s (idle) based on user activity detection
 - ✅ **Floating Sync Overlay**: Non-blocking status indicator that displays at top-center with contextual sync messages
 - ✅ **Lost Reason Persistence**: Fixed bug where lost reasons were cleared on lead edit - now properly preserved
@@ -678,9 +686,13 @@ Common color locations:
 
 ## 9. Security Considerations
 
-### Current Implementation (Demo-level)
+### Current Implementation (v9.4 - Enhanced)
 - ✅ Client-side validation
 - ✅ Server-side validation
+- ✅ **XSS Protection**: HTML escaping for all user-controlled output
+- ✅ **HTML Injection Prevention**: All form fields escaped before rendering in tables/leaderboards
+- ✅ **Safe Notification Handling**: Using `textContent` instead of `innerHTML` for toast notifications
+- ✅ **WCAG Accessibility**: Removed overly restrictive viewport constraints
 - ❌ No encryption
 - ❌ Plain-text passwords
 - ❌ No rate limiting
@@ -691,7 +703,8 @@ Common color locations:
 - 🔐 HTTPS only
 - 🔐 Rate limiting on API
 - 🔐 CORS restrictions
-- 🔐 Input sanitization
+- 🔐 Content Security Policy (CSP) headers
+- 🔐 Regular security audits and penetration testing
 
 ---
 
@@ -735,6 +748,8 @@ app-shanuzzacademy-lmsv9/
 
 | Version | Date | Changes |
 |---------|------|---------|
+| v9.4 | Dec 11, 2025 | Security hardening - XSS protection, HTML injection prevention, WCAG compliance |
+| v9.3 | Dec 8, 2025 | Adaptive polling, floating sync overlay, Kanban card layout optimization |
 | v9 | Dec 8, 2025 | Mobile optimizations, notification improvements, agent table redesign |
 | v8 | Dec 7, 2025 | Add agent filter to Follow ups |
 | v7 | Dec 6, 2025 | Notification system enhancements |
