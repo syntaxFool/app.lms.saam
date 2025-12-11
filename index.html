@@ -607,6 +607,7 @@
                                 <select name="assignedTo" id="assignedToSelect" class="w-full bg-white border-slate-200 border rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary outline-none transition">
                                     <option value="">Select User</option>
                                 </select>
+                                <div id="assignedToDisplay" class="hidden w-full bg-slate-50 border-slate-200 border rounded-xl px-4 py-3 text-slate-700 font-medium">Unassigned</div>
                             </div>
                             <div><label class="block text-sm font-semibold text-slate-700 mb-1.5">Contact Details</label><input type="email" name="email" class="w-full bg-white border-slate-200 border rounded-xl px-4 py-3 mb-3 focus:ring-2 focus:ring-primary outline-none" placeholder="Email"><div class="relative flex items-stretch"><input type="text" name="phonePrefix" class="w-16 bg-slate-100 border-y border-l border-slate-200 rounded-l-xl text-center text-slate-700 font-medium text-sm focus:ring-2 focus:ring-primary focus:z-10 outline-none transition" value="+91" placeholder="+91"><input type="tel" name="phone" class="flex-1 bg-white border border-slate-200 rounded-r-xl px-4 py-3 focus:ring-2 focus:ring-primary outline-none transition" placeholder="98765 43210" pattern="\d{10}" maxlength="10" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10)"></div></div>
                             <div><label class="block text-sm font-semibold text-slate-700 mb-1.5">Notes</label><textarea name="notes" rows="3" class="w-full bg-white border-slate-200 border rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary outline-none resize-none"></textarea></div>
@@ -1857,10 +1858,22 @@
                 document.getElementById('leadForm').email.value = lead.email || '';
                 document.getElementById('leadForm').querySelector('input[name="location"]').value = lead.location || '';
                 document.getElementById('leadForm').querySelector('input[name="source"]').value = lead.source || '';
-                // Assigned To select
-                this.populateAssignedToDropdown();
+                // Assigned To select - only editable by admins
+                const isAdmin = this.currentUser && (this.currentUser.role === 'admin' || this.currentUser.role === 'superuser');
                 const assignedToSelect = document.getElementById('assignedToSelect');
-                if (assignedToSelect) assignedToSelect.value = lead.assignedTo || '';
+                const assignedToDisplay = document.getElementById('assignedToDisplay');
+                if (isAdmin) {
+                    // Admin: show editable dropdown
+                    this.populateAssignedToDropdown();
+                    assignedToSelect.classList.remove('hidden');
+                    assignedToDisplay.classList.add('hidden');
+                    if (assignedToSelect) assignedToSelect.value = lead.assignedTo || '';
+                } else {
+                    // Agent: show read-only display
+                    assignedToSelect.classList.add('hidden');
+                    assignedToDisplay.classList.remove('hidden');
+                    assignedToDisplay.textContent = lead.assignedTo ? this.getUserName(lead.assignedTo) : 'Unassigned';
+                }
                 // Phone split
                 let phone = lead.phone || '';
                 let prefix = '+91', number = '';
@@ -2252,7 +2265,8 @@
                             source: f.querySelector('input[name="source"]').value,
                             assignedTo: f.assignedTo.value || currentLead.assignedTo,
                             phone: fullPhone,
-                            notes: f.notes.value
+                            notes: f.notes.value,
+                            userRole: currentUserRole
                         };
                         this.showLostReasonModal(leadId);
                         return;
@@ -2287,6 +2301,7 @@
                 }
                 
                 // Build the update object, preserving existing assignedTo if agent doesn't change it
+                const isFormAdmin = this.currentUser && (this.currentUser.role === 'admin' || this.currentUser.role === 'superuser');
                 const d = {
                     name: f.name.value,
                     interest: f.interest.value,
@@ -2296,7 +2311,8 @@
                     email: f.email.value,
                     location: f.querySelector('input[name="location"]').value,
                     source: f.querySelector('input[name="source"]').value,
-                    assignedTo: f.assignedTo.value || (existingLead ? existingLead.assignedTo : ''),
+                    // Only admins can change assignedTo; agents always preserve existing value
+                    assignedTo: isFormAdmin ? (f.assignedTo.value || (existingLead ? existingLead.assignedTo : '')) : (existingLead ? existingLead.assignedTo : ''),
                     phone: fullPhone,
                     notes: f.notes.value,
                     // Clear lostReason if status is not "Lost"
@@ -2485,10 +2501,26 @@
                     // If we have pending form data, use it (came from form edit)
                     if (this._pendingFormData) {
                         const formData = { ...this._pendingFormData, status: 'Lost', lostReason: finalReason };
+                        
+                        // Only allow Admin and Senior Manager to change status to Lost
+                        const userRole = this._pendingFormData.userRole;
+                        if (userRole !== 'Admin' && userRole !== 'Senior Manager') {
+                            this.notify('You do not have permission to mark leads as Lost', 'error');
+                            this.closeLostReasonModal();
+                            return;
+                        }
+                        
                         this.store.update(this._pendingLostLeadId, formData, this.currentUser);
                         this._pendingFormData = null;
                     } else {
                         // Came from drag-drop
+                        // Only allow Admin and Senior Manager to change status to Lost
+                        if (currentUserRole !== 'Admin' && currentUserRole !== 'Senior Manager') {
+                            this.notify('You do not have permission to mark leads as Lost', 'error');
+                            this.closeLostReasonModal();
+                            return;
+                        }
+                        
                         this.store.update(this._pendingLostLeadId, { status: 'Lost', lostReason: finalReason }, this.currentUser);
                     }
                     this.closeLostReasonModal();
@@ -2564,6 +2596,12 @@
             moveLead(id, s) { 
                 // If moving to "Lost", show the reason modal
                 if (s === 'Lost') {
+                    // Only allow Admin and Senior Manager to change status to Lost
+                    if (currentUserRole !== 'Admin' && currentUserRole !== 'Senior Manager') {
+                        this.notify('You do not have permission to mark leads as Lost', 'error');
+                        return;
+                    }
+                    
                     const lead = this.store.state.find(l => l.id === id);
                     if (lead && lead.status !== 'Lost') {
                         this.showLostReasonModal(id);
@@ -2600,10 +2638,22 @@
                 document.getElementById('leadForm').email.value = lead.email || '';
                 document.getElementById('leadForm').querySelector('input[name="location"]').value = lead.location || '';
                 document.getElementById('leadForm').querySelector('input[name="source"]').value = lead.source || '';
-                // Assigned To select
-                this.populateAssignedToDropdown();
-                const assignedToSelect = document.getElementById('assignedToSelect');
-                if (assignedToSelect) assignedToSelect.value = lead.assignedTo || '';
+                // Assigned To select - only editable by admins
+                const isAdminEdit = this.currentUser && (this.currentUser.role === 'admin' || this.currentUser.role === 'superuser');
+                const assignedToSelectEdit = document.getElementById('assignedToSelect');
+                const assignedToDisplayEdit = document.getElementById('assignedToDisplay');
+                if (isAdminEdit) {
+                    // Admin: show editable dropdown
+                    this.populateAssignedToDropdown();
+                    assignedToSelectEdit.classList.remove('hidden');
+                    assignedToDisplayEdit.classList.add('hidden');
+                    if (assignedToSelectEdit) assignedToSelectEdit.value = lead.assignedTo || '';
+                } else {
+                    // Agent: show read-only display
+                    assignedToSelectEdit.classList.add('hidden');
+                    assignedToDisplayEdit.classList.remove('hidden');
+                    assignedToDisplayEdit.textContent = lead.assignedTo ? this.getUserName(lead.assignedTo) : 'Unassigned';
+                }
                 // Phone split
                 let phone = lead.phone || '';
                 let prefix = '+91', number = '';
