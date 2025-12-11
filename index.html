@@ -2956,11 +2956,11 @@
                 const tbody = document.getElementById('agentLeaderboardBody');
                 tbody.innerHTML = Object.entries(data.agentData).map(([key, agent]) => `
                     <tr>
-                        <td class="py-3 px-4 font-semibold text-slate-800">${agent.name}</td>
-                        <td class="py-3 px-4 text-right">${agent.assigned}</td>
-                        <td class="py-3 px-4 text-right"><span class="bg-green-100 text-green-700 text-sm font-bold px-2 py-1 rounded">${agent.won}</span></td>
-                        <td class="py-3 px-4 text-right"><span class="bg-red-100 text-red-700 text-sm font-bold px-2 py-1 rounded">${agent.lost}</span></td>
-                        <td class="py-3 px-4 text-right"><span class="bg-blue-100 text-blue-700 text-sm font-bold px-2 py-1 rounded">${agent.winRate}%</span></td>
+                        <td class="py-3 px-4 font-semibold text-slate-800">${this.escapeHtml(agent.name)}</td>
+                        <td class="py-3 px-4 text-right">${this.escapeHtml(String(agent.assigned))}</td>
+                        <td class="py-3 px-4 text-right"><span class="bg-green-100 text-green-700 text-sm font-bold px-2 py-1 rounded">${this.escapeHtml(String(agent.won))}</span></td>
+                        <td class="py-3 px-4 text-right"><span class="bg-red-100 text-red-700 text-sm font-bold px-2 py-1 rounded">${this.escapeHtml(String(agent.lost))}</span></td>
+                        <td class="py-3 px-4 text-right"><span class="bg-blue-100 text-blue-700 text-sm font-bold px-2 py-1 rounded">${this.escapeHtml(String(agent.winRate))}%</span></td>
                     </tr>
                 `).join('');
             }            createCardHTML(lead) {
