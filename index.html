@@ -3060,14 +3060,22 @@
                                 <div class="flex gap-0.5 shrink-0 text-xs">${badge}</div>
                             </div>
                             
-                            <!-- Row 2: Status + Temp (inline) -->
-                            <div class="flex items-center gap-1.5 text-xs font-medium">
-                                <span class="px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-700 text-[10px] font-bold">${this.escapeHtml(lead.status)}</span>
-                                <span class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold ${scores.tempColor}">
+                            <!-- Row 2: AssignedTo | Status | Temperature (all in one row) -->
+                            <div class="flex items-center gap-1.5 text-xs font-semibold flex-wrap">
+                                ${lead.assignedTo ? `<span class="px-2 py-1 rounded-md bg-indigo-100 text-indigo-700 text-[10px] font-bold inline-flex items-center gap-1 whitespace-nowrap">
+                                    <i class="ph-bold ph-user text-indigo-600 text-xs"></i>
+                                    ${this.escapeHtml(this.getUserName(lead.assignedTo))}
+                                </span>` : ''}
+                                <span class="px-2 py-1 rounded-md bg-slate-100 text-slate-700 text-[10px] font-bold inline-flex items-center gap-1">
+                                    <i class="ph-bold ph-folder text-xs text-slate-600"></i>
+                                    ${this.escapeHtml(lead.status)}
+                                </span>
+                                <span class="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold ${scores.tempColor}">
                                     <i class="ph-bold ${scores.tempIcon} text-xs"></i>
-                                    <span class="hidden sm:inline">${scores.temp || 'N/A'}</span>
+                                    ${scores.temp || 'N/A'}
                                 </span>
                             </div>
+
                             
                             <!-- Row 3-4: Interests (styled) -->
                             ${interests.length > 0 ? `<div class="flex flex-col gap-0.5 mt-1">
