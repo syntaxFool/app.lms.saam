@@ -660,41 +660,41 @@
     <!-- Lost Reason Modal -->
     <div id="lostReasonModal" class="fixed inset-0 z-50 hidden flex items-center justify-center" role="dialog" aria-modal="true">
         <div class="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"></div>
-        <div class="relative bg-white rounded-2xl shadow-2xl w-96 p-6">
+        <div class="relative bg-white rounded-2xl shadow-2xl w-96 p-6 max-h-[90vh] overflow-y-auto">
             <h3 class="text-lg font-bold text-slate-800 mb-4">Why Was This Lead Lost?</h3>
-            <p class="text-sm text-slate-600 mb-6">Select the reason for marking this lead as lost.</p>
+            <p class="text-sm text-slate-600 mb-6">Select a reason and enter details about why this lead was lost.</p>
             
             <div class="space-y-3 mb-6">
                 <label class="flex items-center p-3 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50 transition">
-                    <input type="radio" name="lostReason" value="Price too high" class="w-4 h-4 text-primary" onchange="app.toggleOtherReasonInput(false)">
-                    <span class="ml-3 text-sm text-slate-700 font-medium">Price too high</span>
+                    <input type="radio" name="lostReason" value="Price too high" class="w-4 h-4 text-primary" onchange="app.showLostReasonDetails()">
+                    <span class="ml-3 text-sm text-slate-700 font-medium">💰 Price too high</span>
                 </label>
                 <label class="flex items-center p-3 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50 transition">
-                    <input type="radio" name="lostReason" value="Not interested" class="w-4 h-4 text-primary" onchange="app.toggleOtherReasonInput(false)">
-                    <span class="ml-3 text-sm text-slate-700 font-medium">Not interested</span>
+                    <input type="radio" name="lostReason" value="Not interested" class="w-4 h-4 text-primary" onchange="app.showLostReasonDetails()">
+                    <span class="ml-3 text-sm text-slate-700 font-medium">😕 Not interested</span>
                 </label>
                 <label class="flex items-center p-3 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50 transition">
-                    <input type="radio" name="lostReason" value="Competitor" class="w-4 h-4 text-primary" onchange="app.toggleOtherReasonInput(false)">
-                    <span class="ml-3 text-sm text-slate-700 font-medium">Chose competitor</span>
+                    <input type="radio" name="lostReason" value="Competitor" class="w-4 h-4 text-primary" onchange="app.showLostReasonDetails()">
+                    <span class="ml-3 text-sm text-slate-700 font-medium">🏆 Chose competitor</span>
                 </label>
                 <label class="flex items-center p-3 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50 transition">
-                    <input type="radio" name="lostReason" value="Invalid Number" class="w-4 h-4 text-primary" onchange="app.toggleOtherReasonInput(false)">
-                    <span class="ml-3 text-sm text-slate-700 font-medium">Invalid number</span>
+                    <input type="radio" name="lostReason" value="Invalid Number" class="w-4 h-4 text-primary" onchange="app.showLostReasonDetails()">
+                    <span class="ml-3 text-sm text-slate-700 font-medium">📞 Invalid number</span>
                 </label>
                 <label class="flex items-center p-3 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50 transition">
-                    <input type="radio" name="lostReason" value="Duplicate" class="w-4 h-4 text-primary" onchange="app.toggleOtherReasonInput(false)">
-                    <span class="ml-3 text-sm text-slate-700 font-medium">Duplicate lead</span>
+                    <input type="radio" name="lostReason" value="Duplicate" class="w-4 h-4 text-primary" onchange="app.showLostReasonDetails()">
+                    <span class="ml-3 text-sm text-slate-700 font-medium">🔄 Duplicate lead</span>
                 </label>
                 <label class="flex items-center p-3 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50 transition">
-                    <input type="radio" name="lostReason" value="Other" class="w-4 h-4 text-primary" onchange="app.toggleOtherReasonInput(true)">
-                    <span class="ml-3 text-sm text-slate-700 font-medium">Other reason</span>
+                    <input type="radio" name="lostReason" value="Other" class="w-4 h-4 text-primary" onchange="app.showLostReasonDetails()">
+                    <span class="ml-3 text-sm text-slate-700 font-medium">📝 Other reason</span>
                 </label>
             </div>
 
-            <!-- Custom reason input (hidden by default) -->
+            <!-- Reason details input (hidden by default) -->
             <div id="customReasonContainer" class="hidden mb-6">
-                <label class="block text-sm font-semibold text-slate-700 mb-2">Please specify the reason:</label>
-                <textarea id="customReasonInput" class="w-full bg-white border border-slate-200 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary outline-none resize-none" rows="3" placeholder="Enter the reason for loss..."></textarea>
+                <label class="block text-sm font-semibold text-slate-700 mb-2">📋 Enter details about this reason:</label>
+                <textarea id="customReasonInput" class="w-full bg-white border border-slate-200 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-primary outline-none resize-none" rows="3" placeholder="Explain why the lead was lost..."></textarea>
             </div>
             
             <div class="flex gap-3">
@@ -2549,15 +2549,24 @@
                 document.getElementById('customReasonContainer').classList.add('hidden');
             }
 
-            toggleOtherReasonInput(show) {
+            showLostReasonDetails() {
+                const selectedReason = document.querySelector('input[name="lostReason"]:checked')?.value;
                 const container = document.getElementById('customReasonContainer');
-                if (show) {
+                const textarea = document.getElementById('customReasonInput');
+                
+                if (selectedReason) {
                     container.classList.remove('hidden');
-                    document.getElementById('customReasonInput').focus();
+                    textarea.placeholder = `Enter details for: ${selectedReason}`;
+                    textarea.focus();
                 } else {
                     container.classList.add('hidden');
-                    document.getElementById('customReasonInput').value = '';
+                    textarea.value = '';
                 }
+            }
+
+            toggleOtherReasonInput(show) {
+                // This function is deprecated but kept for backward compatibility
+                this.showLostReasonDetails();
             }
 
             confirmLostReason() {
@@ -2567,17 +2576,16 @@
                     return;
                 }
 
-                // If "Other" is selected, require custom input
-                let finalReason = selectedReason;
-                if (selectedReason === 'Other') {
-                    const customReason = document.getElementById('customReasonInput').value.trim();
-                    if (!customReason) {
-                        this.notify('Please specify the reason for the loss', 'error');
-                        document.getElementById('customReasonInput').focus();
-                        return;
-                    }
-                    finalReason = `Other: ${customReason}`;
+                // Require details for ALL reasons, not just "Other"
+                const customDetails = document.getElementById('customReasonInput').value.trim();
+                if (!customDetails) {
+                    this.notify('Please enter details about why this lead was lost', 'error');
+                    document.getElementById('customReasonInput').focus();
+                    return;
                 }
+
+                // Append details to the selected reason
+                const finalReason = `${selectedReason}: ${customDetails}`;
 
                 if (this._pendingLostLeadId) {
                     // If we have pending form data, use it (came from form edit)
