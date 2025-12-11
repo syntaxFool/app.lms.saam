@@ -1302,7 +1302,7 @@
                                                                                                     
                                                                                                     // Mobile-optimized: bottom on mobile, top on desktop
                                                                                                     tray.className = `fixed bottom-20 left-2 right-2 sm:bottom-auto sm:left-1/2 sm:-translate-x-1/2 sm:top-4 z-[100] ${bgColor} text-white px-4 sm:px-5 py-3 sm:py-3.5 rounded-lg sm:rounded-xl shadow-xl flex items-center gap-3 text-sm font-semibold transition-all duration-300 opacity-100 pointer-events-auto sm:max-w-sm md:max-w-md`;
-                                                                                                    document.getElementById('notificationMessage').innerHTML = `${msg}`;
+                                                                                                    document.getElementById('notificationMessage').textContent = msg;
                                                                                                     
                                                                                                     // Update icon
                                                                                                     const iconEl = tray.querySelector('i');
