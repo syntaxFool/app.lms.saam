@@ -1510,9 +1510,9 @@
                                                     if (this.filters.search) {
                                                         filtered = filtered.filter(lead => {
                                                             const search = this.filters.search;
-                                                            return (lead.name && lead.name.toLowerCase().includes(search)) ||
-                                                                   (lead.email && lead.email.toLowerCase().includes(search)) ||
-                                                                   (lead.phone && lead.phone.toLowerCase().includes(search));
+                                                            return (lead.name && String(lead.name).toLowerCase().includes(search)) ||
+                                                                   (lead.email && String(lead.email).toLowerCase().includes(search)) ||
+                                                                   (lead.phone && String(lead.phone).toLowerCase().includes(search));
                                                         });
                                                     }
                                                     
