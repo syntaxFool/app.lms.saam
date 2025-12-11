@@ -3050,7 +3050,7 @@
                 const cardWidth = 320; // Approximate card width
 
                 return `
-                    <div onclick="app.editLead('${lead.id}')" class="bg-white rounded-xl shadow-sm border ${isNoAction ? 'border-red-300 bg-red-50/30' : isNoTask ? 'border-amber-300 bg-amber-50/30' : 'border-slate-100'} active:scale-[0.99] transition-transform cursor-pointer ${lead.status === 'Lost' ? 'grayscale opacity-60' : ''} overflow-hidden flex flex-col h-full">
+                    <div onclick="app.editLead('${lead.id}')" class="bg-white rounded-xl shadow-sm border ${isNoAction ? 'border-red-300 bg-red-50/30' : isNoTask ? 'border-amber-300 bg-amber-50/30' : 'border-slate-100'} active:scale-[0.99] transition-transform cursor-pointer ${lead.status === 'Lost' ? 'grayscale opacity-60' : ''} overflow-hidden flex flex-col">
                         <!-- Card Content -->
                         <div class="p-3 flex flex-col gap-1.5 flex-1">
                             <!-- Row 1: Name + Badge -->
@@ -3106,8 +3106,8 @@
                                 ` : ''}
                             </div>
                             
-                            <!-- Row 7: Notes (compact) -->
-                            ${lead.notes ? `<div class="text-[10px] text-slate-600 bg-slate-50 p-1.5 rounded line-clamp-1 mt-1">${this.escapeHtml(lead.notes)}</div>` : ''}
+                            <!-- Row 7: Notes (single line) -->
+                            ${lead.notes ? `<div class="text-[10px] text-slate-600 bg-slate-50 p-1.5 rounded line-clamp-1 mt-1 truncate">${this.escapeHtml(lead.notes)}</div>` : ''}
                         </div>
                         
                         <!-- Navigation Buttons -->
