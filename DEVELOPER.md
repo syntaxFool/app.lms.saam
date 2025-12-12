@@ -28,12 +28,15 @@
 
 ## 3. Architecture & Data Flow
 
-### Recent Improvements (v9.5 - Enhanced Analytics & Data Management)
+### Recent Improvements (v9.5 - Enhanced Analytics, Data Management & Network Resilience)
 - ✅ **Lost Reason Details**: All 6 lost reason types now require detailed explanations
 - ✅ **Emoji-Enhanced Chart**: "Why Leads Are Lost" pie chart displays 💰 Price too high, 😕 Not interested, 🏆 Competitor, 📞 Invalid number, 🔄 Duplicate, 📝 Other
 - ✅ **Bulk Delete Leads**: Admin/superuser can bulk delete leads with confirmation dialog showing lead names
 - ✅ **Audit Logging**: All lead deletions are logged in the audit trail
 - ✅ **Role-Based Delete**: Delete functionality only visible to admin/superuser users
+- ✅ **Network Error Handling**: 15-second fetch timeout with graceful fallback
+- ✅ **Exponential Backoff**: Automatically adjusts polling intervals during network instability
+- ✅ **QUIC Timeout Recovery**: Handles QUIC_TOO_MANY_RTOS errors without crashing
 
 ### Previous Improvements (v9.4 - Security Hardening)
 - ✅ **Comprehensive XSS Protection**: All notification fields (msg, ts, fullTs) HTML-escaped using `escapeHtml()` utility
@@ -691,15 +694,18 @@ Common color locations:
 
 ---
 
-## 9. Security Considerations
+## 9. Security & Network Resilience
 
-### Current Implementation (v9.4 - Enhanced)
+### Current Implementation (v9.5 - Enhanced)
 - ✅ Client-side validation
 - ✅ Server-side validation
 - ✅ **XSS Protection**: HTML escaping for all user-controlled output
 - ✅ **HTML Injection Prevention**: All form fields escaped before rendering in tables/leaderboards
 - ✅ **Safe Notification Handling**: Using `textContent` instead of `innerHTML` for toast notifications
 - ✅ **WCAG Accessibility**: Removed overly restrictive viewport constraints
+- ✅ **Network Resilience**: Timeout handling with exponential backoff
+- ✅ **QUIC Error Recovery**: Graceful handling of network protocol errors
+- ✅ **Offline Support**: App continues working locally, syncs when connection restores
 - ❌ No encryption
 - ❌ Plain-text passwords
 - ❌ No rate limiting
@@ -712,6 +718,7 @@ Common color locations:
 - 🔐 CORS restrictions
 - 🔐 Content Security Policy (CSP) headers
 - 🔐 Regular security audits and penetration testing
+- 🔐 Use service account for Google Apps Script deployment (not personal account)
 
 ---
 

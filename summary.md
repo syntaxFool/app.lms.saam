@@ -56,6 +56,8 @@ A lightweight, mobile-first Lead Management System designed for educational acad
 - Detailed change tracking ("User X changed Field from Old to New")
 - Notification center for history
 - Toast notifications with auto-dismiss
+- Network resilience with automatic retry on connection failures
+- Exponential backoff for unreliable connections
 
 ## 🛠️ Setup Guide
 
