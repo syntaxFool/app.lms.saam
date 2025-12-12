@@ -738,7 +738,11 @@
             }
 
             async syncWithCloud() {
-                if (!this.config.dbUrl) return;
+                if (!this.config.dbUrl) {
+                    console.warn('Cloud URL not configured - cannot sync');
+                    return false;
+                }
+                
                 ui.showLoading(true, '📥 Downloading updates...');
                 try {
                     // Support differential sync: pass lastSyncTime to get only changed leads
@@ -751,9 +755,10 @@
                         method: 'GET', 
                         redirect: 'follow', 
                         mode: 'cors',
-                        credentials: 'omit'
+                        credentials: 'omit',
+                        signal: AbortSignal.timeout(20000) // 20 second timeout for downloads
                     });
-                    if (!response.ok) throw new Error('Network response was not ok');
+                    if (!response.ok) throw new Error(`Server responded with ${response.status}`);
                     const cloudData = await response.json();
                     
                     // Differential sync: merge received leads instead of replacing entire state
@@ -779,7 +784,7 @@
                     if (cloudData.interests) this.interests = cloudData.interests;
                     if (cloudData.settings) this.settings = cloudData.settings; 
                     // Debug: log what we get from backend
-                    console.log('Backend config:', cloudData.config);
+                    console.log('✓ Cloud sync successful - received', cloudData.leads?.length, 'leads');
                     // Always sync appTitle from backend config if present
                     if (cloudData.config && cloudData.config.appTitle) this.config.appTitle = cloudData.config.appTitle;
                     // Capture server time for real-time sync
@@ -791,26 +796,53 @@
                     this.saveLocal();
                     if(window.app && typeof window.app.applyConfig==='function'){window.app.applyConfig();}
                     if(window.app && typeof window.app.renderLeaderboard==='function'){window.app.renderLeaderboard();}
+                    ui.showLoading(false);
+                    return true;
                 } catch (e) { 
-                    console.warn("Cloud sync unavailable, using local data:", e.message); 
-                } finally { 
-                    ui.showLoading(false); 
+                    console.error("❌ Cloud sync failed:", e.message); 
+                    ui.showLoading(false);
+                    return false;
                 }
             }
             async pushToCloud() {
-                if (!this.config.dbUrl) return;
+                if (!this.config.dbUrl) {
+                    console.warn('Cloud URL not configured - changes only saved locally');
+                    return false;
+                }
+                
                 ui.showLoading(true, '📤 Uploading changes...');
                 try {
                     const payload = { action: 'save_all', leads: this.state, users: this.users, logs: this.logs, config: this.config };
-                    await fetch(this.config.dbUrl, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(payload) });
-                    console.log('Data pushed to cloud successfully');
+                    const response = await fetch(this.config.dbUrl, { 
+                        method: 'POST', 
+                        headers: { 'Content-Type': 'application/json' }, 
+                        body: JSON.stringify(payload),
+                        signal: AbortSignal.timeout(20000) // 20 second timeout for uploads
+                    });
+                    
+                    if (!response.ok) {
+                        console.error(`Cloud sync failed with status ${response.status}:`, response.statusText);
+                        ui.showLoading(false);
+                        return false;
+                    }
+                    
+                    console.log('✓ Data pushed to cloud successfully');
+                    ui.showLoading(false);
+                    return true;
                 } catch (e) { 
-                    console.warn("Cloud sync unavailable, data saved locally:", e.message); 
-                } finally { 
-                    ui.showLoading(false); 
+                    console.error("❌ Cloud sync failed:", e.message); 
+                    ui.showLoading(false);
+                    // Show user notification
+                    if (window.app && typeof window.app.notify === 'function') {
+                        window.app.notify('⚠️ Failed to sync with cloud. Changes saved locally. Will retry...', 'warning');
+                    }
+                    return false;
                 }
             }
-            save() { this.saveLocal(); this.pushToCloud(); }
+            save() { 
+                this.saveLocal(); 
+                this.pushToCloud(); 
+            }
             getCounts() { return { admins: this.users.filter(u => u.role === 'admin').length, agents: this.users.filter(u => u.role === 'agent').length }; }
             addUser(user) { this.users.push({id: this.generateId(), ...user}); this.save(); }
             deleteUser(id) { const u = this.users.find(x => x.id === id); if (u && u.role === 'superuser') return false; this.users = this.users.filter(x => x.id !== id); this.save(); return true; }
