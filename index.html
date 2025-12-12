@@ -921,6 +921,11 @@
                                                                                                                         pollingTimer = null;
                                                                                                                         isIdle = false;
                                                                                                                         
+                                                                                                                        // Network error handling
+                                                                                                                        consecutiveNetworkErrors = 0;
+                                                                                                                        maxNetworkErrors = 5;
+                                                                                                                        networkErrorBackoffMultiplier = 1.5;
+                                                                                                                        
                                                                                                                         addNotification(msg, type = 'info') {
                                                                                                                             if (!this._notifications) this._notifications = [];
                                                                                                                             const timestamp = new Date();
@@ -1202,10 +1207,14 @@
                         method: 'GET', 
                         redirect: 'follow', 
                         mode: 'cors',
-                        credentials: 'omit'
+                        credentials: 'omit',
+                        signal: AbortSignal.timeout(15000) // 15 second timeout
                     });
                     if (!response.ok) return;
                     const data = await response.json();
+                    
+                    // Reset network error counter on successful request
+                    this.consecutiveNetworkErrors = 0;
                     
                     // Check if server has new data
                     if (data.lastUpdate && data.lastUpdate > this.lastServerUpdate) {
@@ -1254,8 +1263,20 @@
                         this.lastServerUpdate = data.lastUpdate;
                     }
                 } catch (e) {
-                    // Silent fail - don't spam errors
-                    console.debug('Update check failed (expected if offline)', e);
+                    // Handle network errors with exponential backoff
+                    this.consecutiveNetworkErrors++;
+                    
+                    if (this.consecutiveNetworkErrors >= this.maxNetworkErrors) {
+                        // Too many errors - show user notification
+                        console.warn('Multiple sync failures - possible offline or server issue', e.message);
+                        this.notify('Sync failed - check your connection. Will retry automatically.', 'warning');
+                        
+                        // Increase idle poll rate temporarily
+                        this.idlePollRate = Math.min(60000, this.idlePollRate * this.networkErrorBackoffMultiplier);
+                    } else {
+                        // Log for debugging
+                        console.debug('Update check failed (will retry)', e.message);
+                    }
                 }
             }
 
