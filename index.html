@@ -211,6 +211,9 @@
             </div>
             <div class="flex items-center gap-3">
                 <span id="currentUserDisplay" class="text-xs font-semibold text-slate-500 bg-slate-100 px-2 py-1 rounded hidden md:block"></span>
+                <button onclick="ui.openQuickSearch()" class="p-2 text-slate-600 hover:bg-slate-100 rounded-full transition" title="Quick Search">
+                    <i class="ph-bold ph-magnifying-glass text-xl"></i>
+                </button>
                 <button onclick="ui.toggleNotificationBox()" class="p-2 text-green-600 hover:bg-green-50 rounded-full transition relative" title="Notifications">
                     <i class="ph-bold ph-bell text-xl"></i>
                     <span id="notificationCount" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 font-bold" style="display:none;">0</span>
@@ -582,6 +585,24 @@
             <div class="p-4 border-t border-slate-200 flex gap-3">
                 <button type="button" onclick="ui.togglePhoneModal(false)" class="flex-1 bg-slate-200 text-slate-700 font-bold py-2.5 rounded-lg hover:bg-slate-300 transition">Cancel</button>
                 <button type="button" onclick="app.proceedWithPhone()" class="flex-1 bg-primary text-white font-bold py-2.5 rounded-lg hover:bg-indigo-600 transition">Continue</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Search Modal -->
+    <div id="quickSearchModal" class="fixed inset-0 z-50 hidden flex items-start justify-center pt-20" onclick="if(event.target === this) ui.closeQuickSearch()">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl mx-4 max-h-96 flex flex-col" onclick="event.stopPropagation()">
+            <!-- Search Input -->
+            <div class="p-4 border-b border-slate-200">
+                <div class="flex items-center gap-3 bg-slate-50 rounded-lg px-4 py-2">
+                    <i class="ph-bold ph-magnifying-glass text-slate-400"></i>
+                    <input type="text" id="quickSearchInput" placeholder="Search by name, email, or phone..." class="flex-1 bg-transparent outline-none text-sm text-slate-800" oninput="app.quickSearchLeads(this.value)">
+                    <button onclick="ui.closeQuickSearch()" class="text-slate-400 hover:text-slate-600" title="Close"><i class="ph-bold ph-x text-lg"></i></button>
+                </div>
+            </div>
+            <!-- Search Results -->
+            <div id="quickSearchResults" class="flex-1 overflow-y-auto divide-y divide-slate-200">
+                <div class="p-6 text-center text-slate-500 text-sm">Type to search for leads...</div>
             </div>
         </div>
     </div>
@@ -1748,6 +1769,52 @@
                                                     
                                                     // Re-render
                                                     this.render(this.store.state);
+                                                }
+
+                                                // Quick Search for leads
+                                                quickSearchLeads(query) {
+                                                    const resultsContainer = document.getElementById('quickSearchResults');
+                                                    
+                                                    if (!query || query.trim().length === 0) {
+                                                        resultsContainer.innerHTML = '<div class="p-6 text-center text-slate-500 text-sm">Type to search for leads...</div>';
+                                                        return;
+                                                    }
+                                                    
+                                                    const searchTerm = query.toLowerCase().trim();
+                                                    const filtered = this.store.state.filter(lead => 
+                                                        lead.name.toLowerCase().includes(searchTerm) ||
+                                                        (lead.email && lead.email.toLowerCase().includes(searchTerm)) ||
+                                                        (lead.phone && lead.phone.includes(searchTerm))
+                                                    );
+                                                    
+                                                    if (filtered.length === 0) {
+                                                        resultsContainer.innerHTML = '<div class="p-6 text-center text-slate-500 text-sm">No leads found</div>';
+                                                        return;
+                                                    }
+                                                    
+                                                    const results = filtered.slice(0, 10).map(lead => `
+                                                        <button onclick="app.openLeadFromSearch('${lead.id}'); ui.closeQuickSearch()" class="w-full text-left p-4 hover:bg-slate-50 transition flex items-center justify-between group">
+                                                            <div class="flex-1">
+                                                                <div class="font-semibold text-slate-900 text-sm group-hover:text-primary">${this.escapeHtml(lead.name)}</div>
+                                                                <div class="text-xs text-slate-500 mt-1">
+                                                                    ${lead.phone ? '<span>' + lead.phone + '</span>' : ''}
+                                                                    ${lead.email ? '<span class="ml-2">' + lead.email + '</span>' : ''}
+                                                                </div>
+                                                                <div class="text-xs text-slate-400 mt-1"><span class="inline-block px-2 py-1 rounded bg-slate-100">${lead.status || 'New'}</span></div>
+                                                            </div>
+                                                            <i class="ph-bold ph-caret-right text-slate-300 ml-4"></i>
+                                                        </button>
+                                                    `).join('');
+                                                    
+                                                    resultsContainer.innerHTML = results;
+                                                }
+
+                                                // Open lead from quick search
+                                                openLeadFromSearch(leadId) {
+                                                    const lead = this.store.state.find(l => l.id === leadId);
+                                                    if (lead) {
+                                                        this.editLead(lead);
+                                                    }
                                                 }
 
                                                 // Apply filters to leads array
@@ -3956,6 +4023,19 @@
             toggleMenu: (s) => { const m = document.getElementById('sideMenu'); if(s) { try { window.app.renderFollowUps(); } catch(e){} m.classList.remove('hidden'); requestAnimationFrame(()=>m.classList.add('open')); } else { m.classList.remove('open'); setTimeout(()=>m.classList.add('hidden'),300); } },
             toggleLogs: (s) => { const m = document.getElementById('logsModal'); if(s) { try { window.app.renderLogs(); } catch(e){} m.classList.remove('hidden'); requestAnimationFrame(()=>m.classList.add('open')); } else { m.classList.remove('open'); setTimeout(()=>m.classList.add('hidden'),300); } },
             toggleConfig: (s) => { const m = document.getElementById('configModal'); if(s) { try { window.app.renderUserList(); } catch(e){} m.classList.remove('hidden'); requestAnimationFrame(()=>m.classList.add('open')); } else { m.classList.remove('open'); setTimeout(()=>m.classList.add('hidden'),300); } },
+            openQuickSearch: () => {
+                const m = document.getElementById('quickSearchModal');
+                m.classList.remove('hidden');
+                requestAnimationFrame(() => {
+                    document.getElementById('quickSearchInput').focus();
+                });
+            },
+            closeQuickSearch: () => {
+                const m = document.getElementById('quickSearchModal');
+                m.classList.add('hidden');
+                document.getElementById('quickSearchInput').value = '';
+                document.getElementById('quickSearchResults').innerHTML = '<div class="p-6 text-center text-slate-500 text-sm">Type to search for leads...</div>';
+            },
             showLoading: (s, message = 'Syncing changes...') => { 
                 const l = document.getElementById('loadingOverlay'); 
                 const msg = document.getElementById('loadingText');
