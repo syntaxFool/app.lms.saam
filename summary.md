@@ -7,9 +7,12 @@ A lightweight, mobile-first Lead Management System designed for educational acad
 ### Core Functionality
 - **Kanban Board**: Visual lead management with status columns (New, Contacted, Proposal, Won, Lost)
 - **Leads Table**: Spreadsheet-style view with sorting, filtering, and bulk operations
-- **Agent Performance Table**: Real-time metrics showing leads, conversions, and revenue
+- **Agent Performance Table**: Real-time metrics showing leads, conversions, pipeline value, and conversion value
 - **Reports & Analytics**: Pipeline insights with KPI cards and date filters
 - **Real-Time Sync**: 10-second heartbeat polling for collaborative multi-user updates with LockService concurrency protection
+- **Quick Search**: Fast lead lookup with magnifying glass icon in header - search by name, email, or phone
+- **View-Only Mode**: Click lead names in table or kanban cards to preview leads before editing
+- **Improved Filter UI**: Modern card-based filter design with icons, horizontal button groups, and color-coded status indicators
 
 ### Lead Management
 - Create, edit, and delete leads (bulk delete with confirmation for admin/superuser)

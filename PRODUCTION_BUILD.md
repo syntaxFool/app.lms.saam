@@ -1,6 +1,20 @@
 # Production Build Guide - Security & Performance
 
-This guide explains how to set up a secure, production-ready build of Shanuzz Academy LMS v9.
+This guide explains how to set up a secure, production-ready build of Shanuzz Academy LMS v9.6.
+
+## Version Information
+
+**Latest Version:** v9.6
+**Release Date:** December 16, 2025
+
+### Recent Enhancements in v9.6
+- Quick Search modal for fast lead lookup (search by name, email, phone)
+- View-Only mode for previewing leads before editing
+- Improved filter UI with modern card design and horizontal button groups
+- Mutually exclusive filter controls for better UX
+- IST timezone enforcement across all date operations
+- Follow-up activity sourcing from activities array
+- Agent Performance metrics updated (Pipeline Value, Conversion Value)
 
 ## Supply Chain Security
 

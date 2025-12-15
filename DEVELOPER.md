@@ -28,7 +28,17 @@
 
 ## 3. Architecture & Data Flow
 
-### Recent Improvements (v9.5 - Enhanced Analytics, Data Management & Network Resilience)
+### Recent Improvements (v9.6 - Enhanced UX & Search)
+- ✅ **Quick Search Modal**: Fast lead lookup with magnifying glass icon in header - search by name, email, or phone
+- ✅ **View-Only Mode**: Click lead names in table or kanban cards to preview leads before editing
+- ✅ **Improved Filter UI**: Modern card-based filter design with icons, horizontal button groups, and color-coded status indicators
+- ✅ **Mutually Exclusive Filters**: Follow-up filters and task filters are mutually exclusive (select only 1 at a time)
+- ✅ **IST Timezone Enforcement**: All dates converted to IST (UTC+5:30) using mathematical offset, ensures consistency across timezones
+- ✅ **Follow-Up Activity Source**: Follow-up dates now sourced from activities array (type='follow_up') instead of field
+- ✅ **Menu Date Fix**: Follow-up menu dates now use IST instead of UTC, fixing date categorization issues
+- ✅ **Agent Performance Metrics**: Updated to show Pipeline Value and Conversion Value instead of Revenue
+
+### Previous Improvements (v9.5 - Enhanced Analytics, Data Management & Network Resilience)
 - ✅ **Lost Reason Details**: All 6 lost reason types now require detailed explanations
 - ✅ **Emoji-Enhanced Chart**: "Why Leads Are Lost" pie chart displays 💰 Price too high, 😕 Not interested, 🏆 Competitor, 📞 Invalid number, 🔄 Duplicate, 📝 Other
 - ✅ **Bulk Delete Leads**: Admin/superuser can bulk delete leads with confirmation dialog showing lead names
