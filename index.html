@@ -2493,9 +2493,17 @@
                     // Check for duplicate phone number before adding new lead
                     const duplicateLead = this.checkDuplicatePhone(fullPhone);
                     if (duplicateLead) {
-                        this.notify(`Duplicate Lead: ${duplicateLead.name} (${duplicateLead.phone})`, 'warning');
+                        // Show prominent error message
+                        this.notify(`❌ Cannot add lead: ${duplicateLead.name} (${duplicateLead.phone}) already exists`, 'error');
+                        // Add visual error indicator to phone input
+                        const phoneInput = f.phone;
+                        phoneInput.classList.add('border-red-500', 'bg-red-50');
+                        phoneInput.focus();
                         return;
                     }
+                    // Remove error styling if resubmitting
+                    const phoneInput = f.phone;
+                    phoneInput.classList.remove('border-red-500', 'bg-red-50');
                     this.store.add(d, this.currentUser);
                     // For new leads, prevAssignedTo is null
                 }
