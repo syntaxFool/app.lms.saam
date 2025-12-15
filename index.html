@@ -281,25 +281,17 @@
                             <div>
                                 <label class="text-xs font-semibold text-slate-600 block mb-2">Follow Up Filters</label>
                                 <div class="flex flex-col gap-2">
-                                    <label class="flex items-center gap-3 cursor-pointer p-2 rounded hover:bg-slate-50 transition">
-                                        <input type="radio" name="followUpFilter" value="all-followups" checked onchange="app.applyFilters()" class="w-4 h-4 accent-slate-600 cursor-pointer">
-                                        <span class="text-sm text-slate-700 flex-1">All Follow Ups</span>
-                                        <i class="ph-bold ph-check text-slate-400 text-sm hidden checked-icon"></i>
-                                    </label>
                                     <label class="flex items-center gap-3 cursor-pointer p-2 rounded hover:bg-red-50 transition">
-                                        <input type="radio" name="followUpFilter" value="overdue-followups" onchange="app.applyFilters()" class="w-4 h-4 accent-red-600 cursor-pointer">
+                                        <input type="checkbox" name="followUpFilter" value="overdue-followups" onchange="app.applyFilters()" class="w-4 h-4 accent-red-600 cursor-pointer">
                                         <span class="text-sm text-red-600 font-semibold flex-1">🔴 Overdue</span>
-                                        <i class="ph-bold ph-check text-red-400 text-sm hidden checked-icon"></i>
                                     </label>
                                     <label class="flex items-center gap-3 cursor-pointer p-2 rounded hover:bg-blue-50 transition">
-                                        <input type="radio" name="followUpFilter" value="today-followups" onchange="app.applyFilters()" class="w-4 h-4 accent-blue-600 cursor-pointer">
+                                        <input type="checkbox" name="followUpFilter" value="today-followups" onchange="app.applyFilters()" class="w-4 h-4 accent-blue-600 cursor-pointer">
                                         <span class="text-sm text-blue-600 font-semibold flex-1">📘 Today</span>
-                                        <i class="ph-bold ph-check text-blue-400 text-sm hidden checked-icon"></i>
                                     </label>
                                     <label class="flex items-center gap-3 cursor-pointer p-2 rounded hover:bg-green-50 transition">
-                                        <input type="radio" name="followUpFilter" value="upcoming-followups" onchange="app.applyFilters()" class="w-4 h-4 accent-green-600 cursor-pointer">
+                                        <input type="checkbox" name="followUpFilter" value="upcoming-followups" onchange="app.applyFilters()" class="w-4 h-4 accent-green-600 cursor-pointer">
                                         <span class="text-sm text-green-600 font-semibold flex-1">📗 Upcoming</span>
-                                        <i class="ph-bold ph-check text-green-400 text-sm hidden checked-icon"></i>
                                     </label>
                                 </div>
                             </div>
@@ -1674,26 +1666,44 @@
                                                     const assignedSelect = document.getElementById('filterAssignedTo');
                                                     const noTaskCheckbox = document.getElementById('filterNoTask');
                                                     const noActionCheckbox = document.getElementById('filterNoAction');
-                                                    const followUpRadio = document.querySelector('input[name="followUpFilter"]:checked');
+                                                    const followUpCheckboxes = document.querySelectorAll('input[name="followUpFilter"]:checked');
                                                     
                                                     if (searchInput) this.filters.search = searchInput.value.toLowerCase().trim();
                                                     if (statusSelect) this.filters.status = statusSelect.value;
                                                     if (assignedSelect) this.filters.assignedTo = assignedSelect.value;
-                                                    if (noTaskCheckbox) this.filters.noTask = noTaskCheckbox.checked;
-                                                    if (noActionCheckbox) this.filters.noAction = noActionCheckbox.checked;
-                                                    if (followUpRadio) {
-                                                        this.filters.followUpFilter = followUpRadio.value;
-                                                        console.log('📅 Follow Up Filter set to:', this.filters.followUpFilter);
-                                                        // Update checkmark visibility for Follow Up Filters
-                                                        document.querySelectorAll('input[name="followUpFilter"]').forEach(radio => {
-                                                            const label = radio.closest('label');
-                                                            const checkmark = label.querySelector('.checked-icon');
-                                                            if (radio.checked && checkmark) {
-                                                                checkmark.classList.remove('hidden');
-                                                            } else if (!radio.checked && checkmark) {
-                                                                checkmark.classList.add('hidden');
-                                                            }
+                                                    
+                                                    // Collect all checked follow-up filters
+                                                    const checkedFollowUps = Array.from(followUpCheckboxes).map(cb => cb.value);
+                                                    
+                                                    // Task Filters and Follow Up Filters are mutually exclusive
+                                                    const hasTaskFilters = noTaskCheckbox.checked || noActionCheckbox.checked;
+                                                    const hasFollowUpFilters = checkedFollowUps.length > 0;
+                                                    
+                                                    if (hasFollowUpFilters) {
+                                                        // Follow-up filter is active, disable task filters
+                                                        noTaskCheckbox.checked = false;
+                                                        noActionCheckbox.checked = false;
+                                                        this.filters.noTask = false;
+                                                        this.filters.noAction = false;
+                                                        this.filters.followUpFilters = checkedFollowUps;
+                                                        console.log('📅 Follow Up Filters set to:', checkedFollowUps);
+                                                    } else if (hasTaskFilters) {
+                                                        // Task filter is active, disable follow-up filters
+                                                        document.querySelectorAll('input[name="followUpFilter"]').forEach(cb => {
+                                                            cb.checked = false;
                                                         });
+                                                        this.filters.noTask = noTaskCheckbox.checked;
+                                                        this.filters.noAction = noActionCheckbox.checked;
+                                                        this.filters.followUpFilters = [];
+                                                        console.log('📋 Task Filters set - No Task:', noTaskCheckbox.checked, 'No Action:', noActionCheckbox.checked);
+                                                    } else {
+                                                        // No filters selected, show all (default)
+                                                        document.querySelectorAll('input[name="followUpFilter"]').forEach(cb => {
+                                                            cb.checked = false;
+                                                        });
+                                                        this.filters.noTask = false;
+                                                        this.filters.noAction = false;
+                                                        this.filters.followUpFilters = [];
                                                     }
                                                     
                                                     // Re-render with filtered and sorted data
@@ -1708,7 +1718,7 @@
                                                         assignedTo: '',
                                                         noTask: false,
                                                         noAction: false,
-                                                        followUpFilter: 'all-followups'
+                                                        followUpFilters: []
                                                     };
                                                     
                                                     // Reset UI
@@ -1717,14 +1727,18 @@
                                                     const assignedSelect = document.getElementById('filterAssignedTo');
                                                     const noTaskCheckbox = document.getElementById('filterNoTask');
                                                     const noActionCheckbox = document.getElementById('filterNoAction');
-                                                    const followUpRadio = document.querySelector('input[name="followUpFilter"][value="all-followups"]');
+                                                    const followUpCheckboxes = document.querySelectorAll('input[name="followUpFilter"]');
                                                     
                                                     if (searchInput) searchInput.value = '';
                                                     if (statusSelect) statusSelect.value = '';
                                                     if (assignedSelect) assignedSelect.value = '';
                                                     if (noTaskCheckbox) noTaskCheckbox.checked = false;
                                                     if (noActionCheckbox) noActionCheckbox.checked = false;
-                                                    if (followUpRadio) followUpRadio.checked = true;
+                                                    
+                                                    // Reset follow-up checkboxes - all unchecked (shows all by default)
+                                                    followUpCheckboxes.forEach(cb => {
+                                                        cb.checked = false;
+                                                    });
                                                     
                                                     // Re-render
                                                     this.render(this.store.state);
@@ -1773,23 +1787,28 @@
                                                         });
                                                     }
 
-                                                    // Apply Follow Up filter
-                                                    const followUpFilter = this.filters.followUpFilter || 'all-followups';
-                                                    if (followUpFilter !== 'all-followups') {
+                                                    // Apply Follow Up filter - supports multiple selections
+                                                    const followUpFilters = this.filters.followUpFilters || [];
+                                                    
+                                                    // If follow-up filters are specified, apply them
+                                                    if (followUpFilters.length > 0) {
                                                         const beforeFilter = filtered.length;
                                                         filtered = filtered.filter(lead => {
-                                                            switch(followUpFilter) {
-                                                                case 'overdue-followups':
-                                                                    return this.isFollowUpOverdue(lead);
-                                                                case 'today-followups':
-                                                                    return this.isFollowUpToday(lead);
-                                                                case 'upcoming-followups':
-                                                                    return this.isFollowUpUpcoming(lead);
-                                                                default:
-                                                                    return true;
-                                                            }
+                                                            // Check if lead matches ANY of the selected follow-up filters
+                                                            return followUpFilters.some(fupFilter => {
+                                                                switch(fupFilter) {
+                                                                    case 'overdue-followups':
+                                                                        return this.isFollowUpOverdue(lead);
+                                                                    case 'today-followups':
+                                                                        return this.isFollowUpToday(lead);
+                                                                    case 'upcoming-followups':
+                                                                        return this.isFollowUpUpcoming(lead);
+                                                                    default:
+                                                                        return true;
+                                                                }
+                                                            });
                                                         });
-                                                        console.log(`📅 Follow Up filter '${followUpFilter}': ${beforeFilter} → ${filtered.length} leads`);
+                                                        console.log(`📅 Follow Up filters ${JSON.stringify(followUpFilters)}: ${beforeFilter} → ${filtered.length} leads`);
                                                     }
                                                     
                                                     return filtered;
@@ -2281,7 +2300,7 @@
                     assignedTo: '',
                     noTask: false,
                     noAction: false,
-                    followUpFilter: 'all-followups'
+                    followUpFilters: []
                 };
                 // Always update login card/app title on construction
                 if (typeof this.applyConfig === 'function') this.applyConfig();
@@ -3440,7 +3459,7 @@
             }
 
             renderFollowUps() {
-                const today = new Date().toISOString().split('T')[0];
+                const today = this.getISTToday();
                 let od=[], td=[], uc=[];
                 
                 // Get selected agent filter
@@ -3486,8 +3505,19 @@
                 leads.forEach(l => {
                     const f = l.activities?.find(a => a.type==='follow_up');
                     if(f && f.note) {
-                        const d = { ...l, followUpDate: f.note };
-                        if(f.note < today) od.push(d); else if(f.note === today) td.push(d); else uc.push(d);
+                        let dateStr = f.note;
+                        
+                        // Handle ISO dates - convert to YYYY-MM-DD in IST
+                        if (dateStr.includes('T') && dateStr.includes('Z')) {
+                            const istDate = this.getISTDate(new Date(dateStr));
+                            const year = istDate.getFullYear();
+                            const month = String(istDate.getMonth() + 1).padStart(2, '0');
+                            const day = String(istDate.getDate()).padStart(2, '0');
+                            dateStr = `${year}-${month}-${day}`;
+                        }
+                        
+                        const d = { ...l, followUpDate: dateStr };
+                        if(dateStr < today) od.push(d); else if(dateStr === today) td.push(d); else uc.push(d);
                     }
                 });
                 const ri = (l) => `<button onclick="app.openLeadFromMenu('${l.id}')" class="w-full text-left px-4 py-3 hover:bg-slate-50 flex justify-between items-center group"><div><div class="font-bold text-slate-700 text-sm group-hover:text-primary">${this.escapeHtml(l.name)}</div><div class="text-xs text-slate-400 mt-0.5">${this.formatDate(l.followUpDate)}</div></div><i class="ph-bold ph-caret-right text-slate-300"></i></button>`;
@@ -3721,7 +3751,30 @@
 
             // Follow-up date helper functions (checks followUpDate first, then falls back to earliest task due date)
             getFollowUpDate(lead) {
-                // Primary: explicit follow-up date
+                // Primary: Check activities for FOLLOW UP entry (most recent)
+                if (lead.activities && lead.activities.length > 0) {
+                    const followUpActivity = lead.activities.find(a => a.type === 'follow_up');
+                    if (followUpActivity && followUpActivity.note) {
+                        // Extract date from activity note (format: "2025-12-16" or ISO date)
+                        let dateStr = followUpActivity.note;
+                        
+                        // If it's an ISO date, convert to YYYY-MM-DD
+                        if (dateStr.includes('T') && dateStr.includes('Z')) {
+                            const istDate = this.getISTDate(new Date(dateStr));
+                            const year = istDate.getFullYear();
+                            const month = String(istDate.getMonth() + 1).padStart(2, '0');
+                            const day = String(istDate.getDate()).padStart(2, '0');
+                            dateStr = `${year}-${month}-${day}`;
+                        }
+                        
+                        // Validate it's a date format
+                        if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+                            return dateStr;
+                        }
+                    }
+                }
+                
+                // Fallback: explicit follow-up date field
                 if (lead.followUpDate) return lead.followUpDate;
                 
                 // Fallback: earliest pending task due date
