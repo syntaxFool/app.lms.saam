@@ -455,7 +455,7 @@
         <div class="fixed bottom-6 right-6 md:bottom-8 md:right-8 mobile-fab-adjusted z-30">
             <!-- FAB Menu (hidden by default) -->
             <div id="fabMenu" class="absolute bottom-20 right-0 bg-white rounded-2xl shadow-2xl p-2 hidden flex-col gap-2 w-48">
-                <button onclick="ui.toggleModal(true); document.getElementById('fabMenu').classList.add('hidden')" class="w-full text-left px-4 py-3 rounded-lg hover:bg-slate-100 flex items-center gap-3 transition text-slate-700">
+                <button onclick="ui.showPhoneModal(); document.getElementById('fabMenu').classList.add('hidden')" class="w-full text-left px-4 py-3 rounded-lg hover:bg-slate-100 flex items-center gap-3 transition text-slate-700">
                     <i class="ph-bold ph-plus text-lg text-primary"></i>
                     <span class="font-semibold text-sm">New Lead</span>
                 </button>
@@ -561,6 +561,31 @@
                 <div class="mb-8"><h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Database</h4><form onsubmit="app.handleSaveAppConfig(event)"><div class="space-y-3"><div><label class="block text-xs font-semibold text-slate-500 mb-1">Script URL</label><input type="text" name="dbUrl" id="configDbUrl" class="w-full bg-slate-50 border-slate-200 border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none" readonly></div><div><label class="block text-xs font-semibold text-slate-500 mb-1">App Name</label><input type="text" name="appTitle" id="configAppTitle" class="w-full bg-slate-50 border-slate-200 border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none"></div><button type="submit" class="w-full bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-slate-700">Save & Sync</button></div></form></div>
                 <div class="mb-8 p-4 bg-slate-50 rounded-xl border border-slate-200"><h4 class="text-sm font-bold text-slate-800 mb-3 flex justify-between">Add User <span id="userLimitMsg" class="text-xs font-normal text-slate-500"></span></h4><form onsubmit="app.handleAddUser(event)"><div class="grid grid-cols-2 gap-3 mb-3"><input type="text" name="newUsername" placeholder="ID (ABC123)" required class="w-full bg-white border-slate-200 border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none"><input type="password" name="newPassword" placeholder="Pwd (4 digits)" required class="w-full bg-white border-slate-200 border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none"></div><div class="grid grid-cols-2 gap-3 mb-3"><input type="text" name="newName" placeholder="Name (CAPS max 15)" required class="w-full bg-white border-slate-200 border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none"><select name="newRole" class="w-full bg-white border-slate-200 border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none"><option value="agent">Agent</option><option value="admin">Admin</option></select></div><button type="submit" class="w-full bg-primary text-white font-bold py-2 rounded-lg text-sm hover:bg-indigo-600 transition shadow-sm">Create User</button></form></div>
                 <div><h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Users</h4><div id="userListContainer" class="space-y-3"></div></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Phone Entry Modal (for new leads) -->
+    <div id="phoneEntryModal" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true">
+        <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" onclick="ui.togglePhoneModal(false)"></div>
+        <div class="absolute inset-x-0 bottom-0 md:relative md:inset-auto md:m-auto w-full md:w-[420px] md:rounded-2xl bg-white shadow-2xl flex flex-col">
+            <div class="p-6 border-b border-slate-200">
+                <h3 class="text-lg font-bold text-slate-800">Add Contact Number</h3>
+                <p class="text-sm text-slate-500 mt-1">Enter phone number to check for duplicates</p>
+            </div>
+            <div class="p-6 space-y-4 flex-1">
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-2">Phone Number</label>
+                    <div class="relative flex items-stretch">
+                        <input type="text" id="phonePrefix" class="w-16 bg-slate-100 border-y border-l border-slate-300 rounded-l-xl text-center text-slate-700 font-medium text-sm focus:ring-2 focus:ring-primary focus:z-10 outline-none transition" value="+91" placeholder="+91">
+                        <input type="tel" id="phoneInput" class="flex-1 bg-white border border-slate-300 rounded-r-xl px-4 py-3 focus:ring-2 focus:ring-primary outline-none transition" placeholder="98765 43210" pattern="\d{10}" maxlength="10" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10)" autofocus>
+                    </div>
+                    <div id="phoneErrorMsg" class="text-red-500 text-xs mt-1 hidden"></div>
+                </div>
+            </div>
+            <div class="p-4 border-t border-slate-200 flex gap-3">
+                <button type="button" onclick="ui.togglePhoneModal(false)" class="flex-1 bg-slate-200 text-slate-700 font-bold py-2.5 rounded-lg hover:bg-slate-300 transition">Cancel</button>
+                <button type="button" onclick="app.proceedWithPhone()" class="flex-1 bg-primary text-white font-bold py-2.5 rounded-lg hover:bg-indigo-600 transition">Continue</button>
             </div>
         </div>
     </div>
@@ -2540,6 +2565,51 @@
                 this.notify('Saved & Synced', 'success');
             }
 
+            proceedWithPhone() {
+                const phoneInput = document.getElementById('phoneInput');
+                const phonePrefix = document.getElementById('phonePrefix').value || '+91';
+                const phoneNum = phoneInput.value.trim();
+                const errorMsg = document.getElementById('phoneErrorMsg');
+
+                // Validate phone
+                if (!phoneNum || phoneNum.length < 10) {
+                    errorMsg.textContent = 'Phone number must be at least 10 digits';
+                    errorMsg.classList.remove('hidden');
+                    phoneInput.focus();
+                    return;
+                }
+
+                const fullPhone = phonePrefix + ' ' + phoneNum;
+
+                // Check for duplicate
+                const duplicateLead = this.checkDuplicatePhone(fullPhone);
+                if (duplicateLead) {
+                    errorMsg.innerHTML = `<span class="text-red-600">❌ This number already exists!</span> <button type="button" onclick="app.editLead('${duplicateLead.id}'); ui.togglePhoneModal(false)" class="text-primary underline font-semibold">View existing lead</button>`;
+                    errorMsg.classList.remove('hidden');
+                    return;
+                }
+
+                // No duplicate - proceed to main form
+                ui.togglePhoneModal(false);
+                
+                // Clear and reset form
+                document.getElementById('leadForm').reset();
+                document.getElementById('leadIdInput').value = '';
+                document.getElementById('modalTitle').textContent = 'New Lead';
+                document.getElementById('submitBtn').textContent = 'Save';
+                
+                // Set phone fields
+                document.getElementById('leadForm').phonePrefix.value = phonePrefix;
+                document.getElementById('leadForm').phone.value = phoneNum;
+                
+                // Reset interests and other fields
+                this.selectedInterests = [];
+                this.renderInterestTags();
+                
+                // Open main lead form
+                ui.toggleModal(true);
+            }
+
             checkDuplicatePhone(phoneNumber) {
                 const duplicateLead = this.store.state.find(l => l.phone === phoneNumber);
                 return duplicateLead || null;
@@ -3705,6 +3775,26 @@
                     m.classList.remove('open'); 
                     setTimeout(()=>{m.classList.add('hidden'); document.getElementById('leadForm').reset(); document.getElementById('leadIdInput').value=''; m.dataset.leadId = ''; if(window.app) window.app._editingLeadSnapshot = null;},300); 
                 } 
+            },
+            showPhoneModal: () => {
+                const m = document.getElementById('phoneEntryModal');
+                m.classList.remove('hidden');
+                requestAnimationFrame(() => m.classList.add('open'));
+                document.getElementById('phoneInput').focus();
+                document.getElementById('phoneErrorMsg').classList.add('hidden');
+            },
+            togglePhoneModal: (s) => {
+                const m = document.getElementById('phoneEntryModal');
+                if (s) {
+                    ui.showPhoneModal();
+                } else {
+                    m.classList.remove('open');
+                    setTimeout(() => {
+                        m.classList.add('hidden');
+                        document.getElementById('phoneInput').value = '';
+                        document.getElementById('phoneErrorMsg').classList.add('hidden');
+                    }, 300);
+                }
             },
             initModalSwipeClose: (modal) => {
                 if (!modal) return;
