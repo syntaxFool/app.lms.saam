@@ -837,28 +837,36 @@
                 this.state.push(newLead);
                 this.log(`Created lead ${data.name}`, user);
                 
-                // Log comprehensive creation activity with all lead details
-                const creationDetails = [
-                    `Name: ${data.name}`,
-                    `Interest: ${data.interest || 'N/A'}`,
-                    `Temperature: ${data.temperature || 'N/A'}`,
-                    `Value: $${data.value || 0}`,
-                    `Phone: ${data.phone || 'N/A'}`,
-                    `Email: ${data.email || 'N/A'}`,
-                    data.source ? `Source: ${data.source}` : null,
-                    data.location ? `Location: ${data.location}` : null,
-                    data.notes ? `Notes: ${data.notes}` : null,
-                    data.assignedTo ? `Assigned to: ${window.app ? window.app.getUserName(data.assignedTo) : data.assignedTo}` : null
-                ].filter(Boolean).join(' | ');
+                // Log initial activity for lead creation
+                const details = [];
+                if (data.name) details.push(`Name: ${data.name}`);
+                if (data.phone) details.push(`Phone: ${data.phone}`);
+                if (data.email) details.push(`Email: ${data.email}`);
+                if (data.interest) details.push(`Interest: ${data.interest}`);
+                if (data.source) details.push(`Source: ${data.source}`);
+                if (data.status) details.push(`Status: ${data.status}`);
                 
                 newLead.activities.push({
                     id: this.generateId(),
-                    type: 'created',
-                    note: creationDetails,
+                    type: 'lead_created',
+                    note: details.length > 0 ? details.join(' | ') : 'Lead created',
                     timestamp: now,
                     createdBy: user ? user.name : 'System',
                     role: user ? user.role : ''
                 });
+                
+                // Log activity if lead is assigned on creation
+                if (data.assignedTo) {
+                    const agentName = window.app ? window.app.getUserName(data.assignedTo) : data.assignedTo;
+                    newLead.activities.push({
+                        id: this.generateId(),
+                        type: 'assignment',
+                        note: `Lead created and assigned to ${agentName}`,
+                        timestamp: new Date().toISOString(),
+                        createdBy: user ? user.name : 'System',
+                        role: user ? user.role : ''
+                    });
+                }
                 
                 this.save();
                 if(window.app && typeof window.app.renderLeaderboard==='function'){window.app.renderLeaderboard();}
@@ -872,77 +880,61 @@
                     
                     if (!this.state[idx].activities) this.state[idx].activities = [];
                     
-                    // Track all field changes for comprehensive activity logging
-                    const changes = [];
-                    
-                    // Status change
-                    if (oldLead.status !== data.status) {
-                        changes.push(`Status changed from ${oldLead.status || 'New'} to ${data.status}`);
-                    }
-                    
-                    // Assignment change
-                    if (oldLead.assignedTo !== data.assignedTo) {
-                        const oldAgent = oldLead.assignedTo ? (window.app ? window.app.getUserName(oldLead.assignedTo) : oldLead.assignedTo) : 'Unassigned';
-                        const newAgent = data.assignedTo ? (window.app ? window.app.getUserName(data.assignedTo) : data.assignedTo) : 'Unassigned';
-                        changes.push(`Reassigned from ${oldAgent} to ${newAgent}`);
-                    }
-                    
-                    // Temperature change
-                    if (oldLead.temperature !== data.temperature) {
-                        changes.push(`Temperature changed from ${oldLead.temperature || 'N/A'} to ${data.temperature}`);
-                    }
-                    
-                    // Interest change
-                    if (oldLead.interest !== data.interest) {
-                        changes.push(`Interest changed from ${oldLead.interest || 'N/A'} to ${data.interest}`);
-                    }
-                    
-                    // Value change
-                    if (oldLead.value !== data.value) {
-                        changes.push(`Value changed from $${oldLead.value || 0} to $${data.value}`);
-                    }
-                    
-                    // Email change
-                    if (oldLead.email !== data.email) {
-                        changes.push(`Email updated to ${data.email}`);
-                    }
-                    
-                    // Phone change
-                    if (oldLead.phone !== data.phone) {
-                        changes.push(`Phone updated to ${data.phone}`);
-                    }
-                    
-                    // Location change
-                    if (oldLead.location !== data.location) {
-                        changes.push(`Location changed to ${data.location || 'N/A'}`);
-                    }
-                    
-                    // Source change
-                    if (oldLead.source !== data.source) {
-                        changes.push(`Source changed to ${data.source || 'N/A'}`);
-                    }
-                    
-                    // Notes change
-                    if (oldLead.notes !== data.notes) {
-                        changes.push(`Notes updated`);
-                    }
-                    
-                    // Lost reason change (for Lost status)
-                    if (oldLead.lostReason !== data.lostReason && data.lostReason) {
-                        changes.push(`Lost reason: ${data.lostReason}`);
-                    }
-                    
-                    // Log all changes as a single activity entry
-                    if (changes.length > 0) {
+                    // Log activity if status changed
+                    if (oldLead.status !== data.status && data.status) {
                         this.state[idx].activities.unshift({
                             id: this.generateId(),
-                            type: 'update',
-                            note: changes.join(' | '),
+                            type: 'status_change',
+                            note: `Status changed from ${oldLead.status} to ${data.status}`,
                             timestamp: new Date().toISOString(),
                             createdBy: user ? user.name : 'System',
                             role: user ? user.role : ''
                         });
                     }
+                    
+                    // Log activity if lost reason was added/changed
+                    if (oldLead.lostReason !== data.lostReason && data.lostReason) {
+                        this.state[idx].activities.unshift({
+                            id: this.generateId(),
+                            type: 'lost_reason',
+                            note: `Lost reason: ${data.lostReason}`,
+                            timestamp: new Date().toISOString(),
+                            createdBy: user ? user.name : 'System',
+                            role: user ? user.role : ''
+                        });
+                    }
+                    
+                    // Log activity if assignment changed
+                    if (oldLead.assignedTo !== data.assignedTo) {
+                        const oldAgent = oldLead.assignedTo ? (window.app ? window.app.getUserName(oldLead.assignedTo) : oldLead.assignedTo) : 'Unassigned';
+                        const newAgent = data.assignedTo ? (window.app ? window.app.getUserName(data.assignedTo) : data.assignedTo) : 'Unassigned';
+                        
+                        this.state[idx].activities.unshift({
+                            id: this.generateId(),
+                            type: 'assignment',
+                            note: `Lead reassigned from ${oldAgent} to ${newAgent}`,
+                            timestamp: new Date().toISOString(),
+                            createdBy: user ? user.name : 'System',
+                            role: user ? user.role : ''
+                        });
+                    }
+                    
+                    // Log activity for field changes (name, email, phone, temperature, interest, source, location, notes)
+                    const fieldsToTrack = ['name', 'email', 'phone', 'temperature', 'interest', 'source', 'location', 'notes', 'value'];
+                    fieldsToTrack.forEach(field => {
+                        if (oldLead[field] !== data[field] && data[field] !== undefined) {
+                            const oldValue = oldLead[field] || '(empty)';
+                            const newValue = data[field] || '(empty)';
+                            this.state[idx].activities.unshift({
+                                id: this.generateId(),
+                                type: 'field_update',
+                                note: `${field.charAt(0).toUpperCase() + field.slice(1)} updated: "${oldValue}" → "${newValue}"`,
+                                timestamp: new Date().toISOString(),
+                                createdBy: user ? user.name : 'System',
+                                role: user ? user.role : ''
+                            });
+                        }
+                    });
                     
                     this.save();
                     if(window.app && typeof window.app.renderLeaderboard==='function'){window.app.renderLeaderboard();}
@@ -958,22 +950,9 @@
             updateStatus(id, status, user) {
                 const l = this.state.find(x => x.id === id);
                 if (l) {
-                    const oldStatus = l.status || 'New';
                     l.status = status;
                     l.updatedAt = new Date().toISOString();
                     this.log(`Moved ${l.name} to ${status}`, user);
-                    
-                    // Log status change activity
-                    if (!l.activities) l.activities = [];
-                    l.activities.unshift({
-                        id: this.generateId(),
-                        type: 'status',
-                        note: `Status changed from ${oldStatus} to ${status}`,
-                        timestamp: new Date().toISOString(),
-                        createdBy: user ? user.name : 'System',
-                        role: user ? user.role : ''
-                    });
-                    
                     this.save();
                     if(window.app && typeof window.app.renderLeaderboard==='function'){window.app.renderLeaderboard();}
                 }
@@ -2049,33 +2028,37 @@
                                 return;
                             }
                             
-                            // Activity type emoji mapping
+                            // Map activity types to emojis and readable names
                             const activityIcons = {
-                                'created': '✨',
-                                'update': '📝',
-                                'status': '📊',
                                 'assignment': '👤',
+                                'status_change': '📊',
+                                'lost_reason': '❌',
+                                'field_update': '✏️',
                                 'task': '✅',
-                                'follow_up': '📞',
+                                'follow_up': '📅',
                                 'call': '☎️',
-                                'note': '📌',
-                                'contact': '📧',
-                                'comment': '💬'
+                                'note': '📝',
+                                'contact': '📞'
                             };
                             
                             container.innerHTML = lead.activities.map(a => {
-                                const icon = activityIcons[a.type] || '📋';
-                                const typeLabel = a.type ? a.type.charAt(0).toUpperCase() + a.type.slice(1).replace('_', ' ') : 'Activity';
+                                const icon = activityIcons[a.type] || '📌';
+                                const timestamp = a.timestamp ? this.formatDateTime(a.timestamp) : '';
+                                const type = a.type ? a.type.replace(/_/g, ' ').toUpperCase() : 'ACTIVITY';
+                                const note = a.note || '';
+                                const createdBy = a.createdBy ? this.escapeHtml(a.createdBy) : '';
+                                const role = a.role ? ` (${this.escapeHtml(a.role)})` : '';
+                                
                                 return `
-                                    <div class="timeline-item relative pl-10 py-4 border-l border-slate-200">
-                                        <div class="timeline-dot absolute -left-2.5 top-5 w-5 h-5 bg-white border-2 border-primary rounded-full flex items-center justify-center text-xs">${icon}</div>
-                                        <div class="flex flex-col gap-2">
-                                            <div class="flex items-center justify-between">
-                                                <div class="font-semibold text-sm text-slate-800">${typeLabel}</div>
-                                                <div class="text-xs text-slate-400">${a.timestamp ? this.formatDateTime(a.timestamp) : ''}</div>
-                                            </div>
-                                            <div class="text-sm text-slate-700 break-words">${this.escapeHtml(a.note || 'No details')}</div>
-                                            <div class="text-xs text-slate-500">${a.createdBy ? '👤 ' + this.escapeHtml(a.createdBy) : ''} ${a.role ? '(' + this.escapeHtml(a.role) + ')' : ''}</div>
+                                    <div class="timeline-item relative pl-8 py-4 border-l-2 border-primary border-opacity-30 hover:bg-slate-50 rounded px-2">
+                                        <div class="absolute left-0 top-4 w-6 h-6 flex items-center justify-center text-lg">
+                                            ${icon}
+                                        </div>
+                                        <div class="flex flex-col gap-1">
+                                            <div class="text-xs text-slate-500">${timestamp}</div>
+                                            <div class="text-sm font-medium text-slate-800">${this.escapeHtml(type)}</div>
+                                            ${note ? `<div class="text-sm text-slate-700 mt-1">${this.escapeHtml(note)}</div>` : ''}
+                                            <div class="text-xs text-slate-400 mt-1">${createdBy}${role}</div>
                                         </div>
                                     </div>
                                 `;
