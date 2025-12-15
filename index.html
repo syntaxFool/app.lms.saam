@@ -277,6 +277,28 @@
                                     </label>
                                 </div>
                             </div>
+                            <!-- Follow Up Filters -->
+                            <div>
+                                <label class="text-xs font-semibold text-slate-600 block mb-2">Follow Up Filters</label>
+                                <div class="flex flex-col gap-1">
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="radio" name="followUpFilter" value="all-followups" checked onchange="app.applyFilters()" class="w-4 h-4 rounded border-slate-300 cursor-pointer">
+                                        <span class="text-sm text-slate-700">All Follow Ups</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="radio" name="followUpFilter" value="overdue-followups" onchange="app.applyFilters()" class="w-4 h-4 rounded border-slate-300 cursor-pointer">
+                                        <span class="text-sm text-red-600 font-semibold">🔴 Overdue</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="radio" name="followUpFilter" value="today-followups" onchange="app.applyFilters()" class="w-4 h-4 rounded border-slate-300 cursor-pointer">
+                                        <span class="text-sm text-blue-600 font-semibold">📘 Today</span>
+                                    </label>
+                                    <label class="flex items-center gap-2 cursor-pointer">
+                                        <input type="radio" name="followUpFilter" value="upcoming-followups" onchange="app.applyFilters()" class="w-4 h-4 rounded border-slate-300 cursor-pointer">
+                                        <span class="text-sm text-green-600 font-semibold">📗 Upcoming</span>
+                                    </label>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <!-- Bulk Actions Bar -->
@@ -306,6 +328,7 @@
                                 <th class="pb-2 sm:pb-3 font-bold px-2 sm:px-3 cursor-pointer hover:text-slate-700 hidden lg:table-cell" onclick="app.sortTable('interest')">Interest <span id="sort-interest" class="ml-1"></span></th>
                                 <th class="pb-2 sm:pb-3 font-bold px-2 sm:px-3 cursor-pointer hover:text-slate-700 hidden lg:table-cell" onclick="app.sortTable('source')">Source <span id="sort-source" class="ml-1"></span></th>
                                 <th class="pb-2 sm:pb-3 font-bold px-2 sm:px-3 cursor-pointer hover:text-slate-700 hidden sm:table-cell" onclick="app.sortTable('assignedTo')">Assigned <span id="sort-assignedTo" class="ml-1"></span></th>
+                                <th class="pb-2 sm:pb-3 font-bold px-2 sm:px-3 cursor-pointer hover:text-slate-700 hidden md:table-cell" onclick="app.sortTable('followUpDate')">Follow Up <span id="sort-followUpDate" class="ml-1"></span></th>
                                 <th class="pb-2 sm:pb-3 font-bold text-right px-2 sm:px-3 cursor-pointer hover:text-slate-700" onclick="app.sortTable('value')">Value <span id="sort-value" class="ml-1 hidden sm:inline"></span></th>
                                 <th class="pb-2 sm:pb-3 font-bold w-10 px-2 sm:px-3"></th>
                             </tr>
@@ -613,6 +636,17 @@
                                 <div id="assignedToDisplay" class="hidden w-full bg-slate-50 border-slate-200 border rounded-xl px-4 py-3 text-slate-700 font-medium">Unassigned</div>
                             </div>
                             <div><label class="block text-sm font-semibold text-slate-700 mb-1.5">Contact Details</label><input type="email" name="email" class="w-full bg-white border-slate-200 border rounded-xl px-4 py-3 mb-3 focus:ring-2 focus:ring-primary outline-none" placeholder="Email"><div class="relative flex items-stretch"><input type="text" name="phonePrefix" class="w-16 bg-slate-100 border-y border-l border-slate-200 rounded-l-xl text-center text-slate-700 font-medium text-sm focus:ring-2 focus:ring-primary focus:z-10 outline-none transition" value="+91" placeholder="+91"><input type="tel" name="phone" class="flex-1 bg-white border border-slate-200 rounded-r-xl px-4 py-3 focus:ring-2 focus:ring-primary outline-none transition" placeholder="98765 43210" pattern="\d{10}" maxlength="10" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10)"></div></div>
+                            
+                            <!-- Follow Up Date and Notes -->
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-1.5">📅 Follow Up Date</label>
+                                <input type="date" name="followUpDate" class="w-full bg-white border-slate-200 border rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700 mb-1.5">Follow Up Notes</label>
+                                <textarea name="followUpNotes" rows="2" placeholder="What to follow up on..." class="w-full bg-white border-slate-200 border rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary outline-none resize-none"></textarea>
+                            </div>
+                            
                             <div><label class="block text-sm font-semibold text-slate-700 mb-1.5">Notes</label><textarea name="notes" rows="3" class="w-full bg-white border-slate-200 border rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary outline-none resize-none"></textarea></div>
                         </div>
                     </form>
@@ -1544,6 +1578,12 @@
                                                             <td class="px-2 sm:px-3 py-2 sm:py-3 hidden lg:table-cell text-slate-600">${this.escapeHtml(lead.interest || '-')}</td>
                                                             <td class="px-2 sm:px-3 py-2 sm:py-3 hidden lg:table-cell text-slate-600">${this.escapeHtml(lead.source || '-')}</td>
                                                             <td class="px-2 sm:px-3 py-2 sm:py-3 hidden sm:table-cell text-slate-600"><span class="text-xs font-medium">${this.escapeHtml(this.getUserName(lead.assignedTo))}</span></td>
+                                                            <td class="px-2 sm:px-3 py-2 sm:py-3 hidden md:table-cell text-slate-600">
+                                                                ${(() => {
+                                                                    const fupDate = this.getFollowUpDate(lead);
+                                                                    return fupDate ? `<span class="text-xs font-medium">${new Date(fupDate).toLocaleDateString()}</span>` : '<span class="text-xs text-slate-400">-</span>';
+                                                                })()}
+                                                            </td>
                                                             <td class="px-2 sm:px-3 py-2 sm:py-3 text-right text-slate-700 font-semibold text-xs sm:text-sm">${this.formatCurrency(lead.value)}</td>
                                                             <td class="px-2 sm:px-3 py-2 sm:py-3 text-right">
                                                                 <button onclick="app.editLead('${lead.id}')" class="text-primary hover:text-primary-dark active:text-primary font-bold text-xs sm:text-sm px-2 py-1 rounded hover:bg-primary/5 active:bg-primary/10 transition">
@@ -1620,12 +1660,17 @@
                                                     const assignedSelect = document.getElementById('filterAssignedTo');
                                                     const noTaskCheckbox = document.getElementById('filterNoTask');
                                                     const noActionCheckbox = document.getElementById('filterNoAction');
+                                                    const followUpRadio = document.querySelector('input[name="followUpFilter"]:checked');
                                                     
                                                     if (searchInput) this.filters.search = searchInput.value.toLowerCase().trim();
                                                     if (statusSelect) this.filters.status = statusSelect.value;
                                                     if (assignedSelect) this.filters.assignedTo = assignedSelect.value;
                                                     if (noTaskCheckbox) this.filters.noTask = noTaskCheckbox.checked;
                                                     if (noActionCheckbox) this.filters.noAction = noActionCheckbox.checked;
+                                                    if (followUpRadio) {
+                                                        this.filters.followUpFilter = followUpRadio.value;
+                                                        console.log('📅 Follow Up Filter set to:', this.filters.followUpFilter);
+                                                    }
                                                     
                                                     // Re-render with filtered and sorted data
                                                     this.render(this.store.state);
@@ -1638,7 +1683,8 @@
                                                         status: '',
                                                         assignedTo: '',
                                                         noTask: false,
-                                                        noAction: false
+                                                        noAction: false,
+                                                        followUpFilter: 'all-followups'
                                                     };
                                                     
                                                     // Reset UI
@@ -1647,12 +1693,14 @@
                                                     const assignedSelect = document.getElementById('filterAssignedTo');
                                                     const noTaskCheckbox = document.getElementById('filterNoTask');
                                                     const noActionCheckbox = document.getElementById('filterNoAction');
+                                                    const followUpRadio = document.querySelector('input[name="followUpFilter"][value="all-followups"]');
                                                     
                                                     if (searchInput) searchInput.value = '';
                                                     if (statusSelect) statusSelect.value = '';
                                                     if (assignedSelect) assignedSelect.value = '';
                                                     if (noTaskCheckbox) noTaskCheckbox.checked = false;
                                                     if (noActionCheckbox) noActionCheckbox.checked = false;
+                                                    if (followUpRadio) followUpRadio.checked = true;
                                                     
                                                     // Re-render
                                                     this.render(this.store.state);
@@ -1699,6 +1747,25 @@
                                                             const hasTasks = lead.tasks && lead.tasks.length > 0;
                                                             return isActiveStage && !hasTasks;
                                                         });
+                                                    }
+
+                                                    // Apply Follow Up filter
+                                                    const followUpFilter = this.filters.followUpFilter || 'all-followups';
+                                                    if (followUpFilter !== 'all-followups') {
+                                                        const beforeFilter = filtered.length;
+                                                        filtered = filtered.filter(lead => {
+                                                            switch(followUpFilter) {
+                                                                case 'overdue-followups':
+                                                                    return this.isFollowUpOverdue(lead);
+                                                                case 'today-followups':
+                                                                    return this.isFollowUpToday(lead);
+                                                                case 'upcoming-followups':
+                                                                    return this.isFollowUpUpcoming(lead);
+                                                                default:
+                                                                    return true;
+                                                            }
+                                                        });
+                                                        console.log(`📅 Follow Up filter '${followUpFilter}': ${beforeFilter} → ${filtered.length} leads`);
                                                     }
                                                     
                                                     return filtered;
@@ -2130,6 +2197,9 @@
                 document.getElementById('leadForm').phonePrefix.value = prefix;
                 document.getElementById('leadForm').phone.value = number;
                 document.getElementById('leadForm').notes.value = lead.notes || '';
+                // Follow up date and notes
+                document.getElementById('leadForm').querySelector('input[name="followUpDate"]').value = lead.followUpDate || '';
+                document.getElementById('leadForm').querySelector('textarea[name="followUpNotes"]').value = lead.followUpNotes || '';
                 // Interests tags
                 this.selectedInterests = (lead.interest || '').split(',').filter(x=>x.trim()).map(i=>({name:i.trim(),value:0}));
                 this.renderInterestTags();
@@ -2173,7 +2243,8 @@
                     status: '',
                     assignedTo: '',
                     noTask: false,
-                    noAction: false
+                    noAction: false,
+                    followUpFilter: 'all-followups'
                 };
                 // Always update login card/app title on construction
                 if (typeof this.applyConfig === 'function') this.applyConfig();
@@ -2517,7 +2588,9 @@
                             source: f.querySelector('input[name="source"]').value,
                             assignedTo: f.assignedTo.value || currentLead.assignedTo,
                             phone: fullPhone,
-                            notes: f.notes.value
+                            notes: f.notes.value,
+                            followUpDate: f.querySelector('input[name="followUpDate"]').value,
+                            followUpNotes: f.querySelector('textarea[name="followUpNotes"]').value
                         };
                         this.showLostReasonModal(leadId);
                         return;
@@ -2545,7 +2618,9 @@
                             source: f.querySelector('input[name="source"]').value,
                             assignedTo: f.assignedTo.value || existingLead.assignedTo,
                             phone: fullPhone,
-                            notes: f.notes.value
+                            notes: f.notes.value,
+                            followUpDate: f.querySelector('input[name="followUpDate"]').value,
+                            followUpNotes: f.querySelector('textarea[name="followUpNotes"]').value
                         });
                         return;
                     }
@@ -2566,6 +2641,8 @@
                     assignedTo: isFormAdmin ? (f.assignedTo.value || (existingLead ? existingLead.assignedTo : '')) : (existingLead ? existingLead.assignedTo : ''),
                     phone: fullPhone,
                     notes: f.notes.value,
+                    followUpDate: f.querySelector('input[name="followUpDate"]').value,
+                    followUpNotes: f.querySelector('textarea[name="followUpNotes"]').value,
                     // Preserve lostReason if status is "Lost", otherwise clear it
                     lostReason: f.status.value === 'Lost' ? (existingLead ? existingLead.lostReason : '') : ''
                 };
@@ -2603,7 +2680,7 @@
             // Optimistic Locking: Detect if lead was modified by another user
             _detectLeadConflict(snapshot, current) {
                 // Track which fields have changed since snapshot was taken
-                const fieldsToCheck = ['name', 'email', 'phone', 'status', 'temperature', 'interest', 'value', 'location', 'source', 'assignedTo', 'notes', 'lostReason'];
+                const fieldsToCheck = ['name', 'email', 'phone', 'status', 'temperature', 'interest', 'value', 'location', 'source', 'assignedTo', 'notes', 'lostReason', 'followUpDate', 'followUpNotes'];
                 const conflicts = [];
                 
                 fieldsToCheck.forEach(field => {
@@ -3487,6 +3564,58 @@
                 hours = hours % 12;
                 hours = hours ? hours : 12;
                 return `${day}/${month}/${year} ${hours}:${minutes} ${ampm}`;
+            }
+
+            // Follow-up date helper functions (checks followUpDate first, then falls back to earliest task due date)
+            getFollowUpDate(lead) {
+                // Primary: explicit follow-up date
+                if (lead.followUpDate) return lead.followUpDate;
+                
+                // Fallback: earliest pending task due date
+                if (lead.tasks && lead.tasks.length > 0) {
+                    const pendingTasks = lead.tasks.filter(t => t.status === 'pending' && t.dueDate);
+                    if (pendingTasks.length > 0) {
+                        // Sort by due date and return the earliest
+                        const earliest = pendingTasks.reduce((min, task) => {
+                            return new Date(task.dueDate) < new Date(min.dueDate) ? task : min;
+                        });
+                        return earliest.dueDate;
+                    }
+                }
+                return null;
+            }
+
+            isFollowUpOverdue(lead) {
+                const followUpDate = this.getFollowUpDate(lead);
+                if (!followUpDate) return false;
+                
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const fupDate = new Date(followUpDate);
+                fupDate.setHours(0, 0, 0, 0);
+                return fupDate < today;
+            }
+
+            isFollowUpToday(lead) {
+                const followUpDate = this.getFollowUpDate(lead);
+                if (!followUpDate) return false;
+                
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const fupDate = new Date(followUpDate);
+                fupDate.setHours(0, 0, 0, 0);
+                return fupDate.getTime() === today.getTime();
+            }
+
+            isFollowUpUpcoming(lead) {
+                const followUpDate = this.getFollowUpDate(lead);
+                if (!followUpDate) return false;
+                
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const fupDate = new Date(followUpDate);
+                fupDate.setHours(0, 0, 0, 0);
+                return fupDate > today;
             }
 
             escapeHtml(s) { if(!s && s !== 0) return ''; const str = String(s); return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;"); }
