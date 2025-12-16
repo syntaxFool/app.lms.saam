@@ -193,11 +193,12 @@
                         </button>
                     </div>
                 </div>
-        <header class="bg-white border-b border-slate-200 px-4 py-3 flex justify-between items-center shadow-sm z-20 shrink-0">
-            <div class="flex items-center gap-3">
-                <button onclick="ui.toggleMenu(true)" class="p-2 -ml-2 text-slate-600 hover:bg-slate-100 rounded-lg active:bg-slate-200 transition"><i class="ph-bold ph-list text-2xl"></i></button>
-                <div class="flex items-center gap-2">
-                    <div class="bg-primary/10 p-1.5 rounded-lg">
+        <header class="bg-white border-b border-slate-200 px-3 sm:px-4 py-2 sm:py-3 flex justify-between items-center shadow-sm z-20 shrink-0">
+            <!-- Left Side: Menu + Brand -->
+            <div class="flex items-center gap-1 sm:gap-3 overflow-hidden">
+                <button onclick="ui.toggleMenu(true)" class="p-2 -ml-2 text-slate-600 hover:bg-slate-100 rounded-lg active:bg-slate-200 transition flex-shrink-0"><i class="ph-bold ph-list text-2xl"></i></button>
+                <div class="flex items-center gap-1 sm:gap-2 overflow-hidden">
+                    <div class="bg-primary/10 p-1.5 rounded-lg flex-shrink-0">
                         <svg width="20" height="20" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
                             <path d="M4 4h24v20c0 0-2-3-4-3s-2 3-4 3-2-3-4-3-2 3-4 3-2-3-4-3-2 3-4 3V4z" fill="#FFD700"/>
                             <circle cx="10" cy="12" r="2.5" fill="#000"/>
@@ -206,19 +207,31 @@
                             <circle cx="22" cy="11" r="1" fill="#fff"/>
                         </svg>
                     </div>
-                    <h1 id="appTitleDisplay" class="text-lg font-bold tracking-tight text-slate-900">LeadFlow</h1>
+                    <!-- Desktop Title -->
+                    <h1 id="appTitleDisplay" class="text-lg font-bold tracking-tight text-slate-900 hidden sm:block whitespace-nowrap">LeadFlow</h1>
+                    <!-- Mobile Title: Shorter for small screens -->
+                    <h1 id="appTitleDisplay" class="text-base font-bold tracking-tight text-slate-900 sm:hidden whitespace-nowrap">LMS</h1>
                 </div>
             </div>
-            <div class="flex items-center gap-3">
-                <span id="currentUserDisplay" class="text-xs font-semibold text-slate-500 bg-slate-100 px-2 py-1 rounded hidden md:block"></span>
+            
+            <!-- Right Side: Actions -->
+            <div class="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+                <!-- Search Icon -->
                 <button onclick="ui.openQuickSearch()" class="p-2 text-slate-600 hover:bg-slate-100 rounded-full transition" title="Quick Search">
-                    <i class="ph-bold ph-magnifying-glass text-xl"></i>
+                    <i class="ph-bold ph-magnifying-glass text-lg sm:text-xl"></i>
                 </button>
+
+                <!-- Notifications -->
                 <button onclick="ui.toggleNotificationBox()" class="p-2 text-green-600 hover:bg-green-50 rounded-full transition relative" title="Notifications">
-                    <i class="ph-bold ph-bell text-xl"></i>
-                    <span id="notificationCount" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 font-bold" style="display:none;">0</span>
+                    <i class="ph-bold ph-bell text-lg sm:text-xl"></i>
+                    <span id="notificationCount" class="absolute -top-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 bg-red-500 text-white text-[10px] sm:text-xs font-bold rounded-full flex items-center justify-center" style="display:none;">0</span>
                 </button>
-                <button onclick="app.sync()" class="p-2 text-blue-600 hover:bg-blue-50 rounded-full transition" title="Force Sync"><i class="ph-bold ph-arrows-clockwise text-xl"></i></button>
+
+                <!-- Sync Status -->
+                <button onclick="app.sync()" class="p-2 text-blue-600 hover:bg-blue-50 rounded-full transition" title="Force Sync"><i class="ph-bold ph-arrows-clockwise text-lg sm:text-xl"></i></button>
+
+                <!-- User Display (Desktop Only) -->
+                <span id="currentUserDisplay" class="text-xs font-semibold text-slate-500 bg-slate-100 px-2 py-1 rounded hidden md:block ml-2"></span>
             </div>
         </header>
 
