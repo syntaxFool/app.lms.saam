@@ -30,6 +30,7 @@
 
 ### Recent Improvements (v9.6 - Enhanced UX & Search)
 - ✅ **Quick Search Modal**: Fast lead lookup with magnifying glass icon in header - search by name, email, or phone
+- ✅ **Quick Search View-Only Mode**: Search results open leads in view-only mode by default, with Edit button to switch
 - ✅ **View-Only Mode**: Click lead names in table or kanban cards to preview leads before editing
 - ✅ **Improved Filter UI**: Modern card-based filter design with icons, horizontal button groups, and color-coded status indicators
 - ✅ **Mutually Exclusive Filters**: Follow-up filters and task filters are mutually exclusive (select only 1 at a time)

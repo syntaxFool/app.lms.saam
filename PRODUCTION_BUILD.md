@@ -9,12 +9,14 @@ This guide explains how to set up a secure, production-ready build of Shanuzz Ac
 
 ### Recent Enhancements in v9.6
 - Quick Search modal for fast lead lookup (search by name, email, phone)
+- Quick Search opens leads in view-only mode with Edit button to switch
 - View-Only mode for previewing leads before editing
 - Improved filter UI with modern card design and horizontal button groups
 - Mutually exclusive filter controls for better UX
 - IST timezone enforcement across all date operations
 - Follow-up activity sourcing from activities array
 - Agent Performance metrics updated (Pipeline Value, Conversion Value)
+- Bug fixes: Quick search view-only mode implementation
 
 ## Supply Chain Security
 
