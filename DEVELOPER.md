@@ -38,6 +38,7 @@
 - ✅ **Follow-Up Activity Source**: Follow-up dates now sourced from activities array (type='follow_up') instead of field
 - ✅ **Menu Date Fix**: Follow-up menu dates now use IST instead of UTC, fixing date categorization issues
 - ✅ **Agent Performance Metrics**: Updated to show Pipeline Value and Conversion Value instead of Revenue
+- ✅ **Responsive Mobile Header**: Adaptive spacing, shorter title ("LMS" on mobile), responsive icon sizing
 
 ### Previous Improvements (v9.5 - Enhanced Analytics, Data Management & Network Resilience)
 - ✅ **Lost Reason Details**: All 6 lost reason types now require detailed explanations

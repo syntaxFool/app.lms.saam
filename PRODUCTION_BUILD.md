@@ -16,6 +16,7 @@ This guide explains how to set up a secure, production-ready build of Shanuzz Ac
 - IST timezone enforcement across all date operations
 - Follow-up activity sourcing from activities array
 - Agent Performance metrics updated (Pipeline Value, Conversion Value)
+- Responsive mobile header with adaptive spacing and shorter title
 - Bug fixes: Quick search view-only mode implementation
 
 ## Supply Chain Security

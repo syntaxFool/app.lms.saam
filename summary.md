@@ -30,6 +30,8 @@ A lightweight, mobile-first Lead Management System designed for educational acad
 
 ### Mobile Optimization
 - Mobile-first responsive design (sm:, md:, lg: breakpoints)
+- Responsive header with adaptive spacing and shorter title on mobile ("LMS" on small screens, "LeadFlow" on desktop)
+- Responsive icon sizing (smaller on mobile, larger on desktop)
 - Desktop-optimized Kanban cards with responsive spacing (md:p-5)
 - Bottom navigation for easy thumb access
 - Touch-friendly buttons and inputs (44px minimum)
