@@ -13,10 +13,8 @@ function doGet(e) {
   const lastSyncTime = e && e.parameter && e.parameter.lastSyncTime ? parseInt(e.parameter.lastSyncTime) : 0;
   if (lastSyncTime > 0) {
     leads = leads.filter(lead => {
-      // Use lastModified if available (more accurate), fallback to updatedAt for backward compatibility
-      const updateTimeStr = lead.lastModified || lead.updatedAt;
-      if (!updateTimeStr) return false;
-      const leadUpdateTime = new Date(updateTimeStr).getTime();
+      if (!lead.updatedAt) return false; // Skip leads without updatedAt (shouldn't happen)
+      const leadUpdateTime = new Date(lead.updatedAt).getTime();
       return leadUpdateTime > lastSyncTime;
     });
   }
