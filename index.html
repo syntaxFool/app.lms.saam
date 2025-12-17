@@ -2356,19 +2356,28 @@
              */
             async fetchLatestLead(leadId) {
                 try {
-                    // Try to fetch from Google Sheets via the backend API
-                    // For now, return from current state - in production, this would call the backend
+                    // Force a sync to get the latest data from the server
+                    // This ensures we have the most up-to-date version before editing
+                    if (this.store.syncWithCloud) {
+                        // Only sync if enough time has passed since last sync (avoid hammering the server)
+                        const now = Date.now();
+                        const lastSync = this._lastFetchSync || 0;
+                        if (now - lastSync > 2000) { // Allow sync every 2 seconds
+                            this._lastFetchSync = now;
+                            await this.store.syncWithCloud();
+                        }
+                    }
+                    
+                    // Get the lead from current state after sync
                     const lead = this.store.state.find(l => l.id === leadId);
                     if (!lead) return null;
                     
-                    // In a full implementation, you would call:
-                    // const response = await this.callApi('getLeadById', { id: leadId });
-                    // return response.data;
-                    
-                    return { ...lead }; // Return a copy of current state
+                    return { ...lead }; // Return a deep copy of current state
                 } catch (error) {
                     console.error('Error fetching latest lead:', error);
-                    return null;
+                    // Return current state even if fetch fails (graceful degradation)
+                    const lead = this.store.state.find(l => l.id === leadId);
+                    return lead ? { ...lead } : null;
                 }
             }
 
