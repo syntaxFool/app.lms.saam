@@ -1,13 +1,23 @@
 # Production Build Guide - Security & Performance
 
-This guide explains how to set up a secure, production-ready build of Shanuzz Academy LMS v9.6.
+This guide explains how to set up a secure, production-ready build of Shanuzz Academy LMS v9.7.
 
 ## Version Information
 
-**Latest Version:** v9.6
-**Release Date:** December 16, 2025
+**Latest Version:** v9.7
+**Release Date:** December 17, 2025
 
-### Recent Enhancements in v9.6
+### Recent Enhancements in v9.7
+- **Lost Updates Prevention**: Timestamp tracking for conflict detection (lastModified, lastModifiedBy)
+- **Fetch-Before-Save Pattern**: Automatically fetches latest lead before saving
+- **Smart Merge Algorithm**: Intelligently merges edits based on timestamps
+- **Automatic Sync on Edit**: Forces server sync before saving (throttled)
+- **Conflict Notifications**: Clear feedback when data is refreshed from server
+- **Zero Data Loss**: Never overwrites newer changes in multi-user scenarios
+- **Comprehensive Audit Trail**: All changes tracked with user, timestamp, old/new values
+- **Graceful Degradation**: Works offline, syncs when available
+
+### Previous Enhancements (v9.6)
 - Quick Search modal for fast lead lookup (search by name, email, phone)
 - Quick Search opens leads in view-only mode with Edit button to switch
 - View-Only mode for previewing leads before editing

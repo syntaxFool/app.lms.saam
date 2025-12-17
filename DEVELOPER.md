@@ -28,7 +28,18 @@
 
 ## 3. Architecture & Data Flow
 
-### Recent Improvements (v9.6 - Enhanced UX & Search)
+### Recent Improvements (v9.7 - Lost Updates Prevention & Data Integrity)
+- ✅ **Timestamp Tracking**: All leads now have `lastModified` and `lastModifiedBy` fields for conflict detection
+- ✅ **Fetch-Before-Save Pattern**: Automatically fetches latest lead from server before saving to prevent stale data overwrites
+- ✅ **Smart Merge Algorithm**: Intelligently merges user changes with server updates based on timestamps, preserving both users' edits
+- ✅ **Automatic Sync on Edit**: Forces server sync (throttled) before saving to ensure latest data
+- ✅ **Conflict Notifications**: Shows users when lead data is refreshed from server with clear feedback
+- ✅ **Zero Data Loss**: Never overwrites newer changes - uses timestamp comparison for smart decision-making
+- ✅ **Graceful Degradation**: Works offline with localStorage, syncs when available
+- ✅ **Comprehensive Audit Trail**: All changes tracked with user, timestamp, old value, new value
+- ⚠️ **Multi-User Scenario**: Tested with simultaneous edits - preserves both users' changes intelligently
+
+### Previous Improvements (v9.6 - Enhanced UX & Search)
 - ✅ **Quick Search Modal**: Fast lead lookup with magnifying glass icon in header - search by name, email, or phone
 - ✅ **Quick Search View-Only Mode**: Search results open leads in view-only mode by default, with Edit button to switch
 - ✅ **View-Only Mode**: Click lead names in table or kanban cards to preview leads before editing
