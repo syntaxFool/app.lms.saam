@@ -60,3 +60,5 @@ temp/
 
 # Vite
 .vite/
+# Local Netlify folder
+.netlify

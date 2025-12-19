@@ -1,6 +1,6 @@
 import { Handler } from '@netlify/functions'
 
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbyGxFUPk-kvRMd4-w7Gy-hOvUN72yAohXDS21CNdfuEQMPvq4hWPyRS3Jguydj5xjK3/exec'
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbzbitA_BClFUviaCXOMAwP6Kj2bkx9jlardOgMD1UWrDCVDYNsDtLVPWANscRLK4P1B/exec'
 
 export const handler: Handler = async (event) => {
   try {

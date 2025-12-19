@@ -256,9 +256,7 @@ function updateLastModified() {
 function createCORSResponse(jsonString) {
   const response = ContentService.createTextOutput(jsonString);
   response.setMimeType(ContentService.MimeType.JSON);
-  response.addHeader('Access-Control-Allow-Origin', '*');
-  response.addHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  response.addHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  // CORS headers are handled by Netlify proxy, not needed here
   return response;
 }
 
@@ -274,22 +272,27 @@ function authenticateUser(ss, credentials) {
     
     // Get users from sheet
     const usersSheet = ss.getSheetByName('Users');
+    if (!usersSheet) {
+      return { success: false, error: 'Users sheet not found' };
+    }
+    
     const users = readSheet(usersSheet);
     
-    // Find user
+    // Find user - check multiple possible column names
     let user = null;
     for (let i = 0; i < users.length; i++) {
-      if (users[i].username === uid) {
-        // Simple password comparison (in production, use proper hashing)
-        if (users[i].password === password) {
-          user = {
-            id: users[i].id || Utilities.getUuid(),
-            name: users[i].name,
-            email: uid,
-            role: users[i].role || 'user',
-            picture: 'https://via.placeholder.com/50'
-          };
-        }
+      const currentUser = users[i];
+      const userUsername = currentUser.username || currentUser.uid || currentUser.UID;
+      const userPassword = String(currentUser.password || currentUser.Password); // Convert to string for comparison
+      
+      if (userUsername === uid && userPassword.trim() === password.trim()) {
+        user = {
+          id: currentUser.id || Utilities.getUuid(),
+          name: currentUser.name || currentUser.username || uid,
+          email: uid,
+          role: currentUser.role || 'user',
+          picture: 'https://via.placeholder.com/50'
+        };
         break;
       }
     }
@@ -389,24 +392,13 @@ function logoutUser(ss, userData) {
 
 function createJWT(user) {
   try {
-    const header = Utilities.base64Encode(JSON.stringify({ alg: 'HS256', typ: 'JWT' })).replace(/=+$/, '');
-    const now = Math.floor(new Date().getTime() / 1000);
-    const payload = Utilities.base64Encode(JSON.stringify({
-      user,
-      iat: now,
-      exp: now + (24 * 60 * 60) // 24 hours
-    })).replace(/=+$/, '');
-    
-    // Simple signature (in production use HMAC-SHA256)
-    const message = header + '.' + payload;
-    const signature = Utilities.base64Encode(
-      Utilities.computeSignature(Utilities.SignatureAlgorithm.HMAC_SHA_256, message, SECRET_KEY)
-    ).replace(/=+$/, '');
-    
-    return message + '.' + signature;
+    // Generate a simple session token (UUID-based)
+    // In production, use proper JWT with signing
+    const token = Utilities.getUuid() + '_' + new Date().getTime();
+    return token;
   } catch (error) {
-    console.log('Error creating JWT:', error);
-    return null;
+    console.log('Error creating token:', error);
+    return Utilities.getUuid(); // Fallback
   }
 }
 
