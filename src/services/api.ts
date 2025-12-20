@@ -8,10 +8,8 @@ import { get as getCached, set as setCached } from './cache'
 // Configuration for the API client
 const isDev = import.meta.env.DEV
 const API_CONFIG = {
-  // Use Netlify Function proxy in dev, direct GAS URL in production
-  baseURL: isDev 
-    ? '/.netlify/functions/proxy'
-    : (import.meta.env.VITE_API_BASE_URL as string) || 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec',
+  // Always use Netlify Function proxy to avoid CORS issues
+  baseURL: '/.netlify/functions/proxy',
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
