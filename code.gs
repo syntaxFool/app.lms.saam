@@ -559,17 +559,10 @@ function initializeSheets() {
       }
     });
     
-    // Initialize Users sheet with superuser
+    // Initialize Users sheet (empty - no demo data)
     const usersSheet = ss.getSheetByName('Users');
     if (usersSheet.getLastRow() === 0) {
-      const superUser = {
-        id: Utilities.getUuid(),
-        username: 'nox1',
-        password: '1233',
-        name: 'Superuser',
-        role: 'admin'
-      };
-      writeSheet(usersSheet, [superUser], ['id', 'username', 'password', 'name', 'role']);
+      usersSheet.appendRow(['id', 'username', 'password', 'name', 'role']);
     }
     
     // Initialize Leads sheet
@@ -602,13 +595,11 @@ function initializeSheets() {
       interestsSheet.appendRow(['id', 'name', 'category']);
     }
     
-    // Initialize Settings sheet
+    // Initialize Settings sheet (empty - no demo data)
     const settingsSheet = ss.getSheetByName('Settings');
     if (settingsSheet.getLastRow() === 0) {
       settingsSheet.appendRow(['Locations', 'Sources', 'TaskTitles', 'ScriptURL', 'AppTitle']);
-      settingsSheet.appendRow(['New York', 'Facebook', 'Follow up', '', 'Shanuzz Academy LMS']);
-      settingsSheet.appendRow(['Los Angeles', 'Google', 'Call', '', '']);
-      settingsSheet.appendRow(['Chicago', 'LinkedIn', 'Email', '', '']);
+      settingsSheet.appendRow(['', '', '', '', 'Shanuzz Academy LMS']);
     }
     
     Logger.log('Database initialized successfully!');
