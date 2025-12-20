@@ -1,6 +1,21 @@
 # LeadFlow India - Vue.js LMS
 
-A modern Learning Management System built with Vue.js 3, TypeScript, and Google Apps Script backend.
+A modern Learning Management System built with Vue.js 3, TypeScript, and Google Apps Script backend. **Ready for production deployment on Netlify.**
+
+## 🚀 Quick Deploy
+
+Deploy to Netlify in 5 minutes:
+
+```bash
+# 1. Push to GitHub (already done)
+git push
+
+# 2. Go to app.netlify.com and connect this repository
+# 3. Set environment variables in Netlify Dashboard
+# 4. Deploy automatically triggers on git push
+```
+
+📖 **[Full Deployment Guide](docs/NETLIFY_DEPLOYMENT.md)** | 📋 **[GitHub Integration](docs/GITHUB_INTEGRATION_CHECKLIST.md)** | ✅ **[Ready Status](docs/NETLIFY_READY_STATUS.md)**
 
 ## 🚀 Tech Stack
 
@@ -169,11 +184,32 @@ Pinia stores handle application state:
 
 ## 🌐 Deployment
 
+### Netlify (Recommended)
+
+The application is fully configured for **production-ready deployment on Netlify**:
+
+✅ **Status**: Ready to deploy  
+✅ **Build time**: ~2-3 minutes  
+✅ **Build size**: 481 KB precached (170 KB gzipped)  
+✅ **Functions**: Serverless functions configured  
+✅ **Security**: HTTPS, security headers, CORS configured  
+
+**Quick deployment**:
+1. Go to [app.netlify.com](https://app.netlify.com)
+2. Connect this GitHub repository
+3. Set environment variables (from `.env.example`)
+4. Click deploy
+
+📖 **Detailed guides**:
+- [NETLIFY_DEPLOYMENT.md](docs/NETLIFY_DEPLOYMENT.md) - Complete deployment guide
+- [GITHUB_INTEGRATION_CHECKLIST.md](docs/GITHUB_INTEGRATION_CHECKLIST.md) - GitHub to Netlify setup
+- [NETLIFY_READY_STATUS.md](docs/NETLIFY_READY_STATUS.md) - Ready status summary
+
 ### Development
 
 The application runs on Vite dev server at `http://localhost:3000`
 
-### Production
+### Production Build
 
 1. Build the application:
 
@@ -181,7 +217,7 @@ The application runs on Vite dev server at `http://localhost:3000`
    npm run build
    ```
 
-2. Deploy the `dist/` folder to your hosting provider (Netlify, Vercel, etc.)
+2. Deploy the `dist/` folder to your hosting provider
 
 3. Configure environment variables in your hosting provider
 
@@ -192,6 +228,8 @@ The application includes PWA configuration:
 - Mobile-first responsive design
 - Touch-friendly interface
 - Offline-ready foundation
+- Service worker with intelligent caching
+- Installable on mobile devices
 
 ## 🤝 Contributing
 
