@@ -2,35 +2,67 @@
   publish = "dist"
   command = "npm run build"
   functions = "netlify/functions"
+  environment = { NODE_VERSION = "18" }
 
 [build.environment]
   NODE_VERSION = "18"
+  NODE_ENV = "production"
 
 [dev]
   targetPort = 3000
   port = 8888
+  command = "npm run dev"
 
 [context.production.environment]
   NODE_ENV = "production"
+
+[context.preview.environment]
+  NODE_ENV = "staging"
 
 # Redirect all non-file requests to index.html for SPA routing
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
+  conditions = { Language = ["en"] }
 
-# Cache settings
+# API proxy redirect
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+
+# Cache settings for assets
 [[headers]]
-  for = "*.js"
+  for = "dist/assets/*"
   [headers.values]
     Cache-Control = "public, max-age=31536000, immutable"
-
-[[headers]]
-  for = "*.css"
-  [headers.values]
-    Cache-Control = "public, max-age=31536000, immutable"
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "SAMEORIGIN"
 
 [[headers]]
   for = "index.html"
   [headers.values]
     Cache-Control = "public, max-age=0, must-revalidate"
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "SAMEORIGIN"
+
+[[headers]]
+  for = "/*.svg"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+    Service-Worker-Allowed = "/"
+
+# Security headers
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
+    X-XSS-Protection = "1; mode=block"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "geolocation=(), microphone=(), camera=()"

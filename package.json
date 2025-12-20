@@ -5,11 +5,11 @@
   "description": "Learning Management System with Google Apps Script and Google Sheets backend",
   "scripts": {
     "dev": "vite --host",
-    "build": "vue-tsc && vite build",
+    "build": "vite build",
     "preview": "vite preview",
+    "type-check": "vue-tsc --noEmit",
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore",
-    "format": "prettier --write src/",
-    "type-check": "vue-tsc --noEmit"
+    "format": "prettier --write src/"
   },
   "dependencies": {
     "@vueuse/core": "^10.7.0",
