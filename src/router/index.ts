@@ -4,8 +4,8 @@ import type { RouteRecordRaw } from 'vue-router'
 const routes: RouteRecordRaw[] = [
   {
     path: '/',
-    name: 'Dashboard',
-    component: () => import('@/views/Dashboard.vue'),
+    name: 'Leads',
+    component: () => import('@/views/LeadsManager.vue'),
     meta: { requiresAuth: true }
   },
   {
@@ -14,34 +14,10 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/views/Login.vue'),
     meta: { requiresAuth: false }
   },
-  {
-    path: '/leads',
-    name: 'Leads',
-    component: () => import('@/views/Leads.vue'),
-    meta: { requiresAuth: true }
-  },
-  {
-    path: '/activities',
-    name: 'Activities',
-    component: () => import('@/views/Activities.vue'),
-    meta: { requiresAuth: true }
-  },
-  {
-    path: '/tasks',
-    name: 'Tasks',
-    component: () => import('@/views/Tasks.vue'),
-    meta: { requiresAuth: true }
-  },
-  {
-    path: '/reports',
-    name: 'Reports',
-    component: () => import('@/views/Reports.vue'),
-    meta: { requiresAuth: true }
-  }
 ]
 
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHistory(import.meta.env.BASE_URL),
   routes
 })
 

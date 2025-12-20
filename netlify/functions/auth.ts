@@ -1,6 +1,7 @@
 import { Handler } from '@netlify/functions'
 
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbyGxFUPk-kvRMd4-w7Gy-hOvUN72yAohXDS21CNdfuEQMPvq4hWPyRS3Jguydj5xjK3/exec'
+// Use the same proxy GAS URL for consistency
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbzbitA_BClFUviaCXOMAwP6Kj2bkx9jlardOgMD1UWrDCVDYNsDtLVPWANscRLK4P1B/exec'
 
 export const handler: Handler = async (event) => {
   // Only allow POST requests
@@ -14,7 +15,7 @@ export const handler: Handler = async (event) => {
   try {
     const body = JSON.parse(event.body || '{}')
     
-    // Forward request to Google Apps Script
+    // Forward request to Google Apps Script (same as proxy)
     const response = await fetch(GAS_URL, {
       method: 'POST',
       headers: {
@@ -25,8 +26,12 @@ export const handler: Handler = async (event) => {
 
     const data = await response.text()
     
+    // Log for debugging
+    console.log('Auth response status:', response.status)
+    console.log('Auth response body:', data.substring(0, 200))
+    
     return {
-      statusCode: 200,
+      statusCode: response.status,
       headers: {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*',
@@ -36,10 +41,10 @@ export const handler: Handler = async (event) => {
       body: data
     }
   } catch (error) {
-    console.error('Function error:', error)
+    console.error('Auth function error:', error)
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: 'Server error' })
+      body: JSON.stringify({ error: 'Server error', details: String(error) })
     }
   }
 }

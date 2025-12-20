@@ -2,6 +2,19 @@
 const SHEET_ID = '1QyDwEBFR3fXve9lifuH9pdbDIyuLLC2RQrOmMYNMmII';
 const SECRET_KEY = 'diffusion-bulginess-symphony';
 
+// ========== ROLE LIMITS ==========
+// Enforce maximum users per role:
+// - Superuser: max 1 (system administrator)
+// - Admin: max 5 (team managers)
+// - Agent: max 10 (sales/support team)
+// - User: unlimited
+const ROLE_LIMITS = {
+  superuser: 1,
+  admin: 5,
+  agent: 10,
+  user: Infinity
+};
+
 function doGet(e) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   setupSheets(ss);
@@ -136,7 +149,18 @@ function doPost(e) {
     }
     
     if (data.action === 'save_all') {
-      if(data.users) writeSheet(ss.getSheetByName('Users'), data.users, ['id', 'username', 'password', 'name', 'role']);
+      if(data.users) {
+        // Validate role limits before saving users
+        const validation = validateUserRoleLimits(data.users);
+        if (!validation.success) {
+          return createCORSResponse(JSON.stringify({ 
+            success: false, 
+            error: validation.message,
+            violations: validation.violations 
+          }));
+        }
+        writeSheet(ss.getSheetByName('Users'), data.users, ['id', 'username', 'password', 'name', 'role']);
+      }
       if(data.logs) writeSheet(ss.getSheetByName('Logs'), data.logs, ['id', 'timestamp', 'message']);
       
       if(data.leads) {
@@ -253,11 +277,129 @@ function updateLastModified() {
   PropertiesService.getScriptProperties().setProperty('LAST_UPDATE', new Date().getTime().toString());
 }
 
+// ========== ROLE LIMIT FUNCTIONS ==========
+
+/**
+ * Get count of users by role
+ * @param {Array} users - Array of user objects
+ * @returns {Object} - Count of users per role
+ */
+function getRoleStats(users) {
+  const stats = {
+    superuser: 0,
+    admin: 0,
+    agent: 0,
+    user: 0
+  };
+  
+  users.forEach(u => {
+    const role = u.role || 'user';
+    if (stats.hasOwnProperty(role)) {
+      stats[role]++;
+    }
+  });
+  
+  return stats;
+}
+
+/**
+ * Check if a new user can be created with the given role
+ * @param {string} role - The role to assign to the new user
+ * @param {Array} users - Array of existing users
+ * @returns {Object} - { allowed: boolean, message: string, current: number, limit: number }
+ */
+function checkRoleLimits(role, users) {
+  const stats = getRoleStats(users);
+  const limit = ROLE_LIMITS[role] || Infinity;
+  const current = stats[role] || 0;
+  
+  if (current >= limit) {
+    const messages = {
+      superuser: `Maximum 1 superuser allowed. Current: ${current}/1`,
+      admin: `Maximum 5 admins allowed. Current: ${current}/5`,
+      agent: `Maximum 10 agents allowed. Current: ${current}/10`,
+      user: `User accounts cannot exceed system limits. Current: ${current}`
+    };
+    
+    return {
+      allowed: false,
+      message: messages[role] || `Maximum ${limit} ${role}s allowed`,
+      current: current,
+      limit: limit
+    };
+  }
+  
+  const remaining = limit - current;
+  return {
+    allowed: true,
+    message: `${remaining} slot${remaining === 1 ? '' : 's'} remaining for ${role}s`,
+    current: current,
+    limit: limit,
+    remaining: remaining
+  };
+}
+
+/**
+ * Get formatted role limits display
+ * @param {Array} users - Array of users
+ * @returns {string} - Formatted string like "Superuser: 0/1 | Admins: 3/5 | Agents: 8/10"
+ */
+function getRoleLimitsDisplay(users) {
+  const stats = getRoleStats(users);
+  return [
+    `Superuser: ${stats.superuser}/${ROLE_LIMITS.superuser}`,
+    `Admins: ${stats.admin}/${ROLE_LIMITS.admin}`,
+    `Agents: ${stats.agent}/${ROLE_LIMITS.agent}`
+  ].join(' | ');
+}
+
 function createCORSResponse(jsonString) {
   const response = ContentService.createTextOutput(jsonString);
   response.setMimeType(ContentService.MimeType.JSON);
   // CORS headers are handled by Netlify proxy, not needed here
   return response;
+}
+
+// ========== USER VALIDATION ==========
+
+/**
+ * Validate that users array respects role limits
+ * @param {Array} users - Array of user objects to validate
+ * @returns {Object} - { success: boolean, message?: string, violations?: Array }
+ */
+function validateUserRoleLimits(users) {
+  if (!Array.isArray(users)) {
+    return { success: false, message: 'Users must be an array' };
+  }
+  
+  const stats = getRoleStats(users);
+  const violations = [];
+  
+  // Check each role against its limit
+  Object.keys(stats).forEach(role => {
+    const count = stats[role];
+    const limit = ROLE_LIMITS[role];
+    
+    if (count > limit) {
+      violations.push({
+        role: role,
+        current: count,
+        limit: limit,
+        message: `Too many ${role}s: ${count} > ${limit}`
+      });
+    }
+  });
+  
+  if (violations.length > 0) {
+    const violationMessages = violations.map(v => v.message).join('; ');
+    return {
+      success: false,
+      message: `Role limit violation: ${violationMessages}`,
+      violations: violations
+    };
+  }
+  
+  return { success: true };
 }
 
 // ========== AUTHENTICATION FUNCTIONS ==========

@@ -14,8 +14,10 @@ interface LoginResponse {
 export const authService = {
   async login(credentials: LoginCredentials): Promise<ApiResponse<LoginResponse>> {
     try {
-      // Use Google Apps Script for authentication
+      // Use Google Apps Script for authentication via proxy
       const response = await gasApi.execute('authenticateUser', credentials)
+      
+      console.log('Auth response:', response)
       
       if (response.success && response.data) {
         // Store token and user info
@@ -33,7 +35,7 @@ export const authService = {
       console.error('Auth service login error:', error)
       return {
         success: false,
-        error: 'Authentication failed'
+        error: error instanceof Error ? error.message : 'Authentication failed'
       }
     }
   },
@@ -41,6 +43,9 @@ export const authService = {
   async validateToken(token: string): Promise<ApiResponse<AuthUser>> {
     try {
       const response = await gasApi.execute('validateToken', { token })
+      
+      console.log('Token validation response:', response)
+      
       return response
     } catch (error) {
       console.error('Auth service token validation error:', error)

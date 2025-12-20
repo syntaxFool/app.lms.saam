@@ -13,6 +13,17 @@
   input, select, textarea {
     font-size: 16px !important;
   }
+
+  /* Prevent layout shift before Phosphor Icons loads */
+  i[class*="ph-"] {
+    display: inline-block;
+  }
+
+  /* Ensure app container fills viewport properly */
+  #app {
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
 }
 
 @layer components {

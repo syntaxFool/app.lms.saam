@@ -12,8 +12,6 @@ import { useAuthStore } from '@/stores/auth'
 const authStore = useAuthStore()
 
 onMounted(() => {
-  // Initialize the app
-  console.log('LeadFlow India LMS - Vue.js App Initialized')
   // Check for existing authentication
   authStore.checkAuth()
 })
