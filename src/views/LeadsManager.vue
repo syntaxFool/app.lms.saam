@@ -221,12 +221,8 @@ const leadModalMode = ref<'add' | 'edit' | 'view'>('add')
 const selectedLeadId = ref<string>('')
 const pendingPhoneNumber = ref<string>('')
 
-// Initialize mock data on first load
+// Initialize on first load  
 onMounted(() => {
-  if (leadsStore.leads.length === 0) {
-    leadsStore.initializeMockData()
-  }
-
   // Handle window resize
   const handleResize = () => {
     isMdScreen.value = window.innerWidth >= 768
