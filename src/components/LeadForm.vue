@@ -70,22 +70,22 @@
             <div>
               <label class="block text-sm font-semibold text-slate-700 mb-1.5">Phone</label>
               <div class="flex gap-2">
-                <input
-                  v-model="phonePrefix"
-                  type="text"
-                  class="w-16 bg-slate-100 border border-slate-200 rounded-xl px-2 py-3 text-center text-sm focus:ring-2 focus:ring-primary outline-none"
-                  value="+91"
-                  readonly
-                />
+                <div class="w-28">
+                  <CountryCodeSelect 
+                    v-model="phonePrefix" 
+                    size="sm"
+                  />
+                </div>
                 <input
                   v-model="phoneNumber"
                   type="tel"
                   class="flex-1 bg-white border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary outline-none transition"
-                  placeholder="98765 43210"
-                  maxlength="10"
-                  pattern="\d{10}"
+                  :placeholder="getPhoneInputPlaceholder(phonePrefix)"
+                  :maxlength="getPhoneInputMaxLength(phonePrefix)"
+                  @input="handlePhoneInput"
                 />
               </div>
+              <p v-if="phoneError" class="mt-1 text-sm text-red-600">{{ phoneError }}</p>
             </div>
           </div>
 
@@ -274,8 +274,10 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import type { Lead, User, LeadStatus } from '@/types'
+import { useCountryCodes } from '@/composables/useCountryCodes'
 import ActivityTimeline from './ActivityTimeline.vue'
 import TaskList from './TaskList.vue'
+import CountryCodeSelect from './CountryCodeSelect.vue'
 
 const props = defineProps<{
   modelValue: boolean
@@ -291,6 +293,12 @@ const emit = defineEmits<{
   'delete-task': [leadId: string, taskIndex: number]
 }>()
 
+const { 
+  validatePhoneLength, 
+  getPhoneInputPlaceholder, 
+  getPhoneInputMaxLength 
+} = useCountryCodes()
+
 const showModal = computed({
   get: () => props.modelValue,
   set: (val) => emit('update:modelValue', val)
@@ -301,6 +309,7 @@ const activeTab = ref('Info')
 
 const phonePrefix = ref('+91')
 const phoneNumber = ref('')
+const phoneError = ref('')
 const interestInput = ref('')
 const selectedInterests = ref<string[]>([])
 
@@ -362,6 +371,23 @@ function resetForm() {
   selectedInterests.value = []
   interestInput.value = ''
   newTask.value = { title: '', note: '', dueDate: '' }
+}
+
+function handlePhoneInput() {
+  // Clean the phone number (remove non-digits)
+  phoneNumber.value = phoneNumber.value.replace(/\D/g, '')
+  
+  // Validate phone length based on country code
+  if (phoneNumber.value.length > 0) {
+    const isValid = validatePhoneLength(phonePrefix.value, phoneNumber.value)
+    if (!isValid) {
+      phoneError.value = `Invalid phone number length for ${phonePrefix.value}`
+    } else {
+      phoneError.value = ''
+    }
+  } else {
+    phoneError.value = ''
+  }
 }
 
 function addInterest() {

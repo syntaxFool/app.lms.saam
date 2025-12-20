@@ -91,31 +91,30 @@
               <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div>
                   <label class="block text-sm font-semibold text-slate-700 mb-1.5">Phone *</label>
-                  <div class="relative flex items-stretch">
-                    <div class="flex-shrink-0">
+                  <div class="flex gap-2">
+                    <div class="w-28">
                       <label class="block text-xs text-slate-500 mb-1 text-center">Code</label>
-                      <input
-                        type="text"
-                        disabled
-                        class="w-20 bg-slate-100 border border-slate-200 rounded-l-xl text-center text-slate-700 font-medium text-sm outline-none disabled:bg-slate-50 py-3"
-                        :value="+91"
+                      <CountryCodeSelect 
+                        v-model="phonePrefix" 
+                        size="sm"
+                        :disabled="modalMode === 'view'"
                       />
                     </div>
                     <div class="flex-1">
                       <label class="block text-xs text-slate-500 mb-1">Number</label>
                       <input
-                        v-model="formData.phone"
+                        v-model="phoneNumber"
                         type="tel"
                         required
-                        pattern="\d{10}"
-                        maxlength="10"
                         :disabled="modalMode === 'view'"
-                        class="w-full bg-white border border-slate-200 rounded-r-xl px-4 py-3 focus:ring-2 focus:ring-primary outline-none transition disabled:bg-slate-50 disabled:cursor-not-allowed"
-                        placeholder="9876543210"
-                        @input="formData.phone = formData.phone.replace(/[^0-9]/g, '').slice(0, 10)"
+                        class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary outline-none transition disabled:bg-slate-50 disabled:cursor-not-allowed"
+                        :placeholder="getPhoneInputPlaceholder(phonePrefix)"
+                        :maxlength="getPhoneInputMaxLength(phonePrefix)"
+                        @input="handlePhoneInput"
                       />
                     </div>
                   </div>
+                  <p v-if="phoneError" class="mt-1 text-sm text-red-600">{{ phoneError }}</p>
                 </div>
                 <div>
                   <label class="block text-sm font-semibold text-slate-700 mb-1.5">Email</label>
@@ -522,10 +521,18 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useLeadsStore } from '@/stores/leads'
+import { useCountryCodes } from '@/composables/useCountryCodes'
 import type { Lead, ActivityType, LostReasonType } from '@/types'
 import LostReasonModal from './LostReasonModal.vue'
+import CountryCodeSelect from './CountryCodeSelect.vue'
 
 const leadsStore = useLeadsStore()
+
+const { 
+  validatePhoneLength, 
+  getPhoneInputPlaceholder, 
+  getPhoneInputMaxLength 
+} = useCountryCodes()
 
 interface Props {
   isOpen: boolean
@@ -548,6 +555,11 @@ const emit = defineEmits<Emits>()
 const currentTab = ref('info')
 const modalMode = ref<'add' | 'edit' | 'view'>(props.mode)
 const formError = ref('')
+
+// Phone handling
+const phonePrefix = ref('+91')
+const phoneNumber = ref('')
+const phoneError = ref('')
 
 // Lost Reason modal state
 const isLostReasonModalOpen = ref(false)
@@ -661,6 +673,24 @@ const filteredSources = computed(() => {
   return sources.filter(s => s.toLowerCase().includes(search))
 })
 
+// Phone handling function
+const handlePhoneInput = () => {
+  // Clean the phone number (remove non-digits)
+  phoneNumber.value = phoneNumber.value.replace(/\D/g, '')
+  
+  // Validate phone length based on country code
+  if (phoneNumber.value.length > 0) {
+    const isValid = validatePhoneLength(phonePrefix.value, phoneNumber.value)
+    if (!isValid) {
+      phoneError.value = `Invalid phone number length for ${phonePrefix.value}`
+    } else {
+      phoneError.value = ''
+    }
+  } else {
+    phoneError.value = ''
+  }
+}
+
 watch(() => props.isOpen, (newVal) => {
   if (newVal) {
     currentTab.value = 'info'
@@ -683,12 +713,24 @@ watch(() => props.isOpen, (newVal) => {
         lostReason: existingLead.value.lostReason || '',
         lostReasonType: existingLead.value.lostReasonType
       }
+      // Parse existing phone number
+      if (existingLead.value.phone) {
+        const parts = existingLead.value.phone.split(' ')
+        if (parts.length >= 2) {
+          phonePrefix.value = parts[0]
+          phoneNumber.value = parts.slice(1).join('')
+        } else {
+          // Assume it's just the number without country code
+          phonePrefix.value = '+91'
+          phoneNumber.value = existingLead.value.phone
+        }
+      }
       previousStatus.value = existingLead.value.status || 'New'
     } else {
       resetForm()
       // Prefill phone if provided
       if (props.prefillPhone) {
-        formData.value.phone = props.prefillPhone
+        phoneNumber.value = props.prefillPhone
       }
     }
   }
@@ -710,6 +752,9 @@ const resetForm = () => {
     lostReason: '',
     lostReasonType: undefined
   }
+  phonePrefix.value = '+91'
+  phoneNumber.value = ''
+  phoneError.value = ''
   formError.value = ''
   previousStatus.value = 'New'
 }
@@ -722,16 +767,19 @@ const submitForm = async () => {
     return
   }
 
-  if (!formData.value.phone || formData.value.phone.length !== 10) {
-    formError.value = 'Valid 10-digit phone number is required'
+  if (!phoneNumber.value || !validatePhoneLength(phonePrefix.value, phoneNumber.value)) {
+    formError.value = `Valid phone number is required for ${phonePrefix.value}`
     return
   }
+
+  // Combine country code and phone number
+  const fullPhoneNumber = `${phonePrefix.value} ${phoneNumber.value}`
 
   try {
     if (modalMode.value === 'add') {
       const result = await leadsStore.addNewLead({
         name: formData.value.name,
-        phone: formData.value.phone,
+        phone: fullPhoneNumber,
         email: formData.value.email,
         status: formData.value.status as any,
         temperature: formData.value.temperature as any,
@@ -750,7 +798,7 @@ const submitForm = async () => {
     } else if (modalMode.value === 'edit' && props.leadId) {
       const result = await leadsStore.updateLeadData(props.leadId, {
         name: formData.value.name,
-        phone: formData.value.phone,
+        phone: fullPhoneNumber,
         email: formData.value.email,
         status: formData.value.status as any,
         temperature: formData.value.temperature as any,

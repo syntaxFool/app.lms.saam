@@ -23,17 +23,19 @@
           <div class="mb-4">
             <label class="block text-sm font-semibold text-slate-700 mb-2">Phone Number</label>
             <div class="flex gap-2">
-              <div class="flex items-center bg-slate-100 border border-slate-200 rounded-lg px-3 py-2.5 text-slate-600 font-medium">
-                +91
+              <div class="w-28">
+                <CountryCodeSelect 
+                  v-model="phonePrefix" 
+                  size="sm"
+                />
               </div>
               <input
                 ref="phoneInput"
                 v-model="phoneNumber"
                 type="tel"
-                maxlength="10"
-                pattern="[0-9]{10}"
                 class="flex-1 bg-white border border-slate-200 rounded-lg px-4 py-2.5 text-lg font-mono focus:ring-2 focus:ring-primary outline-none"
-                placeholder="9876543210"
+                :placeholder="getPhoneInputPlaceholder(phonePrefix)"
+                :maxlength="getPhoneInputMaxLength(phonePrefix)"
                 @input="handlePhoneInput"
                 @keyup.enter="handleSubmit"
               />
@@ -98,7 +100,7 @@
           </div>
 
           <!-- No Duplicate - Continue Button -->
-          <div v-else-if="phoneNumber.length === 10 && !phoneError">
+          <div v-else-if="phoneNumber && validatePhoneLength(phonePrefix, phoneNumber) && !phoneError">
             <button
               @click="handleSubmit"
               class="w-full bg-primary text-white font-bold py-3 rounded-lg hover:bg-indigo-600 transition flex items-center justify-center gap-2"
@@ -116,7 +118,9 @@
 <script setup lang="ts">
 import { ref, computed, watch, nextTick } from 'vue'
 import { useLeadsStore } from '@/stores/leads'
+import { useCountryCodes } from '@/composables/useCountryCodes'
 import type { Lead } from '@/types'
+import CountryCodeSelect from './CountryCodeSelect.vue'
 
 interface Props {
   isOpen: boolean
@@ -132,22 +136,40 @@ const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
 const leadsStore = useLeadsStore()
+
+const { 
+  validatePhoneLength, 
+  getPhoneInputPlaceholder, 
+  getPhoneInputMaxLength,
+  formatPhoneNumber
+} = useCountryCodes()
+
 const phoneInput = ref<HTMLInputElement | null>(null)
+const phonePrefix = ref('+91')
 const phoneNumber = ref('')
 const phoneError = ref('')
 
-// Check for duplicates
+// Check for duplicates - need to check with full phone format
 const duplicateLeads = computed((): Lead[] => {
-  if (phoneNumber.value.length !== 10) return []
-  return leadsStore.leads.filter(lead => 
-    lead.phone === phoneNumber.value
-  )
+  if (!phoneNumber.value) return []
+  
+  const fullPhone = formatPhoneNumber(phonePrefix.value, phoneNumber.value)
+  
+  return leadsStore.leads.filter(lead => {
+    if (!lead.phone) return false
+    
+    // Check if lead's phone matches either format
+    return lead.phone === phoneNumber.value || // Legacy format
+           lead.phone === fullPhone || // Full format with country code
+           lead.phone.replace(/\s+/g, '') === `${phonePrefix.value}${phoneNumber.value}` // Stripped spaces
+  })
 })
 
 // Watch for modal opening to focus input
 watch(() => props.isOpen, (isOpen) => {
   if (isOpen) {
     phoneNumber.value = ''
+    phonePrefix.value = '+91'
     phoneError.value = ''
     nextTick(() => {
       phoneInput.value?.focus()
@@ -159,28 +181,33 @@ const handlePhoneInput = () => {
   // Only allow numbers
   phoneNumber.value = phoneNumber.value.replace(/\D/g, '')
   
-  // Validate
+  // Validate based on selected country code
   phoneError.value = ''
-  if (phoneNumber.value.length > 0 && phoneNumber.value.length < 10) {
-    phoneError.value = 'Phone number must be 10 digits'
+  if (phoneNumber.value.length > 0) {
+    const isValid = validatePhoneLength(phonePrefix.value, phoneNumber.value)
+    if (!isValid) {
+      phoneError.value = `Invalid phone number length for ${phonePrefix.value}`
+    }
   }
 }
 
 const handleSubmit = () => {
-  if (phoneNumber.value.length !== 10) {
-    phoneError.value = 'Please enter a valid 10-digit phone number'
+  if (!validatePhoneLength(phonePrefix.value, phoneNumber.value)) {
+    phoneError.value = `Please enter a valid phone number for ${phonePrefix.value}`
     return
   }
   
   if (duplicateLeads.value.length === 0) {
-    emit('submit', phoneNumber.value)
+    const fullPhone = formatPhoneNumber(phonePrefix.value, phoneNumber.value)
+    emit('submit', fullPhone)
     close()
   }
 }
 
 const continueAnyway = () => {
-  if (phoneNumber.value.length === 10) {
-    emit('submit', phoneNumber.value)
+  if (validatePhoneLength(phonePrefix.value, phoneNumber.value)) {
+    const fullPhone = formatPhoneNumber(phonePrefix.value, phoneNumber.value)
+    emit('submit', fullPhone)
     close()
   }
 }
@@ -196,7 +223,18 @@ const close = () => {
 
 const formatPhone = (phone: string): string => {
   if (!phone) return ''
-  return `+91 ${phone.slice(0, 5)} ${phone.slice(5)}`
+  
+  // If phone already contains country code
+  if (phone.includes('+') || phone.includes(' ')) {
+    return phone
+  }
+  
+  // Legacy format - assume +91
+  if (phone.length === 10) {
+    return `+91 ${phone.slice(0, 5)} ${phone.slice(5)}`
+  }
+  
+  return phone
 }
 
 const getStatusClass = (status: string): string => {

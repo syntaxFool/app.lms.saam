@@ -3,6 +3,9 @@
 export { useConflictDetection } from './useConflictDetection'
 export type { ConflictField, ConflictInfo } from './useConflictDetection'
 
+export { useCountryCodes } from './useCountryCodes'
+export type { CountryCode } from './useCountryCodes'
+
 export { useFollowUpTracking } from './useFollowUpTracking'
 
 export { useLeadFiltering } from './useLeadFiltering'
