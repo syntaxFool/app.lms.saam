@@ -21,6 +21,10 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.getRegistrations().then(regs => {
     regs.forEach(reg => reg.update())
   })
+  // Delete all old caches that don't belong to current SW
+  caches.keys().then(keys => {
+    keys.filter(k => !k.includes('shanuzz-lms-v2')).forEach(k => caches.delete(k))
+  })
 }
 
 const app = createApp(App)
