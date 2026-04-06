@@ -159,10 +159,10 @@ router.post('/', requireAuth, requireRole('superuser', 'admin', 'agent'), valida
       `INSERT INTO leads
          (id, name, phone, email, location, interest, source, status, assigned_to,
           temperature, value, notes, follow_up_date, last_modified_by)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+       VALUES (COALESCE($1::uuid, gen_random_uuid()),$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
        RETURNING *`,
       [
-        d.id || undefined,
+        d.id || null,
         d.name || null, d.phone,
         d.email || null, d.location || null, d.interest || null, d.source || null,
         d.status || 'New',
@@ -181,7 +181,7 @@ router.post('/', requireAuth, requireRole('superuser', 'admin', 'agent'), valida
     await query(
       `INSERT INTO activities (lead_id, type, note, created_by, role)
        VALUES ($1, 'lead_created', $2, $3, $4)`,
-      [row.id, `Lead created: ${d.name}`, req.user!.username, req.user!.role]
+      [row.id, `Lead created: ${d.name || d.phone}`, req.user!.username, req.user!.role]
     )
 
     const activities = await query('SELECT * FROM activities WHERE lead_id = $1', [row.id])
