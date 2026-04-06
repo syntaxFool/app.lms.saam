@@ -146,16 +146,50 @@ docker compose restart
 ```
 
 ### Redeploy after code changes
-```bash
-# From local machine
-rsync -avz --exclude node_modules --exclude .git --exclude dist --exclude dev-dist \
-  --exclude backend/node_modules --exclude backend/dist \
-  -e "ssh -p 2222 -i ~/.ssh/id_ed25519_nas" \
-  . nas@154.84.215.26:/home/nas/lms-app/
 
-# On server
-ssh -p 2222 -i ~/.ssh/id_ed25519_nas nas@154.84.215.26 \
-  "cd /home/nas/lms-app && docker compose up -d --build"
+> **Important:** The deploy directory on the NAS (`/home/nas/lms-app`) is **not a git repo** — code is rsynced from local. Never `git pull` on the server.
+
+**Step 1 — Commit and push (local)**
+```bash
+cd "/Drive/codeProject/Shanuzz/App-Tools/webApp x LMS"
+git add -A
+git commit -m "your message"
+git push origin master
+```
+
+**Step 2 — Rsync to NAS (local)**
+```bash
+rsync -avz \
+  -e "ssh -p 2222 -i ~/.ssh/id_ed25519_nas" \
+  --exclude='.git' \
+  --exclude='node_modules' \
+  --exclude='dist' \
+  --exclude='dev-dist' \
+  --exclude='.env' \
+  --exclude='.env.production' \
+  --exclude='.env.local' \
+  "/Drive/codeProject/Shanuzz/App-Tools/webApp x LMS/" \
+  nas@154.84.215.26:/home/nas/lms-app/
+```
+
+**Step 3 — Rebuild containers (local → runs on NAS)**
+```bash
+ssh -i ~/.ssh/id_ed25519_nas -p 2222 nas@154.84.215.26 \
+  "cd /home/nas/lms-app && docker compose up -d --build && docker restart lms_nginx"
+```
+
+> **Why `docker restart lms_nginx`?** The nginx reverse proxy container is not rebuilt during the build (it uses a pre-built image), so it keeps stale container IP addresses for `lms_api` and `lms_web`. Restarting it forces Docker DNS re-resolution. Without this step you will get **502 Bad Gateway** immediately after rebuilding.
+
+**One-liner (combines steps 2 + 3)**
+```bash
+rsync -avz -e "ssh -p 2222 -i ~/.ssh/id_ed25519_nas" \
+  --exclude='.git' --exclude='node_modules' --exclude='dist' \
+  --exclude='dev-dist' --exclude='.env' --exclude='.env.production' \
+  --exclude='.env.local' \
+  "/Drive/codeProject/Shanuzz/App-Tools/webApp x LMS/" \
+  nas@154.84.215.26:/home/nas/lms-app/ && \
+ssh -i ~/.ssh/id_ed25519_nas -p 2222 nas@154.84.215.26 \
+  "cd /home/nas/lms-app && docker compose up -d --build && docker restart lms_nginx"
 ```
 
 ### Database access
