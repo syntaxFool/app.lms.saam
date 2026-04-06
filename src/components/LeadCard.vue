@@ -94,7 +94,7 @@
         </button>
         <a
           v-if="lead.phone"
-          :href="`tel:${lead.phone.replace(/\\s+/g, '')}`"
+          :href="callHref"
           @click.stop
           title="Call"
           class="flex-1 flex items-center justify-center px-3 py-2 bg-orange-50 text-orange-600 rounded-lg border border-orange-200 hover:bg-orange-100 active:bg-orange-200 transition-colors shadow-sm"
@@ -103,7 +103,7 @@
         </a>
         <a
           v-if="lead.phone"
-          :href="`https://wa.me/${lead.phone.replace(/\\D/g, '')}`"
+          :href="whatsappHref"
           target="_blank"
           @click.stop
           title="WhatsApp"
@@ -205,4 +205,8 @@ const nextStatus = computed(() => {
   const idx = currentStatusIndex.value
   return idx < statusOrder.length - 1 ? statusOrder[idx + 1] : null
 })
+
+const cleanPhone = computed(() => (props.lead.phone || '').replace(/\D/g, ''))
+const whatsappHref = computed(() => `https://wa.me/${cleanPhone.value}`)
+const callHref = computed(() => `tel:+${cleanPhone.value}`)
 </script>
