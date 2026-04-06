@@ -147,6 +147,7 @@
       :mode="leadModalMode"
       :lead-id="selectedLeadId"
       :prefill-phone="pendingPhoneNumber"
+      :initial-tab="leadInitialTab"
       @close="closeLeadModal"
       @saved="handleLeadSaved"
     />
@@ -304,13 +305,16 @@ const handlePhoneSubmit = (phone: string) => {
   isLeadModalOpen.value = true
 }
 
-const editLead = (leadId?: string, _tab?: string, viewOnly?: boolean) => {
+const leadInitialTab = ref<'info' | 'activity' | 'task' | 'contact'>('info')
+
+const editLead = (leadId?: string, tab?: string, viewOnly?: boolean) => {
   // Guard against undefined leadId
   if (!leadId || leadId === 'undefined') {
     return
   }
   selectedLeadId.value = leadId
   leadModalMode.value = viewOnly ? 'view' : 'edit'
+  leadInitialTab.value = (tab as 'info' | 'activity' | 'task' | 'contact') || 'info'
   isLeadModalOpen.value = true
   isPhoneModalOpen.value = false // Close phone modal if open
 }

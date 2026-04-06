@@ -539,6 +539,7 @@ interface Props {
   leadId?: string
   mode?: 'add' | 'edit' | 'view'
   prefillPhone?: string
+  initialTab?: 'info' | 'activity' | 'task' | 'contact'
 }
 
 interface Emits {
@@ -547,7 +548,8 @@ interface Emits {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  mode: 'add'
+  mode: 'add',
+  initialTab: 'info'
 })
 
 const emit = defineEmits<Emits>()
@@ -693,7 +695,7 @@ const handlePhoneInput = () => {
 
 watch(() => props.isOpen, (newVal) => {
   if (newVal) {
-    currentTab.value = 'info'
+    currentTab.value = props.initialTab || 'info'
     modalMode.value = props.mode || 'add'
     formError.value = ''
 
