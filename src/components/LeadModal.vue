@@ -465,13 +465,13 @@
               <p v-if="!formData.phone" class="text-slate-400">No phone number available</p>
               <div v-else class="space-y-3">
                 <a
-                  :href="`tel:+91${formData.phone}`"
+                  :href="`tel:+${formData.phone.replace(/\D/g, '')}`"
                   class="block w-full bg-green-500 text-white rounded-xl py-4 text-center font-bold hover:bg-green-600 transition"
                 >
                   <i class="ph-bold ph-phone mr-2"></i> Call
                 </a>
                 <a
-                  :href="`https://wa.me/91${formData.phone}`"
+                  :href="`https://wa.me/${formData.phone.replace(/\D/g, '')}`"
                   target="_blank"
                   class="block w-full bg-[#25D366] text-white rounded-xl py-4 text-center font-bold hover:bg-[#20BA5D] transition"
                 >
