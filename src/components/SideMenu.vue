@@ -99,8 +99,8 @@
           </div>
         </div>
 
-        <!-- Footer -->
-        <div class="p-4 border-t border-slate-100">
+        <!-- Footer — pb-20 clears the fixed mobile bottom nav (h-20 / z-40) -->
+        <div class="p-4 border-t border-slate-100 md:pb-4 pb-20">
           <button
             @click="handleLogout"
             class="w-full text-red-500 font-bold text-sm hover:text-red-600 flex items-center justify-center gap-2 py-2"
