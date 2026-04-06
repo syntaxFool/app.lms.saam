@@ -52,7 +52,6 @@
               type="text"
               class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary outline-none transition"
               placeholder="e.g. Acme Corp"
-              required
             />
           </div>
 
@@ -68,7 +67,7 @@
               />
             </div>
             <div>
-              <label class="block text-sm font-semibold text-slate-700 mb-1.5">Phone</label>
+              <label class="block text-sm font-semibold text-slate-700 mb-1.5">Phone <span class="text-red-500">*</span></label>
               <div class="flex gap-2">
                 <div class="w-28">
                   <CountryCodeSelect 
@@ -260,7 +259,7 @@
           </button>
           <button
             @click="saveLead"
-            :disabled="!formData.name"
+            :disabled="!phoneNumber"
             class="flex-1 bg-primary text-white font-bold py-2.5 rounded-lg hover:bg-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed transition"
           >
             {{ lead?.id ? 'Update' : 'Save' }}
@@ -417,7 +416,7 @@ function openTaskDetail(leadId: string, taskIndex: number) {
 }
 
 function saveLead() {
-  if (!formData.value.name) return
+  if (!phoneNumber.value) return
 
   const fullPhone = phoneNumber.value ? `${phonePrefix.value} ${phoneNumber.value}` : ''
   const interest = selectedInterests.value.join(', ')
