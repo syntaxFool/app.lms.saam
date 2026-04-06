@@ -728,9 +728,15 @@ watch(() => props.isOpen, (newVal) => {
       previousStatus.value = existingLead.value.status || 'New'
     } else {
       resetForm()
-      // Prefill phone if provided
+      // Prefill phone if provided — split prefix from number if already combined
       if (props.prefillPhone) {
-        phoneNumber.value = props.prefillPhone
+        const parts = props.prefillPhone.trim().split(' ')
+        if (parts.length >= 2 && parts[0].startsWith('+')) {
+          phonePrefix.value = parts[0]
+          phoneNumber.value = parts.slice(1).join('')
+        } else {
+          phoneNumber.value = props.prefillPhone
+        }
       }
     }
   }
