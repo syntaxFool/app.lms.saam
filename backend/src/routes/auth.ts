@@ -11,7 +11,7 @@ interface DbUser {
   username: string
   password: string
   name: string
-  email: string | null
+  mobile: string | null
   role: string
   created_at: string
 }
@@ -55,7 +55,7 @@ router.post('/login', validate(loginSchema), async (req: Request, res: Response)
           id: safeUser.id,
           username: safeUser.username,
           name: safeUser.name,
-          email: safeUser.email,
+          mobile: safeUser.mobile,
           role: safeUser.role,
         }
       }
@@ -70,7 +70,7 @@ router.post('/login', validate(loginSchema), async (req: Request, res: Response)
 router.get('/validate', requireAuth, async (req: Request, res: Response): Promise<void> => {
   try {
     const user = await queryOne<DbUser>(
-      'SELECT id, username, name, email, role FROM users WHERE id = $1',
+      'SELECT id, username, name, mobile, role FROM users WHERE id = $1',
       [req.user!.userId]
     )
 

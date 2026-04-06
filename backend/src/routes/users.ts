@@ -12,7 +12,7 @@ const router = Router()
 router.get('/', requireAuth, requireRole('superuser', 'admin'), async (_req: Request, res: Response): Promise<void> => {
   try {
     const users = await query(
-      'SELECT id, username, name, email, role, created_at FROM users ORDER BY created_at ASC'
+      'SELECT id, username, name, mobile, role, created_at FROM users ORDER BY created_at ASC'
     )
     res.json({ success: true, data: users })
   } catch (err) {
@@ -23,8 +23,8 @@ router.get('/', requireAuth, requireRole('superuser', 'admin'), async (_req: Req
 
 // POST /api/users
 router.post('/', requireAuth, requireRole('superuser', 'admin'), validate(createUserSchema), async (req: Request, res: Response): Promise<void> => {
-  const { username, password, name, email, role } = req.body as {
-    username: string; password: string; name: string; email?: string; role: string
+  const { username, password, name, mobile, role } = req.body as {
+    username: string; password: string; name: string; mobile?: string; role: string
   }
 
   if (!username || !password || !name || !role) {
@@ -55,10 +55,10 @@ router.post('/', requireAuth, requireRole('superuser', 'admin'), validate(create
 
     const hashed = await bcrypt.hash(password, 12)
     const user = await queryOne(
-      `INSERT INTO users (username, password, name, email, role)
+      `INSERT INTO users (username, password, name, mobile, role)
        VALUES ($1, $2, $3, $4, $5)
-       RETURNING id, username, name, email, role, created_at`,
-      [username.trim().toLowerCase(), hashed, name, email || null, role]
+       RETURNING id, username, name, mobile, role, created_at`,
+      [username.trim().toLowerCase(), hashed, name, mobile || null, role]
     )
     res.status(201).json({ success: true, data: user })
   } catch (err: any) {
@@ -73,16 +73,16 @@ router.post('/', requireAuth, requireRole('superuser', 'admin'), validate(create
 
 // PUT /api/users/me — update own profile (no role escalation allowed)
 router.put('/me', requireAuth, validate(updateOwnProfileSchema), async (req: Request, res: Response): Promise<void> => {
-  const { name, email } = req.body
+  const { name, mobile } = req.body
   try {
     const user = await queryOne(
       `UPDATE users SET
-         name  = COALESCE($1, name),
-         email = COALESCE($2, email),
+         name   = COALESCE($1, name),
+         mobile = COALESCE($2, mobile),
          updated_at = NOW()
        WHERE id = $3
-       RETURNING id, username, name, email, role`,
-      [name || null, email || null, req.user!.userId]
+       RETURNING id, username, name, mobile, role`,
+      [name || null, mobile || null, req.user!.userId]
     )
     if (!user) { res.status(404).json({ success: false, error: 'User not found' }); return }
     res.json({ success: true, data: user })
@@ -94,7 +94,7 @@ router.put('/me', requireAuth, validate(updateOwnProfileSchema), async (req: Req
 
 // PUT /api/users/:id
 router.put('/:id', requireAuth, requireRole('superuser', 'admin'), validate(updateUserSchema), async (req: Request, res: Response): Promise<void> => {
-  const { name, email, role, password } = req.body
+  const { name, mobile, role, password } = req.body
   const { id } = req.params
 
   // Prevent demoting/altering superuser unless caller is superuser
@@ -105,7 +105,7 @@ router.put('/:id', requireAuth, requireRole('superuser', 'admin'), validate(upda
 
   try {
     let passwordClause = ''
-    const params: any[] = [name || null, email || null, role || null, id]
+    const params: any[] = [name || null, mobile || null, role || null, id]
 
     if (password) {
       const hashed = await bcrypt.hash(password, 12)
@@ -116,13 +116,13 @@ router.put('/:id', requireAuth, requireRole('superuser', 'admin'), validate(upda
 
     const user = await queryOne(
       `UPDATE users SET
-         name  = COALESCE($1, name),
-         email = COALESCE($2, email),
-         role  = COALESCE($3::user_role, role)
+         name   = COALESCE($1, name),
+         mobile = COALESCE($2, mobile),
+         role   = COALESCE($3::user_role, role)
          ${passwordClause},
          updated_at = NOW()
        WHERE id = $${params.length}
-       RETURNING id, username, name, email, role`,
+       RETURNING id, username, name, mobile, role`,
       params
     )
 

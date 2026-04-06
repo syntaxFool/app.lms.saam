@@ -70,7 +70,7 @@ export interface User {
   username: string
   password: string
   name: string
-  email?: string
+  mobile?: string
   role: UserRole
   createdAt?: string
 }
@@ -422,7 +422,7 @@ export interface ServerUpdate {
 export interface AuthUser {
   id: string
   name: string
-  email: string
+  mobile?: string
   username?: string
   picture?: string
   role: UserRole

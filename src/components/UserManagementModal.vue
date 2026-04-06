@@ -83,13 +83,13 @@
                       />
                     </div>
 
-                    <!-- Email -->
+                    <!-- Mobile Number -->
                     <div>
-                      <label class="block text-sm font-semibold text-slate-700 mb-1.5">Email</label>
+                      <label class="block text-sm font-semibold text-slate-700 mb-1.5">Mobile Number</label>
                       <input
-                        v-model="form.email"
-                        type="email"
-                        placeholder="email@example.com"
+                        v-model="form.mobile"
+                        type="tel"
+                        placeholder="e.g. +60 12-345 6789"
                         class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary outline-none transition"
                       />
                     </div>
@@ -191,7 +191,7 @@
                         class="text-xs text-green-600 font-medium border border-green-200 bg-green-50 px-1.5 py-0.5 rounded-full"
                       >You</span>
                     </div>
-                    <p v-if="user.email" class="text-xs text-slate-400 mt-0.5 truncate">{{ user.email }}</p>
+                    <p v-if="user.mobile" class="text-xs text-slate-400 mt-0.5 truncate">{{ user.mobile }}</p>
                     <p v-if="confirmDeleteId === user.id" class="text-xs text-red-600 font-semibold mt-1">
                       Click the trash icon again to confirm deletion
                     </p>
@@ -253,7 +253,7 @@ interface ManagedUser {
   id: string
   username: string
   name: string
-  email: string | null
+  mobile: string | null
   role: string
   created_at?: string
 }
@@ -288,7 +288,7 @@ const form = ref({
   username: '',
   password: '',
   name: '',
-  email: '',
+  mobile: '',
   role: 'agent',
 })
 
@@ -339,7 +339,7 @@ function roleClass(role: string): string {
 }
 
 function resetForm() {
-  form.value = { username: '', password: '', name: '', email: '', role: 'agent' }
+  form.value = { username: '', password: '', name: '', mobile: '', role: 'agent' }
   formError.value = ''
   editingUserId.value = null
   editingUsername.value = ''
@@ -377,7 +377,7 @@ function startEdit(user: ManagedUser) {
     username: user.username,
     password: '',
     name: user.name ?? '',
-    email: user.email ?? '',
+    mobile: user.mobile ?? '',
     role: user.role,
   }
   showForm.value = true
@@ -420,7 +420,7 @@ async function submitForm() {
         name: form.value.name.trim(),
         role: form.value.role,
       }
-      if (form.value.email.trim()) payload.email = form.value.email.trim()
+      if (form.value.mobile.trim()) payload.mobile = form.value.mobile.trim()
 
       const response = await apiClient.post('/users', payload) as ApiResponse<ManagedUser>
       if (!response.success) { formError.value = response.error ?? 'Failed to create user'; return }
@@ -431,7 +431,7 @@ async function submitForm() {
         name: form.value.name.trim(),
         role: form.value.role,
       }
-      if (form.value.email.trim()) payload.email = form.value.email.trim()
+      if (form.value.mobile.trim()) payload.mobile = form.value.mobile.trim()
       if (form.value.password) payload.password = form.value.password
 
       const response = await apiClient.put(`/users/${editingUserId.value}`, payload) as ApiResponse<ManagedUser>

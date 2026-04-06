@@ -18,20 +18,20 @@ export const createUserSchema = z.object({
   username: z.string().min(2).max(50).regex(/^[a-zA-Z0-9_.-]+$/, 'Username may only contain letters, numbers, underscores, dots and hyphens'),
   password: z.string().min(6).max(200),
   name: z.string().min(1).max(100).optional(),
-  email: z.string().email().optional().or(z.literal('')),
+  mobile: z.string().max(30).optional().or(z.literal('')),
   role: z.enum(userRoles).optional(),
 })
 
 export const updateUserSchema = z.object({
   name: z.string().min(1).max(100).optional(),
-  email: z.string().email().optional().or(z.literal('')),
+  mobile: z.string().max(30).optional().or(z.literal('')),
   role: z.enum(userRoles).optional(),
   password: z.string().min(6).max(200).optional(),
 })
 
 export const updateOwnProfileSchema = z.object({
   name: z.string().min(1).max(100).optional(),
-  email: z.string().email().optional().or(z.literal('')),
+  mobile: z.string().max(30).optional().or(z.literal('')),
 })
 
 // ── Leads ────────────────────────────────────────────────────────────────────
