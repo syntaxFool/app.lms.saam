@@ -76,11 +76,10 @@
             <form @submit.prevent="submitForm">
               <!-- Name -->
               <div class="mb-6">
-                <label class="block text-sm font-semibold text-slate-700 mb-1.5">Lead Name *</label>
+                <label class="block text-sm font-semibold text-slate-700 mb-1.5">Lead Name</label>
                 <input
                   v-model="formData.name"
                   type="text"
-                  required
                   :disabled="modalMode === 'view'"
                   class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary focus:border-primary outline-none transition disabled:bg-slate-50 disabled:cursor-not-allowed"
                   placeholder="e.g. Acme Corp"
@@ -769,11 +768,6 @@ const resetForm = () => {
 
 const submitForm = async () => {
   formError.value = ''
-
-  if (!formData.value.name?.trim()) {
-    formError.value = 'Lead name is required'
-    return
-  }
 
   if (!phoneNumber.value || !validatePhoneLength(phonePrefix.value, phoneNumber.value)) {
     formError.value = `Valid phone number is required for ${phonePrefix.value}`
