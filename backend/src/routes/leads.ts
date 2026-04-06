@@ -163,7 +163,7 @@ router.post('/', requireAuth, requireRole('superuser', 'admin', 'agent'), valida
        RETURNING *`,
       [
         d.id || undefined,
-        d.name, d.phone,
+        d.name || null, d.phone,
         d.email || null, d.location || null, d.interest || null, d.source || null,
         d.status || 'New',
         d.assignedTo || null,

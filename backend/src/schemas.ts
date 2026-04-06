@@ -39,7 +39,7 @@ const leadStatuses = ['New', 'Contacted', 'Qualified', 'Proposal', 'Negotiation'
 const temperatures = ['hot', 'warm', 'cold', ''] as const
 
 export const createLeadSchema = z.object({
-  name: z.string().min(1).max(200),
+  name: z.string().max(200).optional().or(z.literal('')),
   phone: z.string().min(1).max(50),
   email: z.string().email().optional().or(z.literal('')),
   location: z.string().max(200).optional(),
