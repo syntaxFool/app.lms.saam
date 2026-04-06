@@ -465,13 +465,13 @@
               <p v-if="!formData.phone" class="text-slate-400">No phone number available</p>
               <div v-else class="space-y-3">
                 <a
-                  :href="`tel:+${formData.phone.replace(/\D/g, '')}`"
+                  :href="callLink"
                   class="block w-full bg-green-500 text-white rounded-xl py-4 text-center font-bold hover:bg-green-600 transition"
                 >
                   <i class="ph-bold ph-phone mr-2"></i> Call
                 </a>
                 <a
-                  :href="`https://wa.me/${formData.phone.replace(/\D/g, '')}`"
+                  :href="whatsappLink"
                   target="_blank"
                   class="block w-full bg-[#25D366] text-white rounded-xl py-4 text-center font-bold hover:bg-[#20BA5D] transition"
                 >
@@ -650,6 +650,11 @@ const formData = ref({
 })
 
 const existingLead = computed(() => props.leadId ? leadsStore.getLeadById(props.leadId) : null)
+
+// Compute clean phone digits for tel/WhatsApp links (strip everything except digits)
+const cleanPhoneDigits = computed(() => (formData.value.phone || '').replace(/\D/g, ''))
+const whatsappLink = computed(() => `https://wa.me/${cleanPhoneDigits.value}`)
+const callLink = computed(() => `tel:+${cleanPhoneDigits.value}`)
 
 // Activity & Task computed
 const leadActivities = computed(() => existingLead.value?.activities || [])
