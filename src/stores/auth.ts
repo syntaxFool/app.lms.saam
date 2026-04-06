@@ -2,10 +2,12 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { AuthUser, AuthState, UserRole, Permission } from '@/types'
 import { authService } from '@/services/auth'
+import { ROLE_LIMITS } from '@/constants/roleLimits'
 
 export const useAuthStore = defineStore('auth', () => {
   // State
-  const user = ref<AuthUser | null>(null)
+  const storedUser = localStorage.getItem('lms_user')
+  const user = ref<AuthUser | null>(storedUser ? JSON.parse(storedUser) as AuthUser : null)
   const token = ref<string | null>(localStorage.getItem('lms_auth_token'))
   const loading = ref(false)
   const lastLogin = ref<string | null>(localStorage.getItem('lms_last_login'))
@@ -106,19 +108,6 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   // ============ ROLE LIMIT ENFORCEMENT ============
-  /**
-   * Role limits configuration
-   * Superuser: max 1 (system administrator)
-   * Admin: max 5 (team managers)
-   * Agent: max 10 (sales/support team)
-   */
-  const ROLE_LIMITS: Record<UserRole, number> = {
-    superuser: 1,
-    admin: 5,
-    agent: 10,
-    user: Infinity // Unlimited user accounts
-  }
-
   /**
    * Get current count of users by role from the leads store
    * This is called when checking if a new user can be created
@@ -259,12 +248,10 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  async function changePassword(_oldPassword: string, _newPassword: string) {
+  async function changePassword(oldPassword: string, newPassword: string) {
     loading.value = true
     try {
-      // TODO: Implement changePassword in authService when available
-      // For now, this is a placeholder
-      return { success: false, error: 'Password change not yet implemented' }
+      return await authService.changePassword(oldPassword, newPassword)
     } catch (error) {
       console.error('Password change error:', error)
       return { success: false, error: 'An unexpected error occurred' }

@@ -4,6 +4,7 @@ import type {
   Lead,
   Activity,
   Task,
+  Log,
   TaskStatus,
   LeadStatus,
   LeadSnapshot,
@@ -15,7 +16,7 @@ import type {
   PipelineMetrics,
   LeadStatistics
 } from '@/types'
-import { gasApi } from '@/services/api'
+import { apiClient } from '@/services/api'
 import { useAuthStore } from './auth'
 
 export const useLeadsStore = defineStore('leads', () => {
@@ -24,8 +25,9 @@ export const useLeadsStore = defineStore('leads', () => {
   const loading = ref(false)
   const lastSyncTime = ref<number>(0)
   const lastServerUpdate = ref<number>(0)
+  const serverTotalCount = ref<number>(0)
   const editingLeadSnapshot = ref<LeadSnapshot | null>(null)
-  const logs = ref<any[]>([])
+  const logs = ref<Log[]>([])
   const filters = ref<FilterOptions>({
     search: '',
     status: '',
@@ -39,13 +41,6 @@ export const useLeadsStore = defineStore('leads', () => {
     direction: 'asc'
   })
   const selectedLeadIds = ref<string[]>([])
-
-  // ============ MOCK DATA INITIALIZATION ============
-  function initializeMockData(): void {
-    // Mock data removed for production deployment
-    // This function is kept for backward compatibility
-    addLog('Mock data initialization called but no demo data will be loaded')
-  }
 
   // ============ COMPUTED ============
   const totalLeads = computed(() => leads.value.length)
@@ -209,7 +204,7 @@ export const useLeadsStore = defineStore('leads', () => {
   }
 
   // ============ ACTIVITY MANAGEMENT ============
-  function addActivity(leadId: string, activity: Omit<Activity, 'id' | 'timestamp' | 'createdBy' | 'role'>, user?: any): void {
+  function addActivity(leadId: string, activity: Omit<Activity, 'id' | 'timestamp' | 'createdBy' | 'role'>, user?: Pick<import('@/types').AuthUser, 'name' | 'role'>): void {
     const lead = leads.value.find(l => l.id === leadId)
     if (!lead) return
 
@@ -376,14 +371,21 @@ export const useLeadsStore = defineStore('leads', () => {
   }
 
   // ============ FETCH & SYNC ============
-  async function fetchLeads(): Promise<{ success: boolean; error?: string }> {
+  async function fetchLeads(page = 1, limit = 200): Promise<{ success: boolean; error?: string }> {
     loading.value = true
     try {
-      const response = await gasApi.syncData(lastSyncTime.value)
+      const response = await apiClient.get('/leads', {
+        params: {
+          ...(lastSyncTime.value ? { since: lastSyncTime.value } : {}),
+          page,
+          limit
+        }
+      }) as import('@/types').ApiResponse
       if (response.success && response.data) {
         leads.value = response.data.leads || []
         lastSyncTime.value = Date.now()
         lastServerUpdate.value = response.data.lastUpdate || 0
+        serverTotalCount.value = response.data.total ?? leads.value.length
       }
       return { success: response.success, error: response.error }
     } catch (error) {
@@ -395,9 +397,10 @@ export const useLeadsStore = defineStore('leads', () => {
   }
 
   async function checkForServerUpdates(): Promise<boolean> {
-    if (!gasApi) return false
     try {
-      const response = await gasApi.execute('checkUpdates', [lastServerUpdate.value])
+      const response = await apiClient.get('/leads/check-updates', {
+        params: { since: lastServerUpdate.value }
+      }) as import('@/types').ApiResponse
       if (response.success && response.data?.lastUpdate > lastServerUpdate.value) {
         lastServerUpdate.value = response.data.lastUpdate
         return true
@@ -410,7 +413,7 @@ export const useLeadsStore = defineStore('leads', () => {
   }
 
   // ============ CREATE ============
-  async function addNewLead(leadData: Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'lastModified' | 'lastModifiedBy'>, user?: any): Promise<{ success: boolean; data?: Lead; error?: string }> {
+  async function addNewLead(leadData: Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'lastModified' | 'lastModifiedBy'>, user?: Pick<import('@/types').AuthUser, 'name' | 'role'>): Promise<{ success: boolean; data?: Lead; error?: string }> {
     loading.value = true
     try {
       const authStore = useAuthStore()
@@ -436,7 +439,7 @@ export const useLeadsStore = defineStore('leads', () => {
       addLog(`Created lead ${newLead.name}`, user?.name)
 
       // Push to server
-      await gasApi.execute('createLead', [newLead])
+      await apiClient.post('/leads', newLead)
       return { success: true, data: newLead }
     } catch (error) {
       console.error('Create lead error:', error)
@@ -484,7 +487,7 @@ export const useLeadsStore = defineStore('leads', () => {
       editingLeadSnapshot.value = null
 
       // Push to server
-      await gasApi.execute('updateLead', [id, lead])
+      await apiClient.put(`/leads/${id}`, lead)
       return { success: true, data: lead }
     } catch (error) {
       console.error('Update lead error:', error)
@@ -505,7 +508,7 @@ export const useLeadsStore = defineStore('leads', () => {
       addLog(`Deleted ${lead.name}`, user?.name)
 
       // Push to server
-      await gasApi.execute('deleteLead', [id])
+      await apiClient.delete(`/leads/${id}`)
       return { success: true }
     } catch (error) {
       console.error('Delete lead error:', error)
@@ -532,7 +535,7 @@ export const useLeadsStore = defineStore('leads', () => {
       }
 
       addLog(`Bulk assigned ${updateCount} leads`, user?.name)
-      await gasApi.execute('bulkUpdate', [leads.value.filter(l => leadIds.includes(l.id))])
+      await apiClient.put('/leads/bulk', { leadIds, updates: { assignedTo: assignToUser } })
       return { success: true, count: updateCount }
     } catch (error) {
       console.error('Bulk assign error:', error)
@@ -548,7 +551,7 @@ export const useLeadsStore = defineStore('leads', () => {
       const deleted = leads.value.filter(l => leadIds.includes(l.id))
       leads.value = leads.value.filter(l => !leadIds.includes(l.id))
       addLog(`Deleted ${deleted.length} leads`, user?.name)
-      await gasApi.execute('bulkDelete', [leadIds])
+      await apiClient.delete('/leads/bulk', { data: { leadIds } })
       return { success: true, count: deleted.length }
     } catch (error) {
       console.error('Bulk delete error:', error)
@@ -648,6 +651,7 @@ export const useLeadsStore = defineStore('leads', () => {
     loading,
     lastSyncTime,
     lastServerUpdate,
+    serverTotalCount,
     logs,
     filters,
     sortConfig,
@@ -671,7 +675,6 @@ export const useLeadsStore = defineStore('leads', () => {
     // Helpers
     generateId,
     formatDateTime,
-    initializeMockData,
 
     // Activity
     addActivity,

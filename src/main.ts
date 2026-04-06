@@ -4,6 +4,7 @@ import router from './router'
 import App from './App.vue'
 import './style.css'
 import { registerSW } from 'virtual:pwa-register'
+import { initializeServices } from './services/setup'
 
 // Register service worker
 registerSW({
@@ -20,5 +21,7 @@ const pinia = createPinia()
 
 app.use(pinia)
 app.use(router)
+
+initializeServices().catch(err => console.error('Service initialization failed:', err))
 
 app.mount('#app')

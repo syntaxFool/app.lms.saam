@@ -11,9 +11,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'robots.txt', 'apple-touch-icon.png'],
       manifest: {
-        name: 'Shanuzz Academy LMS',
-        short_name: 'LeadFlow',
-        description: 'Lead Management System for Shanuzz Academy',
+        name: 'webApp x LMS x Shanuzz',
+        short_name: 'Shanuzz LMS',
+        description: 'Lead Management System for Shanuzz',
         theme_color: '#6366f1',
         background_color: '#ffffff',
         display: 'standalone',
@@ -75,7 +75,7 @@ export default defineConfig({
             }
           },
           {
-            urlPattern: /\/\.netlify\/functions\/.*/,
+            urlPattern: /\/api\/.*/,
             handler: 'NetworkFirst',
             options: {
               cacheName: 'api-cache',
@@ -107,10 +107,9 @@ export default defineConfig({
     port: 3000,
     middlewareMode: false,
     proxy: {
-      '/.netlify/functions': {
-        target: 'http://localhost:8888',
+      '/api': {
+        target: 'http://localhost:8080',
         changeOrigin: true,
-        rewrite: (path) => path,
       },
     },
   },

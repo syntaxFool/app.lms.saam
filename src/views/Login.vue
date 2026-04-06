@@ -61,12 +61,6 @@
         </button>
       </form>
 
-      <div class="mt-6 p-3 bg-blue-50 border border-blue-200 rounded-lg text-xs">
-        <p class="font-bold text-blue-900 mb-1">Superuser Credentials:</p>
-        <p class="text-blue-800">UID: <code>nox1</code></p>
-        <p class="text-blue-800">Password: <code>1233</code></p>
-      </div>
-
       <div v-if="error" class="mt-4 p-3 bg-red-50 border border-red-200 rounded-xl">
         <div class="flex items-center gap-2">
           <i class="ph-bold ph-warning-circle text-red-500"></i>

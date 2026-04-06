@@ -1,6 +1,6 @@
 // Re-export all services for convenient imports
 
-export { apiClient, api, gasApi } from './api'
+export { apiClient, api } from './api'
 
 export { authService } from './auth'
 

@@ -161,6 +161,12 @@
       :is-open="isMenuOpen"
       @close="isMenuOpen = false"
       @view-change="handleMenuViewChange"
+      @open-settings="isUserManagementOpen = true"
+    />
+
+    <UserManagementModal
+      :is-open="isUserManagementOpen"
+      @close="isUserManagementOpen = false"
     />
 
     <!-- PWA Install Prompt -->
@@ -183,6 +189,7 @@ import PhoneEntryModal from '@/components/PhoneEntryModal.vue'
 import FollowUpsSidebar from '@/components/FollowUpsSidebar.vue'
 import NotificationDropdown from '@/components/NotificationDropdown.vue'
 import InstallPWA from '@/components/InstallPWA.vue'
+import UserManagementModal from '@/components/UserManagementModal.vue'
 
 const authStore = useAuthStore()
 const leadsStore = useLeadsStore()
@@ -213,6 +220,7 @@ const getUserName = (id?: string) => {
 
 // Modal state
 const isMenuOpen = ref(false)
+const isUserManagementOpen = ref(false)
 const isSearchOpen = ref(false)
 const isPhoneModalOpen = ref(false)
 const isLeadModalOpen = ref(false)

@@ -9,7 +9,6 @@ export type { CountryCode } from './useCountryCodes'
 export { useFollowUpTracking } from './useFollowUpTracking'
 
 export { useLeadFiltering } from './useLeadFiltering'
-export type { FilterOptions } from './useLeadFiltering'
 
 export { useLeadScoring } from './useLeadScoring'
 export type { LeadScore } from './useLeadScoring'
@@ -36,4 +35,3 @@ export { useAsync, useAsyncRetry, useAsyncQueue } from './useAsync'
 export type { AsyncState } from './useAsync'
 
 export { useRoleManagement } from './useRoleManagement'
-export type { RoleLimitCheck } from './useRoleManagement'

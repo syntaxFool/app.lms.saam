@@ -17,10 +17,6 @@ export function useRoleManagement() {
    * Example: "Superuser: 0/1 | Admins: 3/5 | Agents: 8/10"
    */
   const roleLimitsDisplay = computed(() => {
-    // Get all users from leads store to calculate stats
-    const leadsStore = authStore.canManageUsers() ? null : null
-    // For now, we'll return a formatted display
-    // In production, fetch actual user list from your data source
     return authStore.getRoleLimitsDisplay([])
   })
 

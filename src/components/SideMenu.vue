@@ -130,6 +130,7 @@ interface Props {
 interface Emits {
   (e: 'close'): void
   (e: 'view-change', view: string): void
+  (e: 'open-settings'): void
 }
 
 defineProps<Props>()
@@ -158,7 +159,7 @@ const switchView = (view: string) => {
 }
 
 const openSettings = () => {
-  // TODO: Implement settings modal
+  emit('open-settings')
   closeMenu()
 }
 

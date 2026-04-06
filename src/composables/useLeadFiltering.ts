@@ -1,14 +1,5 @@
 import { ref, computed } from 'vue'
-import type { Lead } from '@/types'
-
-export interface FilterOptions {
-  search: string
-  status: string
-  assignedTo: string
-  noTask: boolean
-  noAction: boolean
-  temperature?: string
-}
+import type { Lead, FilterOptions } from '@/types'
 
 export function useLeadFiltering(leads: Lead[]) {
   const filters = ref<FilterOptions>({

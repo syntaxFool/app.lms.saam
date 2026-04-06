@@ -192,13 +192,13 @@ export const syncService = {
     }
 
     // Check for conflicts in response
-    const responseAny = response as any
-    if (responseAny.conflict) {
+    const conflictData = (response as { conflict?: { server: unknown; local: unknown } }).conflict
+    if (conflictData) {
       return {
         conflict: {
           operation,
-          serverData: responseAny.conflict.server,
-          localData: responseAny.conflict.local,
+          serverData: conflictData.server,
+          localData: conflictData.local,
           resolution: 'local'
         }
       }
