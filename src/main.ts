@@ -16,6 +16,13 @@ registerSW({
   },
 })
 
+// Force SW update check on every page load so fixes propagate immediately
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then(regs => {
+    regs.forEach(reg => reg.update())
+  })
+}
+
 const app = createApp(App)
 const pinia = createPinia()
 

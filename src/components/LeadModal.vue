@@ -652,7 +652,11 @@ const formData = ref({
 const existingLead = computed(() => props.leadId ? leadsStore.getLeadById(props.leadId) : null)
 
 // Compute clean phone digits for tel/WhatsApp links (strip everything except digits)
-const cleanPhoneDigits = computed(() => (formData.value.phone || '').replace(/\D/g, ''))
+// Use existingLead from store directly so it's always fresh
+const cleanPhoneDigits = computed(() => {
+  const phone = existingLead.value?.phone || formData.value.phone || ''
+  return phone.replace(/\D/g, '')
+})
 const whatsappLink = computed(() => `https://wa.me/${cleanPhoneDigits.value}`)
 const callLink = computed(() => `tel:+${cleanPhoneDigits.value}`)
 
