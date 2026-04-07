@@ -203,7 +203,14 @@ const prevStatus = computed(() => {
 
 const nextStatus = computed(() => {
   const idx = currentStatusIndex.value
-  return idx < statusOrder.length - 1 ? statusOrder[idx + 1] : null
+  if (idx >= statusOrder.length - 1) return null
+  
+  const next = statusOrder[idx + 1]
+  // Prevent moving to Lost via navigation buttons
+  // Lost status requires Lost Reason Modal
+  if (next === 'Lost') return null
+  
+  return next
 })
 
 const cleanPhone = computed(() => (props.lead.phone || '').replace(/\D/g, ''))

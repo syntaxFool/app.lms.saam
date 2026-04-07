@@ -370,6 +370,13 @@ const handleMenuViewChange = (view: string) => {
 }
 
 const handleMove = async (leadId: string, newStatus: LeadStatus) => {
+  // Prevent moving to Lost status via kanban board
+  // Lost status requires Lost Reason Modal
+  if (newStatus === 'Lost') {
+    console.warn('Cannot move lead to Lost status via kanban. Use edit modal to provide lost reason.')
+    return
+  }
+  
   try {
     await leadsStore.updateLeadData(leadId, { status: newStatus })
   } catch (error) {
