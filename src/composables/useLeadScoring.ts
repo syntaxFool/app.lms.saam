@@ -4,14 +4,15 @@ export interface LeadScore {
   temperature: Temperature
   tempColor: string
   tempIcon: string
+  borderColor: string
   qualityScore: number
 }
 
 const temperatureConfig = {
-  Hot: { color: 'bg-red-200 text-red-700', icon: 'ph-thermometer-hot' },
-  Warm: { color: 'bg-amber-200 text-amber-700', icon: 'ph-thermometer-simple' },
-  Cold: { color: 'bg-blue-200 text-blue-700', icon: 'ph-thermometer-cold' },
-  '': { color: 'bg-slate-200 text-slate-700', icon: 'ph-thermometer' }
+  Hot: { color: 'bg-red-200 text-red-700', icon: 'ph-thermometer-hot', borderColor: 'border-l-red-500' },
+  Warm: { color: 'bg-amber-200 text-amber-700', icon: 'ph-thermometer-simple', borderColor: 'border-l-amber-500' },
+  Cold: { color: 'bg-blue-200 text-blue-700', icon: 'ph-thermometer-cold', borderColor: 'border-l-blue-500' },
+  '': { color: 'bg-slate-200 text-slate-700', icon: 'ph-thermometer', borderColor: 'border-l-slate-300' }
 }
 
 export function useLeadScoring() {
@@ -25,7 +26,8 @@ export function useLeadScoring() {
     return {
       temperature: temp as Temperature,
       tempColor: config.color,
-      tempIcon: config.icon
+      tempIcon: config.icon,
+      borderColor: config.borderColor
     }
   }
 

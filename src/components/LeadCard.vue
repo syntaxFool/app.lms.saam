@@ -1,10 +1,11 @@
 <template>
   <div
     @click="emit('open', lead.id)"
-    class="bg-white rounded-xl shadow-sm border cursor-pointer transition-all hover:shadow-md active:scale-[0.99]"
+    class="bg-white rounded-xl shadow-sm border-l-4 cursor-pointer transition-all hover:shadow-md active:scale-[0.99]"
     :class="[
-      isNoAction ? 'border-red-300 bg-red-50/30' : isNoTask ? 'border-amber-300 bg-amber-50/30' : 'border-slate-100',
-      lead.status === 'Lost' ? 'grayscale opacity-60' : ''
+      isNoAction ? 'border-red-300 border-r border-t border-b bg-red-50/30' : isNoTask ? 'border-amber-300 border-r border-t border-b bg-amber-50/30' : 'border-slate-100 border-r border-t border-b',
+      lead.status === 'Lost' ? 'grayscale opacity-60' : '',
+      temperatureScore.borderColor
     ]"
   >
     <!-- Card Header -->
@@ -27,7 +28,7 @@
           <span
             v-if="isNoAction"
             title="No Action - Needs task"
-            class="inline-flex items-center justify-center w-7 h-7 rounded-full bg-red-100 text-red-700"
+            class="inline-flex items-center justify-center w-7 h-7 rounded-full bg-red-100 text-red-700 animate-pulse"
           >
             <i class="ph-bold ph-warning-circle text-base"></i>
           </span>
@@ -41,7 +42,7 @@
         </div>
       </div>
 
-      <!-- Assigned To + Temperature + Value -->
+      <!-- Assigned To + Value -->
       <div class="flex items-center justify-between gap-1.5">
         <div class="flex items-center gap-1 text-xs font-semibold flex-wrap">
           <span
@@ -51,12 +52,8 @@
             <i class="ph-bold ph-user text-indigo-600 text-[10px]"></i>
             {{ assignedToName }}
           </span>
-          <span :class="[temperatureScore.tempColor, 'inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-bold']">
-            <i :class="['ph-bold', temperatureScore.tempIcon, 'text-[10px]']"></i>
-            {{ temperatureScore.temperature || 'N/A' }}
-          </span>
         </div>
-        <div class="text-base font-bold text-slate-900 shrink-0">{{ formatCurrency(lead.value) }}</div>
+        <div class="text-lg font-bold shrink-0" :class="lead.value > 0 ? 'text-emerald-600' : 'text-slate-400'">{{ formatCurrency(lead.value) }}</div>
       </div>
 
       <!-- Interests - Hidden on mobile for density -->
