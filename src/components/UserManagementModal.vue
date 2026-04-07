@@ -41,21 +41,24 @@
             <div v-if="canManageUsers" class="flex gap-1 bg-slate-100 rounded-xl p-1 mb-5">
               <button
                 @click="activeTab = 'users'"
-                :class="['flex-1 flex items-center justify-center gap-1.5 py-1.5 text-sm font-semibold rounded-lg transition', activeTab === 'users' ? 'bg-white text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700']"
+                :class="['flex-1 flex items-center justify-center gap-1 py-2 text-xs sm:text-sm font-semibold rounded-lg transition', activeTab === 'users' ? 'bg-white text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700']"
               >
-                <i class="ph-bold ph-users"></i> Users
+                <i class="ph-bold ph-users text-base"></i>
+                <span class="hidden sm:inline">Users</span>
               </button>
               <button
                 @click="activeTab = 'appearance'"
-                :class="['flex-1 flex items-center justify-center gap-1.5 py-1.5 text-sm font-semibold rounded-lg transition', activeTab === 'appearance' ? 'bg-white text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700']"
+                :class="['flex-1 flex items-center justify-center gap-1 py-2 text-xs sm:text-sm font-semibold rounded-lg transition', activeTab === 'appearance' ? 'bg-white text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700']"
               >
-                <i class="ph-bold ph-paint-brush"></i> Appearance
+                <i class="ph-bold ph-paint-brush text-base"></i>
+                <span class="hidden sm:inline">Appearance</span>
               </button>
               <button
                 @click="activeTab = 'interests'"
-                :class="['flex-1 flex items-center justify-center gap-1.5 py-1.5 text-sm font-semibold rounded-lg transition', activeTab === 'interests' ? 'bg-white text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700']"
+                :class="['flex-1 flex items-center justify-center gap-1 py-2 text-xs sm:text-sm font-semibold rounded-lg transition', activeTab === 'interests' ? 'bg-white text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700']"
               >
-                <i class="ph-bold ph-list-bullets"></i> Interest Options
+                <i class="ph-bold ph-list-bullets text-base"></i>
+                <span class="hidden sm:inline">Interests</span>
               </button>
             </div>
 
