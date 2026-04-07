@@ -41,7 +41,7 @@ Always follow this order — never skip steps:
 6. **Rebuild** — `docker compose build <service> && docker compose up -d <service>`
 7. **Confirm** — check container started; smoke-test the endpoint; spot-check the live URL
 
-**rsync pattern** — always one destination per call:
+**rsync pattern** — always one destination per call. **Always run rsync from the workspace root** (`/Drive/codeProject/Shanuzz/App-Tools/webApp x LMS`). If the terminal is in a subdirectory (e.g. after `cd backend`), `cd` back first or use the absolute path — otherwise rsync will double the path and fail with `change_dir .../backend/backend/src: No such file or directory`.
 ```bash
 rsync -avz -e "ssh -p 2222 -i ~/.ssh/id_ed25519_nas" \
   "local/path/to/file.ts" nas@154.84.215.26:/home/nas/lms-app/path/to/file.ts
@@ -69,6 +69,7 @@ DB credentials are in `/home/nas/lms-app/.env` (`DB_USER=lms`, `DB_NAME=lmsdb`).
 - **z-index**: Use `z-[N]` (e.g. `z-[60]`) for values above 50. `z-60` is NOT a valid Tailwind class.
 - **State**: All cross-component state through Pinia stores (`src/stores/`). No prop-drilling for global data.
 - **API calls**: Always go through `src/services/api.ts`. Never use `fetch` directly in components.
+- **Lead update payload**: `updateLeadData()` in `src/stores/leads.ts` must send **only the schema-defined fields** to `PUT /api/leads/:id` — never the raw Lead object. The Lead interface includes `activities[]`, `tasks[]`, `createdAt`, `lastModified`, etc. which are not in the backend Zod schema and will cause 400 errors. Always construct an explicit `payload` object with only: `name, phone, email, location, interest, source, status, assignedTo, temperature, value, lostReason, lostReasonType, notes, followUpDate`.
 
 ## Business Rules
 
@@ -160,6 +161,11 @@ The app is used primarily on mobile. Follow these established patterns:
 **Settings not syncing across devices**: Branding (app name/logo) is stored in `app_settings` Postgres table. `localStorage` is only a local cache — the source of truth is the DB. Verify with `docker exec lms_api wget -qO- http://127.0.0.1:8080/api/settings`.
 
 **429 Too Many Requests**: Global rate limit is **1000 req / 15 min**; auth login is **20 req / 15 min** (both in `backend/src/index.ts`). Polling is 10 s active / 60 s idle (`LeadsManager.vue → startPolling()`). If 429s recur, raise `max` in the rate limiter and increase polling intervals together.
+
+**400 on `PUT /api/leads/:id`**: Two known root causes:
+1. **Schema enum mismatch** — `backend/src/schemas.ts` `leadStatuses` or `temperatures` array doesn't match DB enums. DB uses: `['New', 'Contacted', 'Proposal', 'Won', 'Lost']` and `['Hot', 'Warm', 'Cold', '']` (capitalized). If these arrays ever drift, all lead updates will 400.
+2. **Dirty payload** — `updateLeadData()` sending the full Lead object (with `activities[]`, `tasks[]`, timestamps). Fix: construct an explicit payload with only the 14 schema fields. See Code Constraints above.
+To debug: check backend logs (`docker logs lms_api --tail 30`). The `validate()` middleware returns the first failing field: `{ error: "fieldName: message" }`.
 
 **Tasks / data disappearing after refresh**: Tasks, activities, and notes are stored in the DB, **not** in the Lead row JSONB. Any store function that modifies these must call the backend API — mutating Pinia state only is silently lost on refresh. Pattern: call the API first, then update local Pinia state on success. If a new store function is added for tasks/activities, always wire it to `POST/PUT/DELETE /api/leads/:id/tasks` (or `/activities`).
 

@@ -23,20 +23,20 @@
             No contact info
           </div>
         </div>
-        <div class="flex gap-0.5 shrink-0 text-xs">
+        <div class="flex gap-0.5 shrink-0">
           <span
             v-if="isNoAction"
-            class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-700 whitespace-nowrap"
+            title="No Action - Needs task"
+            class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-red-100 text-red-700"
           >
-            <i class="ph-bold ph-warning-circle text-[10px]"></i>
-            Alert
+            <i class="ph-bold ph-warning-circle text-sm"></i>
           </span>
           <span
             v-else-if="isNoTask"
-            class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700 whitespace-nowrap"
+            title="No pending tasks"
+            class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-amber-100 text-amber-700"
           >
-            <i class="ph-bold ph-warning text-[10px]"></i>
-            Task
+            <i class="ph-bold ph-warning text-sm"></i>
           </span>
         </div>
       </div>
