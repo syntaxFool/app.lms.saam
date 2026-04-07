@@ -393,20 +393,27 @@
                   class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none resize-none mb-3"
                   placeholder="Task note (optional)..."
                 ></textarea>
-                <div class="flex gap-2">
+                <div class="flex gap-2 mb-2">
                   <input
                     v-model="newTaskDueDate"
-                    type="date"
+                    type="text"
+                    placeholder="DD/MM/YYYY"
+                    maxlength="10"
                     class="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none"
                   />
-                  <button
-                    @click="addTask"
-                    :disabled="!newTaskTitle.trim()"
-                    class="px-4 bg-primary text-white text-sm font-semibold py-2 rounded-lg hover:bg-indigo-600 disabled:bg-slate-300 disabled:cursor-not-allowed transition"
-                  >
-                    <i class="ph-bold ph-plus mr-1"></i> Add Task
-                  </button>
+                  <input
+                    v-model="newTaskDueTime"
+                    type="time"
+                    class="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none"
+                  />
                 </div>
+                <button
+                  @click="addTask"
+                  :disabled="!newTaskTitle.trim()"
+                  class="w-full px-4 bg-primary text-white text-sm font-semibold py-2 rounded-lg hover:bg-indigo-600 disabled:bg-slate-300 disabled:cursor-not-allowed transition"
+                >
+                  <i class="ph-bold ph-plus mr-1"></i> Add Task
+                </button>
               </div>
 
               <!-- Task List -->
@@ -441,7 +448,7 @@
                       <div class="flex items-center gap-3 text-xs text-slate-500">
                         <span v-if="task.dueDate">
                           <i class="ph ph-calendar-blank mr-1"></i>
-                          {{ formatDate(task.dueDate) }}
+                          {{ formatTaskDate(task.dueDate) }}
                         </span>
                         <span v-if="task.priority"
                           :class="getPriorityClass(task.priority)">
@@ -529,6 +536,7 @@ import { ref, computed, watch } from 'vue'
 import { useLeadsStore } from '@/stores/leads'
 import { useAppStore } from '@/stores/app'
 import { useCountryCodes } from '@/composables/useCountryCodes'
+import { useDateUtils } from '@/composables/useDateUtils'
 import type { Lead, ActivityType, LostReasonType } from '@/types'
 import LostReasonModal from './LostReasonModal.vue'
 import CountryCodeSelect from './CountryCodeSelect.vue'
@@ -545,6 +553,8 @@ const {
   getPhoneInputPlaceholder, 
   getPhoneInputMaxLength 
 } = useCountryCodes()
+
+const { formatToDateTime } = useDateUtils()
 
 interface Props {
   isOpen: boolean
@@ -584,6 +594,7 @@ const newActivity = ref('')
 const newTaskTitle = ref('')
 const newTaskNote = ref('')
 const newTaskDueDate = ref('')
+const newTaskDueTime = ref('')
 
 // Autocomplete state
 const showInterestSuggestions = ref(false)
@@ -961,15 +972,31 @@ const addTask = async () => {
   if (!newTaskTitle.value.trim() || !props.leadId) return
   
   try {
+    // Convert DD/MM/YYYY + time to ISO format
+    let dueDate: string | undefined = undefined
+    if (newTaskDueDate.value) {
+      const dateMatch = newTaskDueDate.value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/)
+      if (dateMatch) {
+        const [, day, month, year] = dateMatch
+        const isoDate = `${year}-${month}-${day}`
+        if (newTaskDueTime.value) {
+          dueDate = `${isoDate}T${newTaskDueTime.value}:00`
+        } else {
+          dueDate = `${isoDate}T00:00:00`
+        }
+      }
+    }
+    
     await leadsStore.addTask(props.leadId, {
       title: newTaskTitle.value.trim(),
       note: newTaskNote.value.trim() || undefined,
-      dueDate: newTaskDueDate.value || undefined,
+      dueDate: dueDate,
       status: 'pending'
     })
     newTaskTitle.value = ''
     newTaskNote.value = ''
     newTaskDueDate.value = ''
+    newTaskDueTime.value = ''
   } catch (error) {
     console.error('Failed to add task:', error)
   }
@@ -1014,6 +1041,16 @@ const formatDate = (dateStr: string): string => {
   if (date.toDateString() === today.toDateString()) return 'Today'
   if (date.toDateString() === tomorrow.toDateString()) return 'Tomorrow'
   return date.toLocaleDateString()
+}
+
+const formatTaskDate = (dateStr: string): string => {
+  const date = new Date(dateStr)
+  const hasTime = dateStr.includes('T') && (date.getHours() !== 0 || date.getMinutes() !== 0)
+  
+  if (hasTime) {
+    return formatToDateTime(dateStr)
+  }
+  return formatDate(dateStr)
 }
 
 // Autocomplete handlers

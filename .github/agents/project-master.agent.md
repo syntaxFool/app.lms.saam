@@ -80,6 +80,10 @@ DB credentials are in `/home/nas/lms-app/.env` (`DB_USER=lms`, `DB_NAME=lmsdb`).
 | PUT | `/api/users/:id` | admin/superuser | Update user |
 | DELETE | `/api/users/:id` | superuser | Delete user |
 | GET | `/api/leads` | any auth | List leads |
+| POST | `/api/leads/:id/tasks` | any auth | Add task to lead |
+| PUT | `/api/leads/:id/tasks/:taskId` | any auth | Update task status |
+| DELETE | `/api/leads/:id/tasks/:taskId` | any auth | Delete task |
+| POST | `/api/leads/:id/activities` | any auth | Add activity to lead |
 | GET | `/api/settings` | **public** | Get app branding |
 | PUT | `/api/settings` | admin/superuser | Save app branding |
 
@@ -100,6 +104,8 @@ docker exec lms_api wget -qO- http://127.0.0.1:8080/api/settings
 **Users dropdown empty for agents**: `GET /api/users` requires admin/superuser role — agents only see their own data. This is expected behavior.
 
 **Settings not syncing across devices**: Branding (app name/logo) is stored in `app_settings` Postgres table. `localStorage` is only a local cache — the source of truth is the DB. Verify with `docker exec lms_api wget -qO- http://127.0.0.1:8080/api/settings`.
+
+**Tasks / data disappearing after refresh**: Tasks, activities, and notes are stored in the DB, **not** in the Lead row JSONB. Any store function that modifies these must call the backend API — mutating Pinia state only is silently lost on refresh. Pattern: call the API first, then update local Pinia state on success. If a new store function is added for tasks/activities, always wire it to `POST/PUT/DELETE /api/leads/:id/tasks` (or `/activities`).
 
 ## Approach
 
