@@ -51,8 +51,8 @@
     </header>
 
     <!-- Mobile Tabs -->
-    <nav v-if="showMobileTabs" class="md:hidden bg-white border-b border-slate-200 py-2 overflow-x-auto no-scrollbar shrink-0 z-10">
-      <div class="flex px-4 gap-3 min-w-max">
+    <nav v-if="showMobileTabs" class="md:hidden bg-white border-b border-slate-200 py-2 shrink-0 z-10">
+      <div class="flex px-3 gap-1.5 w-full">
         <button
           v-for="status in statusConfig"
           :key="status.id"
@@ -415,14 +415,16 @@ const syncData = async () => {
   background: white;
   border: 1px solid #e5e7eb;
   border-radius: 9999px;
-  padding: 0.5rem 1.25rem;
-  font-size: 0.875rem;
+  padding: 0.5rem 0.5rem;
+  font-size: 0.8125rem;
   font-weight: 600;
   color: #4b5563;
   white-space: nowrap;
   cursor: pointer;
   transition: all 0.2s ease;
   outline: none;
+  flex: 1;
+  text-align: center;
 }
 
 .mobile-tab-btn.active {
