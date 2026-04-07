@@ -8,19 +8,19 @@
     ]"
   >
     <!-- Card Header -->
-    <div class="p-2 flex flex-col gap-1.5">
+    <div class="p-1.5 md:p-2 flex flex-col gap-1">
       <!-- Name + Badge -->
       <div class="flex justify-between items-start gap-1.5">
         <div class="flex flex-col gap-0.5 flex-1 min-w-0">
           <h3 class="font-bold text-slate-800 text-base leading-tight line-clamp-1">
             {{ lead.name || 'Unnamed Lead' }}
           </h3>
-          <div v-if="lead.phone" class="flex items-center gap-1.5 text-xs text-slate-500">
-            <i class="ph-bold ph-phone text-slate-400 text-[11px]"></i>
+          <div v-if="lead.phone" class="flex items-center gap-1 text-xs text-slate-500">
+            <i class="ph-bold ph-phone text-slate-400 text-[10px]"></i>
             <span class="font-medium">{{ lead.phone }}</span>
           </div>
           <div v-else class="text-xs text-slate-400 italic">
-            No phone number
+            No phone
           </div>
         </div>
         <div class="flex gap-0.5 shrink-0">
@@ -42,7 +42,7 @@
       </div>
 
       <!-- Assigned To + Temperature + Value -->
-      <div class="flex items-center justify-between gap-2">
+      <div class="flex items-center justify-between gap-1.5">
         <div class="flex items-center gap-1 text-xs font-semibold flex-wrap">
           <span
             v-if="lead.assignedTo"
@@ -59,8 +59,8 @@
         <div class="text-base font-bold text-slate-900 shrink-0">{{ formatCurrency(lead.value) }}</div>
       </div>
 
-      <!-- Interests -->
-      <div v-if="interests.length > 0" class="flex flex-col gap-0.5">
+      <!-- Interests - Hidden on mobile for density -->
+      <div v-if="interests.length > 0" class="hidden md:flex flex-col gap-0.5">
         <div
           v-for="(interest, idx) in interests.slice(0, 2)"
           :key="idx"
@@ -80,7 +80,7 @@
           @click.stop="emit('edit-task', lead.id)"
           title="Task"
           :class="[
-            'flex-1 flex items-center justify-center px-3 py-2.5 sm:py-2 rounded-lg border transition-colors min-h-[44px] sm:min-h-0',
+            'flex-1 flex items-center justify-center px-2 py-2 sm:py-1.5 rounded-lg border transition-colors min-h-[42px] sm:min-h-0',
             isNoAction
               ? 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100'
               : isNoTask
@@ -88,16 +88,16 @@
                 : 'bg-purple-50 text-purple-600 border-purple-200 hover:bg-purple-100'
           ]"
         >
-          <i class="ph-bold ph-plus text-xl sm:text-lg"></i>
+          <i class="ph-bold ph-plus text-lg"></i>
         </button>
         <a
           v-if="lead.phone"
           :href="callHref"
           @click.stop
           title="Call"
-          class="flex-1 flex items-center justify-center px-3 py-2.5 sm:py-2 bg-orange-50 text-orange-600 rounded-lg border border-orange-200 hover:bg-orange-100 active:bg-orange-200 transition-colors min-h-[44px] sm:min-h-0"
+          class="flex-1 flex items-center justify-center px-2 py-2 sm:py-1.5 bg-orange-50 text-orange-600 rounded-lg border border-orange-200 hover:bg-orange-100 active:bg-orange-200 transition-colors min-h-[42px] sm:min-h-0"
         >
-          <i class="ph-fill ph-phone text-xl sm:text-lg"></i>
+          <i class="ph-fill ph-phone text-lg"></i>
         </a>
         <a
           v-if="lead.phone"
@@ -105,28 +105,28 @@
           target="_blank"
           @click.stop
           title="WhatsApp"
-          class="flex-1 flex items-center justify-center px-3 py-2.5 sm:py-2 bg-green-50 text-green-600 rounded-lg border border-green-200 hover:bg-green-100 active:bg-green-200 transition-colors min-h-[44px] sm:min-h-0"
+          class="flex-1 flex items-center justify-center px-2 py-2 sm:py-1.5 bg-green-50 text-green-600 rounded-lg border border-green-200 hover:bg-green-100 active:bg-green-200 transition-colors min-h-[42px] sm:min-h-0"
         >
-          <i class="ph-fill ph-whatsapp-logo text-xl sm:text-lg"></i>
+          <i class="ph-fill ph-whatsapp-logo text-lg"></i>
         </a>
       </div>
 
-      <!-- Notes -->
+      <!-- Notes - Hidden on mobile for density -->
       <div
         v-if="lead.notes"
-        class="text-[10px] text-slate-600 bg-slate-50 p-1.5 rounded line-clamp-1 truncate"
+        class="hidden md:block text-[10px] text-slate-600 bg-slate-50 p-1.5 rounded line-clamp-1 truncate"
       >
         {{ lead.notes }}
       </div>
     </div>
 
     <!-- Navigation Buttons -->
-    <div class="flex gap-1.5 p-1.5 border-t border-slate-100 bg-slate-50">
+    <div class="flex gap-1.5 p-1 md:p-1.5 border-t border-slate-100 bg-slate-50">
       <button
         v-if="prevStatus"
         @click.stop="emit('move', lead.id, prevStatus)"
         title="Move left"
-        class="flex items-center justify-center flex-1 py-2 sm:py-1.5 bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold hover:bg-slate-300 active:bg-slate-400 transition-colors min-h-[40px] sm:min-h-0"
+        class="flex items-center justify-center flex-1 py-1.5 sm:py-1 bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold hover:bg-slate-300 active:bg-slate-400 transition-colors min-h-[36px] sm:min-h-0"
       >
         <i class="ph-bold ph-arrow-left text-sm"></i>
       </button>
@@ -136,7 +136,7 @@
         v-if="nextStatus"
         @click.stop="emit('move', lead.id, nextStatus)"
         title="Move right"
-        class="flex items-center justify-center flex-1 py-2 sm:py-1.5 bg-primary/15 text-primary rounded-lg text-xs font-semibold hover:bg-primary/25 active:bg-primary/35 transition-colors min-h-[40px] sm:min-h-0"
+        class="flex items-center justify-center flex-1 py-1.5 sm:py-1 bg-primary/15 text-primary rounded-lg text-xs font-semibold hover:bg-primary/25 active:bg-primary/35 transition-colors min-h-[36px] sm:min-h-0"
       >
         <i class="ph-bold ph-arrow-right text-sm"></i>
       </button>
