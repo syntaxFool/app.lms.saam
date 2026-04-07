@@ -1,13 +1,13 @@
 <template>
   <div class="h-full w-full flex flex-col">
     <!-- Kanban Board -->
-    <div class="kanban-board h-full w-full p-3 md:p-6 flex overflow-x-auto gap-3 md:gap-6 items-start">
+    <div class="kanban-board h-full w-full p-2 md:p-6 flex overflow-x-auto gap-2 md:gap-6 items-start">
       <div
         v-for="status in statuses"
         :key="status"
         :class="[
           'kanban-column flex flex-col h-full bg-slate-100 rounded-xl border border-slate-200 overflow-hidden',
-          'w-72 flex-shrink-0',
+          'w-[calc(100vw-1.5rem)] md:w-72 flex-shrink-0',
           activeMobileTab && activeMobileTab !== status ? 'hidden md:flex' : 'flex'
         ]"
       >
