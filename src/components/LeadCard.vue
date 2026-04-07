@@ -8,40 +8,40 @@
     ]"
   >
     <!-- Card Header -->
-    <div class="p-2.5 flex flex-col gap-2">
+    <div class="p-2 flex flex-col gap-1.5">
       <!-- Name + Badge -->
       <div class="flex justify-between items-start gap-1.5">
         <div class="flex flex-col gap-0.5 flex-1 min-w-0">
-          <h3 v-if="lead.name" class="font-bold text-slate-800 text-sm leading-tight line-clamp-1">
-            {{ lead.name }}
+          <h3 class="font-bold text-slate-800 text-base leading-tight line-clamp-1">
+            {{ lead.name || 'Unnamed Lead' }}
           </h3>
-          <div v-if="lead.phone" class="flex items-center gap-1.5 text-xs text-slate-600">
-            <i class="ph-bold ph-phone text-slate-400"></i>
+          <div v-if="lead.phone" class="flex items-center gap-1.5 text-xs text-slate-500">
+            <i class="ph-bold ph-phone text-slate-400 text-[11px]"></i>
             <span class="font-medium">{{ lead.phone }}</span>
           </div>
-          <div v-if="!lead.name && !lead.phone" class="text-xs text-slate-400 italic">
-            No contact info
+          <div v-else class="text-xs text-slate-400 italic">
+            No phone number
           </div>
         </div>
         <div class="flex gap-0.5 shrink-0">
           <span
             v-if="isNoAction"
             title="No Action - Needs task"
-            class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-red-100 text-red-700"
+            class="inline-flex items-center justify-center w-7 h-7 rounded-full bg-red-100 text-red-700"
           >
-            <i class="ph-bold ph-warning-circle text-sm"></i>
+            <i class="ph-bold ph-warning-circle text-base"></i>
           </span>
           <span
             v-else-if="isNoTask"
             title="No pending tasks"
-            class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-amber-100 text-amber-700"
+            class="inline-flex items-center justify-center w-7 h-7 rounded-full bg-amber-100 text-amber-700"
           >
-            <i class="ph-bold ph-warning text-sm"></i>
+            <i class="ph-bold ph-warning text-base"></i>
           </span>
         </div>
       </div>
 
-      <!-- Assigned To + Status + Temperature + Value -->
+      <!-- Assigned To + Temperature + Value -->
       <div class="flex items-center justify-between gap-2">
         <div class="flex items-center gap-1 text-xs font-semibold flex-wrap">
           <span
@@ -51,16 +51,12 @@
             <i class="ph-bold ph-user text-indigo-600 text-[10px]"></i>
             {{ assignedToName }}
           </span>
-          <span class="px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[10px] font-bold inline-flex items-center gap-0.5">
-            <i class="ph-bold ph-folder text-[10px] text-slate-600"></i>
-            {{ lead.status }}
-          </span>
           <span :class="[temperatureScore.tempColor, 'inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-bold']">
             <i :class="['ph-bold', temperatureScore.tempIcon, 'text-[10px]']"></i>
             {{ temperatureScore.temperature || 'N/A' }}
           </span>
         </div>
-        <div class="text-sm font-bold text-slate-900 shrink-0">{{ formatCurrency(lead.value) }}</div>
+        <div class="text-base font-bold text-slate-900 shrink-0">{{ formatCurrency(lead.value) }}</div>
       </div>
 
       <!-- Interests -->
@@ -79,14 +75,7 @@
       </div>
 
       <!-- Action Buttons -->
-      <div class="flex gap-2 flex-wrap w-full" :class="lead.status === 'Lost' ? 'pointer-events-none opacity-40' : ''">
-        <button
-          @click.stop="emit('edit-activity', lead.id)"
-          title="Activity"
-          class="flex-1 flex items-center justify-center px-3 py-2.5 sm:py-2 bg-blue-50 text-blue-600 rounded-lg border border-blue-200 hover:bg-blue-100 active:bg-blue-200 transition-colors min-h-[44px] sm:min-h-0"
-        >
-          <i class="ph-bold ph-chat text-xl sm:text-lg"></i>
-        </button>
+      <div class="flex gap-1.5 flex-wrap w-full" :class="lead.status === 'Lost' ? 'pointer-events-none opacity-40' : ''">
         <button
           @click.stop="emit('edit-task', lead.id)"
           title="Task"
@@ -132,14 +121,14 @@
     </div>
 
     <!-- Navigation Buttons -->
-    <div class="flex gap-2 p-2.5 border-t border-slate-100 bg-slate-50">
+    <div class="flex gap-1.5 p-1.5 border-t border-slate-100 bg-slate-50">
       <button
         v-if="prevStatus"
         @click.stop="emit('move', lead.id, prevStatus)"
         title="Move left"
-        class="flex items-center justify-center flex-1 py-2.5 sm:py-2 bg-slate-200 text-slate-700 rounded-lg text-sm font-semibold hover:bg-slate-300 active:bg-slate-400 transition-colors min-h-[44px] sm:min-h-0"
+        class="flex items-center justify-center flex-1 py-2 sm:py-1.5 bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold hover:bg-slate-300 active:bg-slate-400 transition-colors min-h-[40px] sm:min-h-0"
       >
-        <i class="ph-bold ph-arrow-left text-base"></i>
+        <i class="ph-bold ph-arrow-left text-sm"></i>
       </button>
       <div v-else class="flex-1"></div>
 
@@ -147,9 +136,9 @@
         v-if="nextStatus"
         @click.stop="emit('move', lead.id, nextStatus)"
         title="Move right"
-        class="flex items-center justify-center flex-1 py-2.5 sm:py-2 bg-primary/15 text-primary rounded-lg text-sm font-semibold hover:bg-primary/25 active:bg-primary/35 transition-colors min-h-[44px] sm:min-h-0"
+        class="flex items-center justify-center flex-1 py-2 sm:py-1.5 bg-primary/15 text-primary rounded-lg text-xs font-semibold hover:bg-primary/25 active:bg-primary/35 transition-colors min-h-[40px] sm:min-h-0"
       >
-        <i class="ph-bold ph-arrow-right text-base"></i>
+        <i class="ph-bold ph-arrow-right text-sm"></i>
       </button>
       <div v-else class="flex-1"></div>
     </div>
