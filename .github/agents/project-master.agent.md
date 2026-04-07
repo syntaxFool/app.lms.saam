@@ -70,6 +70,34 @@ DB credentials are in `/home/nas/lms-app/.env` (`DB_USER=lms`, `DB_NAME=lmsdb`).
 - **State**: All cross-component state through Pinia stores (`src/stores/`). No prop-drilling for global data.
 - **API calls**: Always go through `src/services/api.ts`. Never use `fetch` directly in components.
 
+## Business Rules
+
+Critical behavioral constraints — these are intentional, not bugs:
+
+- **Superuser protected**: `username === 'superuser'` is the built-in default admin. Edit and delete buttons are hidden in `UserManagementModal.vue` for this account. Never remove this guard.
+- **Kanban → Lost blocked**: Moving a lead to `'Lost'` via Kanban drag or the right-arrow button is intentionally disabled. Lost status must be set via the edit modal, which triggers `LostReasonModal.vue` to capture a reason.
+- **Task completion → resolution**: Checking a task complete in `LeadModal.vue` opens `TaskResolutionModal.vue` first. The resolution text is saved to the `resolution` column in the `tasks` table. Unchecking (reverting to pending) is immediate with no modal.
+- **Lost leads in Kanban**: Already-lost leads CAN be moved left (back to `'Won'`) — only the forward direction is blocked.
+- **Tasks/activities in DB**: Stored in separate `tasks` and `activities` tables with `lead_id FK`, never in a JSONB blob. All store mutations must call the backend API first.
+
+## Database Schema
+
+Key tables in `lmsdb` (PostgreSQL). Migrations are in `backend/db/migrations/` numbered `001–006`; next file must be `007_xxx.sql`.
+
+| Table | Key columns |
+|-------|-------------|
+| `leads` | `id, name, mobile, status lead_status, source, stage, score, assigned_to, notes, created_at, updated_at` |
+| `tasks` | `id, lead_id FK, title, due_date TIMESTAMPTZ, status task_status, completed_at TIMESTAMPTZ, resolution TEXT, created_at` |
+| `activities` | `id, lead_id FK, type, note, user_id, created_at` |
+| `users` | `id, username, password_hash, role user_role, created_at` |
+| `app_settings` | branding (app_name, logo_url, primary_color, etc.) |
+
+Applying a new migration (pipe via stdin — the migration file is local, not on the server):
+```bash
+ssh -p 2222 -i ~/.ssh/id_ed25519_nas nas@154.84.215.26 \
+  "docker exec -i lms_db psql -U lms -d lmsdb" < backend/db/migrations/007_xxx.sql
+```
+
 ## Backend API Reference
 
 | Method | Path | Auth | Purpose |
@@ -81,7 +109,7 @@ DB credentials are in `/home/nas/lms-app/.env` (`DB_USER=lms`, `DB_NAME=lmsdb`).
 | DELETE | `/api/users/:id` | superuser | Delete user |
 | GET | `/api/leads` | any auth | List leads |
 | POST | `/api/leads/:id/tasks` | any auth | Add task to lead |
-| PUT | `/api/leads/:id/tasks/:taskId` | any auth | Update task status |
+| PUT | `/api/leads/:id/tasks/:taskId` | any auth | Update task (status, completedAt, `resolution?: string`) |
 | DELETE | `/api/leads/:id/tasks/:taskId` | any auth | Delete task |
 | POST | `/api/leads/:id/activities` | any auth | Add activity to lead |
 | GET | `/api/settings` | **public** | Get app branding |
@@ -104,6 +132,8 @@ docker exec lms_api wget -qO- http://127.0.0.1:8080/api/settings
 **Users dropdown empty for agents**: `GET /api/users` requires admin/superuser role — agents only see their own data. This is expected behavior.
 
 **Settings not syncing across devices**: Branding (app name/logo) is stored in `app_settings` Postgres table. `localStorage` is only a local cache — the source of truth is the DB. Verify with `docker exec lms_api wget -qO- http://127.0.0.1:8080/api/settings`.
+
+**429 Too Many Requests**: Global rate limit is **1000 req / 15 min**; auth login is **20 req / 15 min** (both in `backend/src/index.ts`). Polling is 10 s active / 60 s idle (`LeadsManager.vue → startPolling()`). If 429s recur, raise `max` in the rate limiter and increase polling intervals together.
 
 **Tasks / data disappearing after refresh**: Tasks, activities, and notes are stored in the DB, **not** in the Lead row JSONB. Any store function that modifies these must call the backend API — mutating Pinia state only is silently lost on refresh. Pattern: call the API first, then update local Pinia state on success. If a new store function is added for tasks/activities, always wire it to `POST/PUT/DELETE /api/leads/:id/tasks` (or `/activities`).
 

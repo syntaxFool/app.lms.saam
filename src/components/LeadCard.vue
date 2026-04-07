@@ -8,81 +8,90 @@
     ]"
   >
     <!-- Card Header -->
-    <div class="p-3 flex flex-col gap-1.5 flex-1">
+    <div class="p-2.5 flex flex-col gap-1.5 flex-1">
       <!-- Name + Badge -->
-      <div class="flex justify-between items-start gap-1">
-        <h3 class="font-bold text-slate-800 text-xs leading-tight line-clamp-2 flex-1">
-          {{ lead.name || lead.phone }}
-        </h3>
+      <div class="flex justify-between items-start gap-1.5">
+        <div class="flex flex-col gap-0.5 flex-1 min-w-0">
+          <h3 v-if="lead.name" class="font-bold text-slate-800 text-sm leading-tight line-clamp-1">
+            {{ lead.name }}
+          </h3>
+          <div v-if="lead.phone" class="flex items-center gap-1.5 text-xs text-slate-600">
+            <i class="ph-bold ph-phone text-slate-400"></i>
+            <span class="font-medium">{{ lead.phone }}</span>
+          </div>
+          <div v-if="!lead.name && !lead.phone" class="text-xs text-slate-400 italic">
+            No contact info
+          </div>
+        </div>
         <div class="flex gap-0.5 shrink-0 text-xs">
           <span
             v-if="isNoAction"
-            class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700 whitespace-nowrap"
+            class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-700 whitespace-nowrap"
           >
-            <i class="ph-bold ph-warning-circle text-xs"></i>
-            No Action
+            <i class="ph-bold ph-warning-circle text-[10px]"></i>
+            Alert
           </span>
           <span
             v-else-if="isNoTask"
-            class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-700 whitespace-nowrap"
+            class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-700 whitespace-nowrap"
           >
-            <i class="ph-bold ph-warning text-xs"></i>
-            No Task
+            <i class="ph-bold ph-warning text-[10px]"></i>
+            Task
           </span>
         </div>
       </div>
 
       <!-- Assigned To + Status + Temperature -->
-      <div class="flex items-center gap-1.5 text-xs font-semibold flex-wrap">
+      <div class="flex items-center gap-1 text-xs font-semibold flex-wrap">
         <span
           v-if="lead.assignedTo"
-          class="px-2 py-1 rounded-md bg-indigo-100 text-indigo-700 text-[10px] font-bold inline-flex items-center gap-1 whitespace-nowrap"
+          class="px-1.5 py-0.5 rounded-md bg-indigo-100 text-indigo-700 text-[10px] font-bold inline-flex items-center gap-0.5 whitespace-nowrap"
         >
-          <i class="ph-bold ph-user text-indigo-600 text-xs"></i>
+          <i class="ph-bold ph-user text-indigo-600 text-[10px]"></i>
           {{ assignedToName }}
         </span>
-        <span class="px-2 py-1 rounded-md bg-slate-100 text-slate-700 text-[10px] font-bold inline-flex items-center gap-1">
-          <i class="ph-bold ph-folder text-xs text-slate-600"></i>
+        <span class="px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[10px] font-bold inline-flex items-center gap-0.5">
+          <i class="ph-bold ph-folder text-[10px] text-slate-600"></i>
           {{ lead.status }}
         </span>
-        <span :class="[temperatureScore.tempColor, 'inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-bold']">
-          <i :class="['ph-bold', temperatureScore.tempIcon, 'text-xs']"></i>
+        <span :class="[temperatureScore.tempColor, 'inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-bold']">
+          <i :class="['ph-bold', temperatureScore.tempIcon, 'text-[10px]']"></i>
           {{ temperatureScore.temperature || 'N/A' }}
         </span>
       </div>
 
       <!-- Interests -->
-      <div v-if="interests.length > 0" class="flex flex-col gap-0.5 mt-1">
+      <div v-if="interests.length > 0" class="flex flex-col gap-0.5">
         <div
           v-for="(interest, idx) in interests.slice(0, 2)"
           :key="idx"
-          class="inline-flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-200 rounded-md text-[11px] font-medium text-indigo-700 line-clamp-1"
+          class="inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-200 rounded-md text-[10px] font-medium text-indigo-700 line-clamp-1"
         >
-          <i class="ph-bold ph-star text-indigo-600 text-xs"></i>
-          <span>{{ interest }}</span>
+          <i class="ph-bold ph-star text-indigo-600 text-[10px]"></i>
+          <span class="truncate">{{ interest }}</span>
         </div>
-        <div v-if="interests.length > 2" class="text-[10px] font-medium text-slate-400 px-2 py-0.5">
-          +{{ interests.length - 2 }} interest{{ interests.length - 2 > 1 ? 's' : '' }}
+        <div v-if="interests.length > 2" class="text-[9px] font-medium text-slate-400 px-1">
+          +{{ interests.length - 2 }} more
         </div>
       </div>
 
       <!-- Value -->
-      <div class="text-sm font-bold text-slate-900 mt-1">{{ formatCurrency(lead.value) }}</div>
+      <div class="text-sm font-bold text-slate-900">{{ formatCurrency(lead.value) }}</div>
 
       <!-- Action Buttons -->
-      <div class="flex gap-1.5 flex-wrap mt-1.5 w-full" :class="lead.status === 'Lost' ? 'pointer-events-none opacity-40' : ''">
+      <div class="flex gap-1.5 flex-wrap w-full" :class="lead.status === 'Lost' ? 'pointer-events-none opacity-40' : ''">
         <button
           @click.stop="emit('edit-activity', lead.id)"
           title="Activity"
-          class="flex-1 flex items-center justify-center px-3 py-2 bg-blue-50 text-blue-600 rounded-lg border border-blue-200 hover:bg-blue-100 active:bg-blue-200 transition-colors shadow-sm"
+          class="flex-1 flex items-center justify-center px-2 py-1.5 bg-blue-50 text-blue-600 rounded-lg border border-blue-200 hover:bg-blue-100 active:bg-blue-200 transition-colors"
         >
-          <i class="ph-bold ph-chat text-base"></i>
+          <i class="ph-bold ph-chat text-lg"></i>
         </button>
         <button
           @click.stop="emit('edit-task', lead.id)"
           title="Task"
           :class="[
-            'flex-1 flex items-center justify-center px-3 py-2 rounded-lg border transition-colors shadow-sm',
+            'flex-1 flex items-center justify-center px-2 py-1.5 rounded-lg border transition-colors',
             isNoAction
               ? 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100'
               : isNoTask
@@ -90,16 +99,16 @@
                 : 'bg-purple-50 text-purple-600 border-purple-200 hover:bg-purple-100'
           ]"
         >
-          <i class="ph-bold ph-plus text-base"></i>
+          <i class="ph-bold ph-plus text-lg"></i>
         </button>
         <a
           v-if="lead.phone"
           :href="callHref"
           @click.stop
           title="Call"
-          class="flex-1 flex items-center justify-center px-3 py-2 bg-orange-50 text-orange-600 rounded-lg border border-orange-200 hover:bg-orange-100 active:bg-orange-200 transition-colors shadow-sm"
+          class="flex-1 flex items-center justify-center px-2 py-1.5 bg-orange-50 text-orange-600 rounded-lg border border-orange-200 hover:bg-orange-100 active:bg-orange-200 transition-colors"
         >
-          <i class="ph-fill ph-phone text-base"></i>
+          <i class="ph-fill ph-phone text-lg"></i>
         </a>
         <a
           v-if="lead.phone"
@@ -107,16 +116,16 @@
           target="_blank"
           @click.stop
           title="WhatsApp"
-          class="flex-1 flex items-center justify-center px-3 py-2 bg-green-50 text-green-600 rounded-lg border border-green-200 hover:bg-green-100 active:bg-green-200 transition-colors shadow-sm"
+          class="flex-1 flex items-center justify-center px-2 py-1.5 bg-green-50 text-green-600 rounded-lg border border-green-200 hover:bg-green-100 active:bg-green-200 transition-colors"
         >
-          <i class="ph-fill ph-whatsapp-logo text-base"></i>
+          <i class="ph-fill ph-whatsapp-logo text-lg"></i>
         </a>
       </div>
 
       <!-- Notes -->
       <div
         v-if="lead.notes"
-        class="text-[10px] text-slate-600 bg-slate-50 p-1.5 rounded line-clamp-1 mt-1 truncate"
+        class="text-[10px] text-slate-600 bg-slate-50 p-1.5 rounded line-clamp-1 truncate"
       >
         {{ lead.notes }}
       </div>
