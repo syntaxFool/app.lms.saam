@@ -740,6 +740,8 @@ watch(() => props.isOpen, (open) => {
     loadUsers()
     brandName.value = appStore.appName
     brandLogo.value = appStore.appLogo
+    // Refresh interestsList from store when modal opens
+    interestsList.value = [...(appStore.interestsList || [])]
   } else {
     showForm.value = false
     resetForm()
