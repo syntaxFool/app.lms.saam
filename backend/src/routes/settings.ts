@@ -23,9 +23,9 @@ router.get('/', async (_req: Request, res: Response): Promise<void> => {
 
 // PUT /api/settings — admin/superuser only
 router.put('/', requireAuth, requireRole('superuser', 'admin'), async (req: Request, res: Response): Promise<void> => {
-  const { app_name, app_logo } = req.body as { app_name?: string; app_logo?: string }
+  const { app_name, app_logo, interests_list } = req.body as { app_name?: string; app_logo?: string; interests_list?: string[] }
 
-  if (app_name === undefined && app_logo === undefined) {
+  if (app_name === undefined && app_logo === undefined && interests_list === undefined) {
     res.status(400).json({ success: false, error: 'No settings provided' })
     return
   }
@@ -46,6 +46,20 @@ router.put('/', requireAuth, requireRole('superuser', 'admin'), async (req: Requ
          VALUES ('app_logo', $1, NOW())
          ON CONFLICT (key) DO UPDATE SET value = $1, updated_at = NOW()`,
         [app_logo]
+      )
+    }
+    if (interests_list !== undefined) {
+      // Validate that it's an array of strings
+      if (!Array.isArray(interests_list) || !interests_list.every(i => typeof i === 'string' && i.trim().length > 0)) {
+        res.status(400).json({ success: false, error: 'interests_list must be an array of non-empty strings' })
+        return
+      }
+      // Store as JSON string
+      await queryOne(
+        `INSERT INTO app_settings (key, value, updated_at)
+         VALUES ('interests_list', $1, NOW())
+         ON CONFLICT (key) DO UPDATE SET value = $1, updated_at = NOW()`,
+        [JSON.stringify(interests_list)]
       )
     }
     res.json({ success: true })

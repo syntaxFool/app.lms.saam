@@ -49,6 +49,7 @@ export const useAppStore = defineStore('app', () => {
   const theme = ref<'light' | 'dark'>(localStorage.getItem('app_theme') as 'light' | 'dark' || 'light')
   const appName = ref(localStorage.getItem('app_name') || 'LeadFlow India')
   const appLogo = ref(localStorage.getItem('app_logo') || '')
+  const interestsList = ref<string[]>(JSON.parse(localStorage.getItem('interests_list') || '[]'))
   const users = ref<User[]>([])
 
   // Getters
@@ -235,14 +236,37 @@ export const useAppStore = defineStore('app', () => {
     setAppBranding(resolved, logo)
   }
 
+  async function saveInterestsList(interests: string[]): Promise<void> {
+    try {
+      await apiClient.put('/settings', { interests_list: interests })
+      interestsList.value = interests
+      localStorage.setItem('interests_list', JSON.stringify(interests))
+    } catch (err) {
+      console.error('Failed to save interests to server:', err)
+      throw err
+    }
+  }
+
   async function fetchAppSettings(): Promise<void> {
     try {
       const response = await apiClient.get('/settings') as { success: boolean; data: Record<string, string> }
       if (response.success && response.data) {
         const name = response.data['app_name']
         const logo = response.data['app_logo']
+        const interests = response.data['interests_list']
         if (name) { appName.value = name; localStorage.setItem('app_name', name) }
         if (logo !== undefined) { appLogo.value = logo; localStorage.setItem('app_logo', logo) }
+        if (interests) {
+          try {
+            const parsed = JSON.parse(interests)
+            if (Array.isArray(parsed)) {
+              interestsList.value = parsed
+              localStorage.setItem('interests_list', interests)
+            }
+          } catch (e) {
+            console.error('Failed to parse interests_list:', e)
+          }
+        }
       }
     } catch (err) {
       console.error('Failed to load app settings:', err)
@@ -354,6 +378,7 @@ export const useAppStore = defineStore('app', () => {
     theme,
     appName,
     appLogo,
+    interestsList,
     
     // Getters
     isLoading,
@@ -399,6 +424,7 @@ export const useAppStore = defineStore('app', () => {
     toggleTheme,
     setAppBranding,
     saveAppBranding,
+    saveInterestsList,
     fetchAppSettings,
 
     // UI State

@@ -333,7 +333,75 @@
                   </div>
                 </div>
 
-                <!-- Save -->
+                <!-- Interests Configuration -->
+                <div>
+                  <div class="flex items-center justify-between mb-2">
+                    <label class="text-sm font-bold text-slate-700">Interest Options</label>
+                    <span class="text-xs text-slate-400">{{ interestsList.length }} options</span>
+                  </div>
+                  <p class="text-xs text-slate-500 mb-3">Configure the interest options shown in lead forms.</p>
+
+                  <!-- Add new interest -->
+                  <div class="flex gap-2 mb-3">
+                    <input
+                      v-model="newInterest"
+                      @keydown.enter="addInterest"
+                      type="text"
+                      placeholder="Add new interest..."
+                      class="flex-1 bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none transition"
+                    />
+                    <button
+                      @click="addInterest"
+                      :disabled="!newInterest.trim()"
+                      class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center gap-1.5"
+                    >
+                      <i class="ph-bold ph-plus"></i>
+                      <span class="text-sm font-semibold">Add</span>
+                    </button>
+                  </div>
+
+                  <!-- Interests list -->
+                  <div class="bg-slate-50 rounded-lg border border-slate-200 p-2 max-h-48 overflow-y-auto">
+                    <div v-if="interestsList.length === 0" class="text-center py-6 text-sm text-slate-400">
+                      No interests configured yet
+                    </div>
+                    <div v-else class="space-y-1">
+                      <div
+                        v-for="(interest, idx) in interestsList"
+                        :key="idx"
+                        class="flex items-center justify-between bg-white rounded-lg px-3 py-2 group"
+                      >
+                        <span class="text-sm text-slate-700">{{ interest }}</span>
+                        <button
+                          @click="removeInterest(idx)"
+                          class="text-slate-400 hover:text-red-500 transition opacity-0 group-hover:opacity-100"
+                        >
+                          <i class="ph-bold ph-x text-lg"></i>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Save interests -->
+                  <div class="flex items-center gap-3 justify-end mt-3">
+                    <Transition name="form-slide">
+                      <span v-if="interestsSaved" class="text-sm text-green-600 font-semibold flex items-center gap-1">
+                        <i class="ph-bold ph-check-circle"></i> Saved!
+                      </span>
+                    </Transition>
+                    <button
+                      @click="saveInterests"
+                      :disabled="interestsSaving"
+                      class="flex items-center gap-1.5 bg-indigo-600 text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-indigo-700 disabled:opacity-60 transition"
+                    >
+                      <i v-if="interestsSaving" class="ph-bold ph-spinner-gap animate-spin"></i>
+                      <i v-else class="ph-bold ph-floppy-disk"></i>
+                      {{ interestsSaving ? 'Saving…' : 'Save Interests' }}
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Save Branding -->
                 <div class="flex items-center gap-3 justify-end">
                   <Transition name="form-slide">
                     <span v-if="brandSaved" class="text-sm text-green-600 font-semibold flex items-center gap-1">
@@ -414,6 +482,12 @@ const brandLogo = ref(appStore.appLogo)
 const emojiCategory = ref(0)
 const brandSaved = ref(false)
 const brandSaving = ref(false)
+
+// Interests management
+const interestsList = ref<string[]>([...(appStore.interestsList || [])])
+const newInterest = ref('')
+const interestsSaved = ref(false)
+const interestsSaving = ref(false)
 
 const showForm = ref(false)
 const formMode = ref<'create' | 'edit'>('create')
@@ -536,6 +610,31 @@ function saveBranding() {
     brandSaved.value = true
     setTimeout(() => { brandSaved.value = false }, 2000)
   })
+}
+
+function addInterest() {
+  const interest = newInterest.value.trim()
+  if (interest && !interestsList.value.includes(interest)) {
+    interestsList.value.push(interest)
+    newInterest.value = ''
+  }
+}
+
+function removeInterest(idx: number) {
+  interestsList.value.splice(idx, 1)
+}
+
+async function saveInterests() {
+  interestsSaving.value = true
+  try {
+    await appStore.saveInterestsList(interestsList.value)
+    interestsSaved.value = true
+    setTimeout(() => { interestsSaved.value = false }, 2000)
+  } catch (err) {
+    console.error('Failed to save interests:', err)
+  } finally {
+    interestsSaving.value = false
+  }
 }
 
 async function submitForm() {

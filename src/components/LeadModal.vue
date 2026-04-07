@@ -614,24 +614,7 @@ const showLocationSuggestions = ref(false)
 const showSourceSuggestions = ref(false)
 
 // Autocomplete data
-const interests = [
-  'Software Development',
-  'Mobile App Development',
-  'Web Development',
-  'Digital Marketing',
-  'SEO Services',
-  'Social Media Marketing',
-  'Graphic Design',
-  'UI/UX Design',
-  'Cloud Services',
-  'Data Analytics',
-  'AI/ML Solutions',
-  'Cybersecurity',
-  'E-commerce Platform',
-  'CRM Software',
-  'ERP System',
-  'Business Consulting'
-]
+const interests = computed(() => appStore.interestsList || [])
 
 const locations = [
   'Bangalore',
@@ -702,9 +685,9 @@ const leadTasks = computed(() => existingLead.value?.tasks || [])
 
 // Autocomplete computed
 const filteredInterests = computed(() => {
-  if (!formData.value.interest) return interests
+  if (!formData.value.interest) return interests.value
   const search = formData.value.interest.toLowerCase()
-  return interests.filter(i => i.toLowerCase().includes(search))
+  return interests.value.filter(i => i.toLowerCase().includes(search))
 })
 
 const filteredLocations = computed(() => {

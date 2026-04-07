@@ -133,16 +133,18 @@ The app is used primarily on mobile. Follow these established patterns:
 - Mobile Kanban uses tab-based column switching — don't add horizontal scroll.
 
 **LeadCard display hierarchy** (top → bottom):
-1. **Name** (`text-sm font-bold`) — primary; phone shown below only if name present
-2. **Phone** (`text-xs`, with phone icon) — shown separately, not merged with name
-3. **Badges** — assigned user, status, temperature — all `text-[10px] px-1.5 py-0.5`
-4. **Interests** — max 2 shown with "+N more"
-5. **Value** — `text-sm font-bold`
-6. **Action buttons** — 4 equal-width: chat, task, call, WhatsApp (`py-1.5`, `text-lg` icons)
-7. **Notes** — 1-line truncated
-8. **Nav footer** — prev/next status arrows
+1. **Name + Alert/Task badge** — one row: name (`text-sm font-bold`) on left, status icon on right
+   - Alert/Task badges are **icon-only circles** (`w-6 h-6 rounded-full`) — red for no-action, amber for no-pending-task. Never use text labels in these badges.
+2. **Phone** (`text-xs`, with phone icon) — separate line below name
+3. **Badges row + Value** — one `justify-between` row: `[Status] [Temp]` badges on left, `₹Value` on right (`text-sm font-bold shrink-0`)
+4. **Interests** — max 2 shown with "+N more" (`text-[10px]`)
+5. **Action buttons** — 4 equal-width: chat, task, call, WhatsApp (`py-1.5`, `text-lg` icons)
+6. **Notes** — 1-line truncated (only if present)
+7. **Nav footer** — prev/next status arrows
 
-**Badge/chip sizing on cards**: Always `text-[10px] px-1.5 py-0.5`. Avoid `text-xs px-2 py-1` — too bulky on mobile.
+**Card spacing**: Main content area uses `p-2.5` padding and `gap-2` between all sections.
+
+**Badge/chip sizing on cards**: Metadata badges use `text-[10px] px-1.5 py-0.5`. Avoid `text-xs px-2 py-1` — too bulky on mobile. Status icon badges (Alert/Task) are the exception: `w-6 h-6` circles.
 
 **z-index stack**: Modals at `z-50`; any modal above another modal uses `z-[60]`.
 
