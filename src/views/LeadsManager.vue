@@ -291,7 +291,9 @@ function setupAdaptivePolling() {
 }
 
 function startPolling() {
-  const interval = isUserActive.value ? 5000 : 40000 // 5s active, 40s idle
+  // Increased intervals to reduce API calls: 10s active, 60s idle
+  // Prevents hitting rate limit (1000 req/15min)
+  const interval = isUserActive.value ? 10000 : 60000 // 10s active, 60s idle
   
   syncIntervalId = window.setInterval(async () => {
     try {
