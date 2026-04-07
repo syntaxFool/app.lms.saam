@@ -209,6 +209,10 @@
                         v-if="user.id === authStore.user?.id"
                         class="text-xs text-green-600 font-medium border border-green-200 bg-green-50 px-1.5 py-0.5 rounded-full"
                       >You</span>
+                      <span
+                        v-if="user.username === 'superuser'"
+                        class="text-xs text-purple-600 font-medium border border-purple-200 bg-purple-50 px-1.5 py-0.5 rounded-full"
+                      ><i class="ph-bold ph-lock-key text-xs"></i> Default</span>
                     </div>
                     <p v-if="user.mobile" class="text-xs text-slate-400 mt-0.5 truncate">{{ user.mobile }}</p>
                     <p v-if="confirmDeleteId === user.id" class="text-xs text-red-600 font-semibold mt-1">
@@ -219,7 +223,7 @@
                   <!-- Action buttons -->
                   <div class="flex items-center gap-1 flex-shrink-0">
                     <button
-                      v-if="canManageUsers"
+                      v-if="canManageUsers && user.username !== 'superuser'"
                       @click="startEdit(user)"
                       class="p-1.5 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition"
                       title="Edit user"
@@ -228,7 +232,7 @@
                     </button>
 
                     <button
-                      v-if="authStore.isSuperuser && user.id !== authStore.user?.id"
+                      v-if="authStore.isSuperuser && user.id !== authStore.user?.id && user.username !== 'superuser'"
                       @click="onDeleteClick(user.id)"
                       :class="[
                         'p-1.5 rounded-lg transition',
