@@ -50,6 +50,7 @@ export const useAppStore = defineStore('app', () => {
   const appName = ref(localStorage.getItem('app_name') || 'LeadFlow India')
   const appLogo = ref(localStorage.getItem('app_logo') || '')
   const interestsList = ref<string[]>(JSON.parse(localStorage.getItem('interests_list') || '[]'))
+  const sourcesList = ref<string[]>(JSON.parse(localStorage.getItem('sources_list') || '[]'))
   const users = ref<User[]>([])
 
   // Getters
@@ -247,6 +248,17 @@ export const useAppStore = defineStore('app', () => {
     }
   }
 
+  async function saveSourcesList(sources: string[]): Promise<void> {
+    try {
+      await apiClient.put('/settings', { sources_list: sources })
+      sourcesList.value = sources
+      localStorage.setItem('sources_list', JSON.stringify(sources))
+    } catch (err) {
+      console.error('Failed to save sources to server:', err)
+      throw err
+    }
+  }
+
   async function fetchAppSettings(): Promise<void> {
     try {
       const response = await apiClient.get('/settings') as { success: boolean; data: Record<string, string> }
@@ -254,6 +266,7 @@ export const useAppStore = defineStore('app', () => {
         const name = response.data['app_name']
         const logo = response.data['app_logo']
         const interests = response.data['interests_list']
+        const sources = response.data['sources_list']
         if (name) { appName.value = name; localStorage.setItem('app_name', name) }
         if (logo !== undefined) { appLogo.value = logo; localStorage.setItem('app_logo', logo) }
         if (interests) {
@@ -265,6 +278,17 @@ export const useAppStore = defineStore('app', () => {
             }
           } catch (e) {
             console.error('Failed to parse interests_list:', e)
+          }
+        }
+        if (sources) {
+          try {
+            const parsed = JSON.parse(sources)
+            if (Array.isArray(parsed)) {
+              sourcesList.value = parsed
+              localStorage.setItem('sources_list', sources)
+            }
+          } catch (e) {
+            console.error('Failed to parse sources_list:', e)
           }
         }
       }
@@ -379,6 +403,7 @@ export const useAppStore = defineStore('app', () => {
     appName,
     appLogo,
     interestsList,
+    sourcesList,
     
     // Getters
     isLoading,
@@ -425,6 +450,7 @@ export const useAppStore = defineStore('app', () => {
     setAppBranding,
     saveAppBranding,
     saveInterestsList,
+    saveSourcesList,
     fetchAppSettings,
 
     // UI State

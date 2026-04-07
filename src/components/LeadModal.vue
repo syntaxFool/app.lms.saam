@@ -615,6 +615,7 @@ const showSourceSuggestions = ref(false)
 
 // Autocomplete data
 const interests = computed(() => appStore.interestsList || [])
+const sources = computed(() => appStore.sourcesList || [])
 
 const locations = [
   'Bangalore',
@@ -633,23 +634,6 @@ const locations = [
   'Indore',
   'Coimbatore',
   'Kochi'
-]
-
-const sources = [
-  'LinkedIn',
-  'Facebook',
-  'Instagram',
-  'Google Ads',
-  'Website',
-  'Referral',
-  'Cold Call',
-  'Email Campaign',
-  'WhatsApp',
-  'Trade Show',
-  'Partner',
-  'Direct',
-  'YouTube',
-  'Twitter'
 ]
 
 const formData = ref({
@@ -697,9 +681,9 @@ const filteredLocations = computed(() => {
 })
 
 const filteredSources = computed(() => {
-  if (!formData.value.source) return sources
+  if (!formData.value.source) return sources.value
   const search = formData.value.source.toLowerCase()
-  return sources.filter(s => s.toLowerCase().includes(search))
+  return sources.value.filter(s => s.toLowerCase().includes(search))
 })
 
 // Phone handling function
