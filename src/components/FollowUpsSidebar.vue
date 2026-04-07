@@ -66,7 +66,7 @@
               >
                 <div class="flex items-start justify-between mb-2">
                   <h4 class="font-semibold text-slate-800 text-sm">{{ lead.name }}</h4>
-                  <span class="text-xs text-red-600 font-medium">{{ getDaysOverdue(lead.followUpDate!) }}</span>
+                  <span class="text-xs text-red-600 font-medium">{{ getDaysOverdueForLead(lead) }}</span>
                 </div>
                 <p class="text-xs text-slate-600 mb-2">{{ lead.phone }}</p>
                 <div class="flex items-center gap-2">
@@ -152,7 +152,7 @@
               >
                 <div class="flex items-start justify-between mb-2">
                   <h4 class="font-semibold text-slate-800 text-sm">{{ lead.name }}</h4>
-                  <span class="text-xs text-blue-600 font-medium">{{ getRelativeDate(lead.followUpDate!) }}</span>
+                  <span class="text-xs text-blue-600 font-medium">{{ getRelativeDateForLead(lead) }}</span>
                 </div>
                 <p class="text-xs text-slate-600 mb-2">{{ lead.phone }}</p>
                 <div class="flex items-center gap-2">
@@ -203,26 +203,55 @@ const expandedSections = ref({
   upcoming: true
 })
 
-// Filter leads by agent
+// Helper: Get the earliest relevant date from followUpDate or pending tasks
+const getEarliestDate = (lead: Lead): Date | null => {
+  const dates: Date[] = []
+  
+  // Add followUpDate if exists
+  if (lead.followUpDate) {
+    dates.push(new Date(lead.followUpDate))
+  }
+  
+  // Add pending task due dates
+  if (lead.tasks) {
+    lead.tasks
+      .filter(task => task.status === 'pending' && task.dueDate)
+      .forEach(task => dates.push(new Date(task.dueDate!)))
+  }
+  
+  if (dates.length === 0) return null
+  return new Date(Math.min(...dates.map(d => d.getTime())))
+}
+
+// Filter leads by agent — include leads with followUpDate OR pending tasks with due dates
 const filteredLeads = computed(() => {
-  let leads = leadsStore.leads.filter(lead => lead.followUpDate)
+  let leads = leadsStore.leads.filter(lead => {
+    const hasFollowUp = !!lead.followUpDate
+    const hasPendingTasks = lead.tasks?.some(t => t.status === 'pending' && t.dueDate)
+    return hasFollowUp || hasPendingTasks
+  })
   if (selectedAgent.value) {
     leads = leads.filter(lead => lead.assignedTo === selectedAgent.value)
   }
   return leads
 })
 
-// Categorize leads by follow-up date
+// Categorize leads by earliest date (followUpDate or task due date)
 const overdueLeads = computed(() => {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
   return filteredLeads.value
     .filter(lead => {
-      const followUpDate = new Date(lead.followUpDate!)
-      followUpDate.setHours(0, 0, 0, 0)
-      return followUpDate < today
+      const earliestDate = getEarliestDate(lead)
+      if (!earliestDate) return false
+      earliestDate.setHours(0, 0, 0, 0)
+      return earliestDate < today
     })
-    .sort((a, b) => new Date(a.followUpDate!).getTime() - new Date(b.followUpDate!).getTime())
+    .sort((a, b) => {
+      const dateA = getEarliestDate(a)!
+      const dateB = getEarliestDate(b)!
+      return dateA.getTime() - dateB.getTime()
+    })
 })
 
 const todayLeads = computed(() => {
@@ -230,9 +259,10 @@ const todayLeads = computed(() => {
   today.setHours(0, 0, 0, 0)
   return filteredLeads.value
     .filter(lead => {
-      const followUpDate = new Date(lead.followUpDate!)
-      followUpDate.setHours(0, 0, 0, 0)
-      return followUpDate.getTime() === today.getTime()
+      const earliestDate = getEarliestDate(lead)
+      if (!earliestDate) return false
+      earliestDate.setHours(0, 0, 0, 0)
+      return earliestDate.getTime() === today.getTime()
     })
 })
 
@@ -244,11 +274,16 @@ const upcomingLeads = computed(() => {
   
   return filteredLeads.value
     .filter(lead => {
-      const followUpDate = new Date(lead.followUpDate!)
-      followUpDate.setHours(0, 0, 0, 0)
-      return followUpDate > today && followUpDate <= nextWeek
+      const earliestDate = getEarliestDate(lead)
+      if (!earliestDate) return false
+      earliestDate.setHours(0, 0, 0, 0)
+      return earliestDate > today && earliestDate <= nextWeek
     })
-    .sort((a, b) => new Date(a.followUpDate!).getTime() - new Date(b.followUpDate!).getTime())
+    .sort((a, b) => {
+      const dateA = getEarliestDate(a)!
+      const dateB = getEarliestDate(b)!
+      return dateA.getTime() - dateB.getTime()
+    })
 })
 
 const toggleSection = (section: 'overdue' | 'today' | 'upcoming') => {
@@ -263,6 +298,12 @@ const getDaysOverdue = (dateStr: string): string => {
   return `${diffDays}d overdue`
 }
 
+const getDaysOverdueForLead = (lead: Lead): string => {
+  const earliestDate = getEarliestDate(lead)
+  if (!earliestDate) return ''
+  return getDaysOverdue(earliestDate.toISOString())
+}
+
 const getRelativeDate = (dateStr: string): string => {
   const followUpDate = new Date(dateStr)
   const today = new Date()
@@ -275,6 +316,12 @@ const getRelativeDate = (dateStr: string): string => {
   if (diffDays === 1) return 'Tomorrow'
   if (diffDays <= 7) return `${diffDays}d`
   return followUpDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
+const getRelativeDateForLead = (lead: Lead): string => {
+  const earliestDate = getEarliestDate(lead)
+  if (!earliestDate) return ''
+  return getRelativeDate(earliestDate.toISOString())
 }
 
 const openLead = (leadId?: string) => {

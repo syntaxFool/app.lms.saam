@@ -562,25 +562,42 @@ export const useLeadsStore = defineStore('leads', () => {
   }
 
   // ============ TASK MANAGEMENT ============
-  function addTask(leadId: string, task: Omit<Task, 'id' | 'createdAt'>, user?: any): boolean {
+  async function addTask(leadId: string, task: Omit<Task, 'id' | 'createdAt'>): Promise<boolean> {
     const lead = leads.value.find(l => l.id === leadId)
     if (!lead) return false
 
-    if (!lead.tasks) lead.tasks = []
-    const newTask: Task = {
-      id: generateId(),
-      createdAt: formatDateTime(),
-      ...task
+    try {
+      // Call backend API to persist task
+      const response = await apiClient.post(`/leads/${leadId}/tasks`, {
+        title: task.title,
+        note: task.note,
+        dueDate: task.dueDate,
+        priority: task.priority,
+        assignedTo: task.assignedTo
+      })
+
+      if (!response.data?.data) return false
+
+      // Add the backend-created task to local state
+      if (!lead.tasks) lead.tasks = []
+      const newTask: Task = {
+        id: response.data.data.id,
+        title: response.data.data.title,
+        note: response.data.data.note,
+        dueDate: response.data.data.due_date,
+        status: response.data.data.status,
+        priority: response.data.data.priority,
+        assignedTo: response.data.data.assigned_to,
+        createdAt: response.data.data.created_at,
+        completedAt: response.data.data.completed_at
+      }
+
+      lead.tasks.push(newTask)
+      return true
+    } catch (error) {
+      console.error('Add task error:', error)
+      return false
     }
-
-    lead.tasks.push(newTask)
-    addActivity(leadId, {
-      type: 'task',
-      note: `Task created: ${task.title}${task.dueDate ? ` (Due: ${task.dueDate})` : ''}`,
-      relatedTaskId: newTask.id
-    }, user)
-
-    return true
   }
 
   function updateTask(leadId: string, taskId: string, updates: Partial<Task>): boolean {
@@ -594,26 +611,27 @@ export const useLeadsStore = defineStore('leads', () => {
     return true
   }
 
-  function deleteTask(leadId: string, taskId: string, user?: any): boolean {
+  async function deleteTask(leadId: string, taskId: string): Promise<boolean> {
     const lead = leads.value.find(l => l.id === leadId)
     if (!lead || !lead.tasks) return false
 
     const taskIndex = lead.tasks.findIndex(t => t.id === taskId)
     if (taskIndex === -1) return false
 
-    const task = lead.tasks[taskIndex]
-    lead.tasks.splice(taskIndex, 1)
+    try {
+      // Call backend API to delete task
+      await apiClient.delete(`/leads/${leadId}/tasks/${taskId}`)
 
-    addActivity(leadId, {
-      type: 'task',
-      note: `Task deleted: ${task.title}`,
-      relatedTaskId: taskId
-    }, user)
-
-    return true
+      // Remove from local state
+      lead.tasks.splice(taskIndex, 1)
+      return true
+    } catch (error) {
+      console.error('Delete task error:', error)
+      return false
+    }
   }
 
-  function toggleTaskStatus(leadId: string, taskId: string, user?: any): boolean {
+  async function toggleTaskStatus(leadId: string, taskId: string): Promise<boolean> {
     const lead = leads.value.find(l => l.id === leadId)
     if (!lead || !lead.tasks) return false
 
@@ -621,21 +639,24 @@ export const useLeadsStore = defineStore('leads', () => {
     if (!task) return false
 
     const newStatus: TaskStatus = task.status === 'completed' ? 'pending' : 'completed'
-    task.status = newStatus
-    
-    if (newStatus === 'completed') {
-      task.completedAt = new Date().toISOString()
-    } else {
-      task.completedAt = undefined
+    const completedAt = newStatus === 'completed' ? new Date().toISOString() : null
+
+    try {
+      // Call backend API to update task status
+      await apiClient.put(`/leads/${leadId}/tasks/${taskId}`, {
+        status: newStatus,
+        completedAt: completedAt
+      })
+
+      // Update local state
+      task.status = newStatus
+      task.completedAt = completedAt || undefined
+
+      return true
+    } catch (error) {
+      console.error('Toggle task status error:', error)
+      return false
     }
-
-    addActivity(leadId, {
-      type: 'task',
-      note: `Task ${newStatus === 'completed' ? 'completed' : 'reopened'}: ${task.title}`,
-      relatedTaskId: taskId
-    }, user)
-
-    return true
   }
 
   // ============ UTILITY ============

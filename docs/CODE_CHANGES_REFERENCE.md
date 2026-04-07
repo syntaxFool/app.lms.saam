@@ -359,3 +359,168 @@ If you need to rollback these changes:
 - [x] Ready for component integration
 - [x] Ready for end-to-end testing
 
+---
+
+# Session 2 – Bug Fixes (April 7, 2026)
+
+Commits: `e8fa451` (WhatsApp fix), `4187c82` (fetch on mount)
+
+---
+
+## Bug Fix 1: "Lead name is required" blocked phone-only lead creation
+
+**Problem:** Submitting a new lead with only a phone number (no name) showed "Lead name is required" even after the form field was made optional.
+
+**Root cause — 5 layers:**
+
+### Layer 1: `src/components/LeadForm.vue`
+- Removed `required` attribute from the name `<input>`
+- Changed submit button `disabled` from `!name && !phoneNumber` to `!phoneNumber`
+- Added `*` indicator to Phone label only
+
+### Layer 2: `src/components/LeadModal.vue`
+- `submitForm()` had an explicit guard: `if (!formData.value.name?.trim()) { showError('Lead name is required'); return }`
+- **Fix:** Removed this guard entirely
+- Also removed `required` HTML attribute from name field in the modal template
+
+### Layer 3: `backend/src/schemas.ts`
+- `createLeadSchema` had `name: z.string().min(1)` → returned HTTP 400 when name was empty
+- **Fix:** Changed to `name: z.string().max(200).optional().or(z.literal(''))`
+
+### Layer 4: `backend/src/routes/leads.ts`
+- INSERT query used `d.id || undefined` which passed `null` to a NOT NULL `id` column → HTTP 500
+- **Fix:** Changed to `COALESCE($1::uuid, gen_random_uuid())` for the id parameter
+- Changed `d.name` to `d.name || null` so empty string becomes NULL in DB
+- Activity log note changed from `d.name` to `d.name || d.phone` so nameless leads still get a meaningful log entry
+
+### Layer 5: `backend/db/migrations/003_leads_name_nullable.sql`
+- `name` column was `NOT NULL` in the DB schema
+- **Fix:** New migration file created and applied:
+  ```sql
+  ALTER TABLE leads ALTER COLUMN name DROP NOT NULL;
+  ```
+
+---
+
+## Bug Fix 2: WhatsApp / Call links had wrong URL format
+
+**Problem:** WhatsApp link opened as `https://wa.me/+91%207218923711` instead of `https://wa.me/917218923711` (must be digits only, no `+`, no spaces).
+
+**Root cause:** `src/components/LeadCard.vue` had double-escaped regex in template string literals:
+```
+// BAD — matches literal \D, not non-digit characters
+phone.replace('\\D', '')
+phone.replace('\\s+', ' ')
+```
+
+**Fix (`src/components/LeadCard.vue`):**
+```typescript
+const cleanPhone = computed(() => (props.lead.phone || '').replace(/\D/g, ''))
+const whatsappHref = computed(() => `https://wa.me/${cleanPhone.value}`)
+const callHref = computed(() => `tel:+${cleanPhone.value}`)
+```
+Template updated to use `:href="whatsappHref"` and `:href="callHref"`.
+
+**Same fix applied to `src/components/LeadModal.vue`:**
+- Added computed `cleanPhoneDigits` using `existingLead?.phone || formData.value.phone`
+- Added computed `whatsappLink` and `callLink` bindings
+
+---
+
+## Bug Fix 3: Leads disappeared on page refresh
+
+**Problem:** Adding a lead succeeded (saved to DB), but after a browser refresh the lead list was empty.
+
+**Root cause:** `src/views/LeadsManager.vue` `onMounted` hook never called `fetchLeads()`. It only called `setupAdaptivePolling()`, which internally uses `checkForServerUpdates()` — a function that only checks *whether* the server has updates (via a flag), but never actually loads data.
+
+**Fix (`src/views/LeadsManager.vue`):**
+```typescript
+// BEFORE
+onMounted(async () => {
+  const handleResize = () => { isMdScreen.value = window.innerWidth >= 768 }
+  window.addEventListener('resize', handleResize)
+  setupAdaptivePolling()
+})
+
+// AFTER
+onMounted(async () => {
+  await leadsStore.fetchLeads()           // ← added
+  const handleResize = () => { isMdScreen.value = window.innerWidth >= 768 }
+  window.addEventListener('resize', handleResize)
+  setupAdaptivePolling()
+})
+```
+
+---
+
+## Bug Fix 4: PWA service worker serving stale cached bundle
+
+**Problem:** Browser was loading an old JS bundle cached by the service worker, masking deployed code fixes.
+
+### `vite.config.ts` — Workbox config updated:
+```typescript
+workbox: {
+  cacheId: 'shanuzz-lms-v2',      // bumped from v1
+  skipWaiting: true,
+  clientsClaim: true,
+  cleanupOutdatedCaches: true,
+}
+```
+
+### `nginx-frontend.conf` — Added no-cache rule for service worker files (before the `*.js` 1-year immutable rule):
+```nginx
+location ~* (sw\.js|workbox-.*\.js)$ {
+  expires off;
+  add_header Cache-Control "no-store, no-cache, must-revalidate";
+  try_files $uri =404;
+}
+```
+
+### `src/main.ts` — Force SW update + old cache deletion on app load:
+```typescript
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then(regs => {
+    regs.forEach(reg => reg.update())
+  })
+  caches.keys().then(keys => {
+    keys.filter(k => !k.includes('shanuzz-lms-v2')).forEach(k => caches.delete(k))
+  })
+}
+```
+
+---
+
+## Session 2 — Summary of Changed Files
+
+| File | Change |
+|------|--------|
+| `src/components/LeadForm.vue` | Phone only required field; name optional |
+| `src/components/LeadModal.vue` | Removed name guard; computed WhatsApp/Call links; `initialTab` prop |
+| `src/components/LeadCard.vue` | Computed `cleanPhone`/`whatsappHref`/`callHref` (fixed double-escaped regex) |
+| `src/views/LeadsManager.vue` | Added `await leadsStore.fetchLeads()` in `onMounted` |
+| `backend/src/schemas.ts` | `name` field optional in `createLeadSchema` |
+| `backend/src/routes/leads.ts` | `COALESCE` for id; `d.name \|\| null`; fallback activity note |
+| `backend/db/migrations/003_leads_name_nullable.sql` | `ALTER TABLE leads ALTER COLUMN name DROP NOT NULL` |
+| `vite.config.ts` | `cacheId: 'shanuzz-lms-v2'`, `skipWaiting`, `clientsClaim`, `cleanupOutdatedCaches` |
+| `nginx-frontend.conf` | No-cache rule for `sw.js`/`workbox-*.js` |
+| `src/main.ts` | Force SW update + old cache deletion on load |
+
+## Session 2 — Commits
+
+| Commit | Description |
+|--------|-------------|
+| `e8fa451` | fix: computed WhatsApp/Call links in LeadCard and LeadModal (double-escaped regex) |
+| `4187c82` | fix: fetch leads from server on mount so they load after page refresh |
+
+## Session 2 — Problem → Root Cause → Fix
+
+| Symptom | Root Cause | Fix Location |
+|---------|-----------|--------------|
+| "Lead name is required" toast | `LeadModal.vue` explicit name guard | Removed guard in `LeadModal.vue` |
+| HTTP 400 on POST /api/leads | Zod `name: z.string().min(1)` | `backend/src/schemas.ts` |
+| HTTP 500 on POST /api/leads | `d.id \|\| undefined` → NULL on NOT NULL col | `backend/src/routes/leads.ts` |
+| DB error: name NOT NULL | Column constraint | Migration `003_leads_name_nullable.sql` |
+| WhatsApp URL had `+` and spaces | `\\D` double-escaped in template literal | Computed props in `LeadCard.vue` & `LeadModal.vue` |
+| Leads gone on refresh | `onMounted` never called `fetchLeads()` | `src/views/LeadsManager.vue` |
+| Old bundle served after deploy | SW cached JS with 1-year immutable header | nginx no-cache rule + vite `cacheId` bump |
+

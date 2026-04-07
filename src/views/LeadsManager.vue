@@ -9,7 +9,8 @@
         </button>
         <div class="flex items-center gap-1 sm:gap-2 overflow-hidden">
           <div class="bg-primary/10 p-1.5 rounded-lg flex-shrink-0">
-            <svg width="20" height="20" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+            <span v-if="appStore.appLogo" class="text-xl leading-none select-none">{{ appStore.appLogo }}</span>
+            <svg v-else width="20" height="20" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
               <path d="M4 4h24v20c0 0-2-3-4-3s-2 3-4 3-2-3-4-3-2 3-4 3-2-3-4-3-2 3-4 3V4z" fill="#FFD700"/>
               <circle cx="10" cy="12" r="2.5" fill="#000"/>
               <circle cx="22" cy="12" r="2.5" fill="#000"/>
@@ -17,8 +18,8 @@
               <circle cx="22" cy="11" r="1" fill="#fff"/>
             </svg>
           </div>
-          <h1 class="text-lg font-bold tracking-tight text-slate-900 hidden sm:block whitespace-nowrap">LeadFlow India</h1>
-          <h1 class="text-base font-bold tracking-tight text-slate-900 sm:hidden whitespace-nowrap">LeadFlow</h1>
+          <h1 class="text-lg font-bold tracking-tight text-slate-900 hidden sm:block whitespace-nowrap">{{ appStore.appName }}</h1>
+          <h1 class="text-base font-bold tracking-tight text-slate-900 sm:hidden whitespace-nowrap">{{ appStore.appName.split(' ')[0] }}</h1>
         </div>
       </div>
 
@@ -250,9 +251,10 @@ const pendingPhoneNumber = ref<string>('')
 
 // Initialize on first load  
 onMounted(async () => {
-  // Load leads and users on initial mount
+  // Load leads, users and app settings on initial mount
   await leadsStore.fetchLeads()
   appStore.fetchUsers()
+  appStore.fetchAppSettings()
 
   // Handle window resize
   const handleResize = () => {

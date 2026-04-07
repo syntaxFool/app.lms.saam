@@ -313,3 +313,45 @@ A: No - only superuser/admin can add users (permission matrix enforces this)
 
 **Status: COMPLETE & READY FOR TESTING**
 
+---
+
+## Quick Reference
+
+### Code Locations
+
+| Layer | File | What's There |
+|-------|------|-------------|
+| Frontend store | `src/stores/auth.ts` (lines 103–170) | `ROLE_LIMITS`, `getRoleStats()`, `checkRoleLimits()`, `getRoleLimitsDisplay()` |
+| Frontend composable | `src/composables/useRoleManagement.ts` | `canAddRole()`, `getRoleLabel()`, `getRoleColor()`, `getRoleIcon()` |
+| Types | `src/types/index.ts` | `RoleStats`, `RoleLimitCheck`, `UserValidationResult` |
+| Backend | `backend/src/constants/roleLimits.ts` | Role limit constants |
+
+### API Response Shapes
+
+**`checkRoleLimits()` (frontend)**
+```typescript
+// Allowed
+{ allowed: true,  message: "3 slots remaining for admins", remainingSlots: 3, current: 2, limit: 5 }
+
+// Blocked
+{ allowed: false, message: "Maximum 5 admins allowed. Current: 5/5", remainingSlots: 0 }
+```
+
+**Backend validation failure response**
+```json
+{
+  "success": false,
+  "message": "Role limit violation: Too many admins: 6 > 5",
+  "violations": [{ "role": "admin", "current": 6, "limit": 5, "message": "Too many admins: 6 > 5" }]
+}
+```
+
+### Error Messages Reference
+
+| Scenario | Message |
+|----------|---------|
+| Adding 2nd superuser | "Maximum 1 superuser allowed. Current: 1/1" |
+| Adding 6th admin | "Maximum 5 admins allowed. Current: 5/5" |
+| Adding 11th agent | "Maximum 10 agents allowed. Current: 10/10" |
+| Slots available | "3 slots remaining for admins" |
+

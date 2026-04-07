@@ -1,5 +1,7 @@
 # Google Apps Script Backend Integration Guide
 
+> ⚠️ **OUTDATED** — This document describes the legacy Google Apps Script backend. The current backend is Express + PostgreSQL. See [DEPLOYMENT_SELF_HOSTED.md](DEPLOYMENT_SELF_HOSTED.md) for the current architecture.
+
 ## Overview
 
 This document explains how the Vue.js frontend connects to the Google Apps Script backend for the Shanuzz Academy LMS.

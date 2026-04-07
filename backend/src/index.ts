@@ -3,9 +3,10 @@ import cors from 'cors'
 import helmet from 'helmet'
 import rateLimit from 'express-rate-limit'
 
-import authRoutes  from './routes/auth'
-import leadsRoutes from './routes/leads'
-import usersRoutes from './routes/users'
+import authRoutes     from './routes/auth'
+import leadsRoutes    from './routes/leads'
+import usersRoutes    from './routes/users'
+import settingsRoutes from './routes/settings'
 
 const app = express()
 const PORT = parseInt(process.env.PORT || '8080')
@@ -45,9 +46,10 @@ app.use('/api/auth/login', rateLimit({
 }))
 
 // ─── Routes ───
-app.use('/api/auth',  authRoutes)
-app.use('/api/leads', leadsRoutes)
-app.use('/api/users', usersRoutes)
+app.use('/api/auth',     authRoutes)
+app.use('/api/leads',    leadsRoutes)
+app.use('/api/users',    usersRoutes)
+app.use('/api/settings', settingsRoutes)
 
 // ─── Health check ───
 app.get('/api/health', (_req: Request, res: Response) => {

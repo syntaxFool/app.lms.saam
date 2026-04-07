@@ -1,5 +1,7 @@
 # Role Management System - Implementation Complete
 
+> ⚠️ **PARTIALLY OUTDATED** — The backend section references the legacy `code.gs` (Google Apps Script). The current backend implementation is in `backend/src/constants/roleLimits.ts` and `backend/src/middleware/`. Frontend sections remain accurate.
+
 ## Overview
 Implemented comprehensive role-based user management with enforced role limits across frontend (Vue) and backend (Google Apps Script).
 

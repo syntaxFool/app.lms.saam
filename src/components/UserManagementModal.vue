@@ -19,7 +19,7 @@
             </div>
             <div class="flex items-center gap-2">
               <button
-                v-if="canManageUsers && !showForm"
+                v-if="canManageUsers && !showForm && activeTab === 'users'"
                 @click="startCreate"
                 class="flex items-center gap-1.5 bg-primary text-white text-sm font-semibold px-3 py-2 rounded-lg hover:bg-indigo-700 transition"
               >
@@ -36,6 +36,25 @@
 
           <!-- Body -->
           <div class="flex-1 overflow-y-auto p-6">
+
+            <!-- Tabs (admin/superuser only) -->
+            <div v-if="canManageUsers" class="flex gap-1 bg-slate-100 rounded-xl p-1 mb-5">
+              <button
+                @click="activeTab = 'users'"
+                :class="['flex-1 flex items-center justify-center gap-1.5 py-1.5 text-sm font-semibold rounded-lg transition', activeTab === 'users' ? 'bg-white text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700']"
+              >
+                <i class="ph-bold ph-users"></i> Users
+              </button>
+              <button
+                @click="activeTab = 'appearance'"
+                :class="['flex-1 flex items-center justify-center gap-1.5 py-1.5 text-sm font-semibold rounded-lg transition', activeTab === 'appearance' ? 'bg-white text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700']"
+              >
+                <i class="ph-bold ph-paint-brush"></i> Appearance
+              </button>
+            </div>
+
+            <!-- USERS TAB -->
+            <template v-if="activeTab === 'users'">
 
             <!-- Loading -->
             <div v-if="loading" class="flex flex-col items-center justify-center py-16 text-slate-400 gap-3">
@@ -234,7 +253,103 @@
                 </div>
               </div>
 
-            </template>
+            </template> <!-- end v-else -->
+            </template> <!-- end users tab -->
+
+            <!-- APPEARANCE TAB -->
+            <template v-else-if="activeTab === 'appearance'">
+              <div class="space-y-6">
+
+                <!-- Live Preview -->
+                <div class="bg-slate-50 rounded-xl border border-slate-200 p-4">
+                  <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Preview</p>
+                  <div class="bg-white rounded-lg border border-slate-200 px-3 py-2 flex items-center gap-2">
+                    <div class="bg-primary/10 p-1.5 rounded-lg flex-shrink-0">
+                      <span v-if="brandLogo" class="text-xl leading-none select-none">{{ brandLogo }}</span>
+                      <svg v-else width="20" height="20" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M4 4h24v20c0 0-2-3-4-3s-2 3-4 3-2-3-4-3-2 3-4 3-2-3-4-3-2 3-4 3V4z" fill="#FFD700"/>
+                        <circle cx="10" cy="12" r="2.5" fill="#000"/><circle cx="22" cy="12" r="2.5" fill="#000"/>
+                        <circle cx="10" cy="11" r="1" fill="#fff"/><circle cx="22" cy="11" r="1" fill="#fff"/>
+                      </svg>
+                    </div>
+                    <span class="text-base font-bold text-slate-900">{{ brandName || 'LeadFlow India' }}</span>
+                  </div>
+                </div>
+
+                <!-- App Name -->
+                <div>
+                  <label class="block text-sm font-bold text-slate-700 mb-2">App Name</label>
+                  <input
+                    v-model="brandName"
+                    type="text"
+                    maxlength="40"
+                    placeholder="LeadFlow India"
+                    class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary outline-none transition"
+                  />
+                  <p class="text-xs text-slate-400 mt-1">Shown in the header bar.</p>
+                </div>
+
+                <!-- App Logo (Emoji Picker) -->
+                <div>
+                  <div class="flex items-center justify-between mb-2">
+                    <label class="text-sm font-bold text-slate-700">App Logo (Emoji)</label>
+                    <button
+                      v-if="brandLogo"
+                      @click="brandLogo = ''"
+                      class="text-xs text-red-500 hover:text-red-700 transition"
+                    >
+                      Remove logo
+                    </button>
+                  </div>
+
+                  <!-- Category filter -->
+                  <div class="flex gap-1.5 overflow-x-auto pb-1.5 mb-2 no-scrollbar">
+                    <button
+                      v-for="(cat, idx) in EMOJI_CATEGORIES"
+                      :key="idx"
+                      @click="emojiCategory = idx"
+                      :class="['flex-shrink-0 px-3 py-1 text-xs font-semibold rounded-full transition', emojiCategory === idx ? 'bg-primary text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200']"
+                    >
+                      {{ cat.name }}
+                    </button>
+                  </div>
+
+                  <!-- Emoji grid -->
+                  <div class="h-44 overflow-y-auto bg-slate-50 rounded-xl border border-slate-200 p-2">
+                    <div class="grid grid-cols-8 sm:grid-cols-10 gap-0.5">
+                      <button
+                        v-for="emoji in EMOJI_CATEGORIES[emojiCategory].emojis"
+                        :key="emoji"
+                        @click="brandLogo = emoji"
+                        :class="['text-xl p-1.5 rounded-lg hover:bg-primary/10 transition leading-none flex items-center justify-center', brandLogo === emoji ? 'bg-primary/20 ring-2 ring-primary ring-offset-1' : '']"
+                      >
+                        {{ emoji }}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Save -->
+                <div class="flex items-center gap-3 justify-end">
+                  <Transition name="form-slide">
+                    <span v-if="brandSaved" class="text-sm text-green-600 font-semibold flex items-center gap-1">
+                      <i class="ph-bold ph-check-circle"></i> Saved!
+                    </span>
+                  </Transition>
+                  <button
+                    @click="saveBranding"
+                    :disabled="brandSaving"
+                    class="flex items-center gap-1.5 bg-primary text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-indigo-700 disabled:opacity-60 transition"
+                  >
+                    <i v-if="brandSaving" class="ph-bold ph-spinner-gap animate-spin"></i>
+                    <i v-else class="ph-bold ph-floppy-disk"></i>
+                    {{ brandSaving ? 'Saving…' : 'Save Changes' }}
+                  </button>
+                </div>
+
+              </div>
+            </template> <!-- end appearance tab -->
+
           </div>
         </div>
       </div>
@@ -245,6 +360,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import { useAppStore } from '@/stores/app'
 import { apiClient } from '@/services/api'
 import type { ApiResponse } from '@/types'
 import { ROLE_LIMITS } from '@/constants/roleLimits'
@@ -270,10 +386,30 @@ const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
 const authStore = useAuthStore()
+const appStore = useAppStore()
+
+// ─── Emoji Categories ─────────────────────────────────────────────────────────
+const EMOJI_CATEGORIES = [
+  { name: '😊 Smileys', emojis: ['😀','😃','😄','😁','😆','😅','😂','🤣','😊','😇','🙂','😉','😌','😍','🥰','😘','😋','😛','😜','🤪','🤨','🧐','🤓','😎','🥸','🤩','🥳','😏','😒','😞','😔','😟','😕','🙁','☹️','😣','😖','😫','😩','🥺','😢','😭','😤','😠','😡','🤬','🤯','😳','🥵','🥶','😱','😨','😰','😥','😓','🤗','🤔','🤭','🤫','🤥','😶','😑','😬','🙄','😯','😦','😧','😮','😲','🥱','😴','🤤','😵','🤐','🥴','🤢','🤧','😷','🤒','🤕','💀','👻','👽','🤖','💩','😸','😹','😺','😻','😼','😽','🙀','😿','😾'] },
+  { name: '🐶 Animals', emojis: ['🐶','🐱','🐭','🐹','🐰','🦊','🐻','🐼','🐨','🐯','🦁','🐮','🐷','🐸','🐵','🙈','🙉','🙊','🐒','🦅','🦆','🦉','🦇','🐺','🐴','🦄','🐝','🦋','🐛','🐞','🐜','🦟','🦗','🕷','🦂','🐢','🐍','🦎','🐊','🐸','🐉','🦕','🦖','🐳','🐬','🦭','🐟','🦈','🐙','🦑','🦐','🦞','🦀','🦜','🦢','🦩','🦚','🦃','🐓','🦤','🕊','🐇','🦝','🦨','🦦','🦥','🐿','🦔','🐾'] },
+  { name: '🌿 Nature', emojis: ['🌵','🎄','🌲','🌳','🌴','🌱','🌿','☘️','🍀','🎋','🍃','🍂','🍁','🍄','🌾','💐','🌷','🌹','🥀','🌺','🌸','🌼','🌻','🌞','🌝','🌛','🌜','🌚','🌕','🌖','🌗','🌘','🌑','🌒','🌓','🌔','🌙','🌟','⭐','🌠','☀️','🌤','⛅','☁️','🌧','⛈','🌩','🌨','❄️','🌊','💧','💦','🌈','🔥','⚡','🌪','🌀','🌍','🌎','🌏','🗺'] },
+  { name: '🍕 Food', emojis: ['🍕','🍔','🌮','🌯','🍜','🍣','🍱','🍛','🍲','🥘','🍝','🥩','🍗','🍖','🌭','🍟','🥪','🧀','🍳','🥚','🥞','🧇','🥓','🥐','🍞','🥖','🧆','🌰','🍫','🍬','🍭','🍦','🍧','🍨','🍰','🎂','🍮','🍯','☕','🍵','🧋','🥤','🍹','🍸','🥂','🍾','🥛','🍺','🍻','🍷','🫖','🧃','🍎','🍊','🍋','🍇','🍓','🫐','🍒','🍑','🥭','🍍','🥥','🥝','🍅'] },
+  { name: '🏀 Sports', emojis: ['⚽','🏀','🏈','⚾','🥎','🏐','🏉','🥏','🎾','🏸','🏒','🏓','🥊','🥋','🎯','🏹','🎱','🛹','⛸','🥌','⛷','🏂','🏋️','🤸','🏊','🏄','🚵','🧘','🏆','🥇','🥈','🥉','🎖','🎯','🎳','🎣','🤿','🧗','🤺','⛳','🎮','🕹','🎲','♟','🎭','🎨','🪁','🏇','🤾','🏌','🪃','🥅','🛷','🎿','🏔','🧩'] },
+  { name: '🚀 Travel', emojis: ['🚀','✈️','🛸','🚁','🚗','🚕','🚙','🚌','🏎','🚓','🚑','🚒','🛻','🚚','🚜','🏍','🛵','🚲','🛴','🛹','⛵','🚤','🛥','🛳','🚢','⚓','🏔','⛰','🌋','🗻','🏕','🏖','🏜','🏝','🏟','🏛','🗼','🗽','🗿','🏰','🏯','🕌','🕍','⛩','🛤','🛣','🌁','🎡','🎢','🎠','🌃','🌉','🌆','🌇','🌌','🌠','🎑','🏙'] },
+  { name: '💼 Business', emojis: ['💼','📊','📈','📉','📋','📌','📍','📎','🖇','📏','📐','✂️','🗃','🗄','🗑','🔒','🔓','🔑','🗝','🔨','🔧','🪛','🔩','🔗','📱','💻','🖥','🖨','⌨️','🖱','💽','💾','☎️','📞','📟','📺','📻','📷','📸','🎙','🎚','🎛','⏱','⏰','🕰','⌚','⏳','🔭','🔬','💊','🩺','🩻','⚗️','🧪','🧫','🧬','📡','🛰','☢️','⚡','🧲','💡','🔦','🕯'] },
+  { name: '💎 Symbols', emojis: ['💎','👑','🏅','🎗','🎀','🎁','🎊','🎉','🎈','🎆','🎇','🧨','✨','💫','⭐','🌟','🔥','💥','❄️','🌈','☀️','🌙','💧','🌊','❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💔','❣️','💕','💞','💓','💗','💖','💝','💟','♾','✅','❎','⭕','❌','💯','🔴','🟠','🟡','🟢','🔵','🟣','⚫','⚪','🟤','♻️','🔰','⚜','🏮','💲','💱','🔱'] },
+]
 
 // ─── State ────────────────────────────────────────────────────────────────────
 const users = ref<ManagedUser[]>([])
 const loading = ref(false)
+
+const activeTab = ref<'users' | 'appearance'>('users')
+const brandName = ref(appStore.appName)
+const brandLogo = ref(appStore.appLogo)
+const emojiCategory = ref(0)
+const brandSaved = ref(false)
+const brandSaving = ref(false)
 
 const showForm = ref(false)
 const formMode = ref<'create' | 'edit'>('create')
@@ -389,6 +525,15 @@ function cancelForm() {
   resetForm()
 }
 
+function saveBranding() {
+  brandSaving.value = true
+  appStore.saveAppBranding(brandName.value, brandLogo.value).then(() => {
+    brandSaving.value = false
+    brandSaved.value = true
+    setTimeout(() => { brandSaved.value = false }, 2000)
+  })
+}
+
 async function submitForm() {
   formError.value = ''
 
@@ -490,10 +635,13 @@ function handleClose() {
 watch(() => props.isOpen, (open) => {
   if (open) {
     loadUsers()
+    brandName.value = appStore.appName
+    brandLogo.value = appStore.appLogo
   } else {
     showForm.value = false
     resetForm()
     confirmDeleteId.value = null
+    activeTab.value = 'users'
   }
 })
 </script>

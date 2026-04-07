@@ -1,6 +1,6 @@
 <template>
   <Teleport to="body">
-    <div v-if="isOpen" class="fixed inset-0 z-60" role="dialog">
+    <div v-if="isOpen" class="fixed inset-0 z-[60]" role="dialog">
       <!-- Backdrop -->
       <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" @click="closeMenu"></div>
 

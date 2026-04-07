@@ -10,6 +10,7 @@ import type {
   User
 } from '@/types'
 import { authService } from '@/services/auth'
+import { apiClient } from '@/services/api'
 
 export const useAppStore = defineStore('app', () => {
   // State
@@ -46,6 +47,8 @@ export const useAppStore = defineStore('app', () => {
   const auditLog = ref<AuditLogEntry[]>([])
   const appVersion = ref('1.0.0')
   const theme = ref<'light' | 'dark'>(localStorage.getItem('app_theme') as 'light' | 'dark' || 'light')
+  const appName = ref(localStorage.getItem('app_name') || 'LeadFlow India')
+  const appLogo = ref(localStorage.getItem('app_logo') || '')
   const users = ref<User[]>([])
 
   // Getters
@@ -214,6 +217,38 @@ export const useAppStore = defineStore('app', () => {
     setTheme(theme.value === 'dark' ? 'light' : 'dark')
   }
 
+  function setAppBranding(name: string, logo: string) {
+    appName.value = name.trim() || 'LeadFlow India'
+    appLogo.value = logo
+    localStorage.setItem('app_name', appName.value)
+    localStorage.setItem('app_logo', logo)
+  }
+
+  async function saveAppBranding(name: string, logo: string): Promise<void> {
+    const resolved = name.trim() || 'LeadFlow India'
+    try {
+      await apiClient.put('/settings', { app_name: resolved, app_logo: logo })
+    } catch (err) {
+      console.error('Failed to save branding to server:', err)
+    }
+    // Always apply locally regardless of server outcome
+    setAppBranding(resolved, logo)
+  }
+
+  async function fetchAppSettings(): Promise<void> {
+    try {
+      const response = await apiClient.get('/settings') as { success: boolean; data: Record<string, string> }
+      if (response.success && response.data) {
+        const name = response.data['app_name']
+        const logo = response.data['app_logo']
+        if (name) { appName.value = name; localStorage.setItem('app_name', name) }
+        if (logo !== undefined) { appLogo.value = logo; localStorage.setItem('app_logo', logo) }
+      }
+    } catch (err) {
+      console.error('Failed to load app settings:', err)
+    }
+  }
+
   // ============ UI STATE MANAGEMENT ============
   function selectLead(leadId: string) {
     ui.value.selectedLead = leadId
@@ -317,6 +352,8 @@ export const useAppStore = defineStore('app', () => {
     auditLog,
     appVersion,
     theme,
+    appName,
+    appLogo,
     
     // Getters
     isLoading,
@@ -360,6 +397,9 @@ export const useAppStore = defineStore('app', () => {
     // Theme & Appearance
     setTheme,
     toggleTheme,
+    setAppBranding,
+    saveAppBranding,
+    fetchAppSettings,
 
     // UI State
     selectLead,
