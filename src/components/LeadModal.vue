@@ -36,9 +36,11 @@
                 'pb-3 font-semibold text-sm transition-colors whitespace-nowrap',
                 currentTab === 'activity'
                   ? 'text-primary border-b-2 border-primary'
-                  : 'text-slate-600 border-b-2 border-transparent hover:text-slate-800'
+                  : 'text-slate-600 border-b-2 border-transparent hover:text-slate-800',
+                !leadId ? 'opacity-40 cursor-not-allowed' : ''
               ]"
               :disabled="!leadId"
+              :title="!leadId ? 'Save the lead first to view activity' : ''"
             >
               Activity
             </button>
@@ -48,9 +50,11 @@
                 'pb-3 font-semibold text-sm transition-colors whitespace-nowrap',
                 currentTab === 'task'
                   ? 'text-primary border-b-2 border-primary'
-                  : 'text-slate-600 border-b-2 border-transparent hover:text-slate-800'
+                  : 'text-slate-600 border-b-2 border-transparent hover:text-slate-800',
+                !leadId ? 'opacity-40 cursor-not-allowed' : ''
               ]"
               :disabled="!leadId"
+              :title="!leadId ? 'Save the lead first to add tasks' : ''"
             >
               Task
             </button>
@@ -60,9 +64,11 @@
                 'pb-3 font-semibold text-sm transition-colors whitespace-nowrap',
                 currentTab === 'contact'
                   ? 'text-primary border-b-2 border-primary'
-                  : 'text-slate-600 border-b-2 border-transparent hover:text-slate-800'
+                  : 'text-slate-600 border-b-2 border-transparent hover:text-slate-800',
+                !leadId ? 'opacity-40 cursor-not-allowed' : ''
               ]"
               :disabled="!leadId"
+              :title="!leadId ? 'Save the lead first to view contact options' : ''"
             >
               Contact
             </button>
@@ -273,8 +279,9 @@
                   class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary outline-none transition disabled:bg-slate-50 disabled:cursor-not-allowed appearance-none"
                 >
                   <option value="">Unassigned</option>
-                  <option value="agent1">Agent 1</option>
-                  <option value="agent2">Agent 2</option>
+                  <option v-for="agent in agents" :key="agent.id" :value="agent.username">
+                    {{ agent.name || agent.username }}
+                  </option>
                 </select>
               </div>
 
@@ -520,12 +527,18 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useLeadsStore } from '@/stores/leads'
+import { useAppStore } from '@/stores/app'
 import { useCountryCodes } from '@/composables/useCountryCodes'
 import type { Lead, ActivityType, LostReasonType } from '@/types'
 import LostReasonModal from './LostReasonModal.vue'
 import CountryCodeSelect from './CountryCodeSelect.vue'
 
 const leadsStore = useLeadsStore()
+const appStore = useAppStore()
+
+const agents = computed(() =>
+  appStore.users.filter(u => ['superuser', 'admin', 'agent'].includes(u.role))
+)
 
 const { 
   validatePhoneLength, 

@@ -34,14 +34,24 @@
           <label for="password" class="block text-sm font-medium text-slate-700 mb-2">
             Password
           </label>
-          <input
-            id="password"
-            v-model="credentials.password"
-            type="password"
-            required
-            class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
-            placeholder="••••••••"
-          />
+          <div class="relative">
+            <input
+              id="password"
+              v-model="credentials.password"
+              :type="showPassword ? 'text' : 'password'"
+              required
+              class="w-full px-4 py-3 pr-12 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors"
+              placeholder="••••••••"
+            />
+            <button
+              type="button"
+              @click="showPassword = !showPassword"
+              class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+              :aria-label="showPassword ? 'Hide password' : 'Show password'"
+            >
+              <i :class="showPassword ? 'ph-bold ph-eye-slash' : 'ph-bold ph-eye'" class="text-lg"></i>
+            </button>
+          </div>
         </div>
 
         <button
@@ -81,6 +91,7 @@ const authStore = useAuthStore()
 
 const loading = ref(false)
 const error = ref('')
+const showPassword = ref(false)
 
 const credentials = reactive({
   uid: '',

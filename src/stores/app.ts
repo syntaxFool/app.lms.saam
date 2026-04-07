@@ -6,8 +6,10 @@ import type {
   Notification,
   SyncStatus,
   BatchOperationResult,
-  AuditLogEntry
+  AuditLogEntry,
+  User
 } from '@/types'
+import { authService } from '@/services/auth'
 
 export const useAppStore = defineStore('app', () => {
   // State
@@ -44,6 +46,7 @@ export const useAppStore = defineStore('app', () => {
   const auditLog = ref<AuditLogEntry[]>([])
   const appVersion = ref('1.0.0')
   const theme = ref<'light' | 'dark'>(localStorage.getItem('app_theme') as 'light' | 'dark' || 'light')
+  const users = ref<User[]>([])
 
   // Getters
   const isLoading = computed(() => ui.value.loading)
@@ -293,6 +296,18 @@ export const useAppStore = defineStore('app', () => {
     window.removeEventListener('offline', handleOnlineStatus)
   }
 
+  // ============ USERS ============
+  async function fetchUsers(): Promise<void> {
+    try {
+      const response = await authService.getUsers()
+      if (response.success && response.data) {
+        users.value = response.data
+      }
+    } catch (error) {
+      console.error('Failed to fetch users:', error)
+    }
+  }
+
   return {
     // State
     settings,
@@ -361,6 +376,10 @@ export const useAppStore = defineStore('app', () => {
     // Initialization
     initializeApp,
     destroy,
-    handleOnlineStatus
+    handleOnlineStatus,
+
+    // Users
+    users,
+    fetchUsers
   }
 })

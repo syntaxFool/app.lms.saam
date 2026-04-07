@@ -17,8 +17,8 @@
               <circle cx="22" cy="11" r="1" fill="#fff"/>
             </svg>
           </div>
-          <h1 class="text-lg font-bold tracking-tight text-slate-900 hidden sm:block whitespace-nowrap">LeadFlow</h1>
-          <h1 class="text-base font-bold tracking-tight text-slate-900 sm:hidden whitespace-nowrap">LMS</h1>
+          <h1 class="text-lg font-bold tracking-tight text-slate-900 hidden sm:block whitespace-nowrap">LeadFlow India</h1>
+          <h1 class="text-base font-bold tracking-tight text-slate-900 sm:hidden whitespace-nowrap">LeadFlow</h1>
         </div>
       </div>
 
@@ -31,8 +31,13 @@
           <i class="ph-bold ph-magnifying-glass text-lg sm:text-xl"></i>
         </button>
         <NotificationDropdown @open-lead="editLead" />
-        <button @click="syncData" class="p-2 text-blue-600 hover:bg-blue-50 rounded-full transition relative group">
-          <i class="ph-bold ph-arrows-clockwise text-lg sm:text-xl"></i>
+        <button @click="syncData" class="p-2 rounded-full transition relative group"
+          :class="syncFeedbackStatus === 'success' ? 'text-green-600 hover:bg-green-50' : syncFeedbackStatus === 'error' ? 'text-red-500 hover:bg-red-50' : 'text-blue-600 hover:bg-blue-50'"
+        >
+          <i v-if="syncFeedbackStatus === 'syncing'" class="ph-bold ph-spinner-gap animate-spin text-lg sm:text-xl"></i>
+          <i v-else-if="syncFeedbackStatus === 'success'" class="ph-bold ph-check-circle text-lg sm:text-xl"></i>
+          <i v-else-if="syncFeedbackStatus === 'error'" class="ph-bold ph-warning-circle text-lg sm:text-xl"></i>
+          <i v-else class="ph-bold ph-arrows-clockwise text-lg sm:text-xl"></i>
           <!-- Sync tooltip -->
           <div class="absolute right-0 top-full mt-2 bg-slate-800 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
             Last sync: {{ getTimeSinceSync() }}
@@ -63,6 +68,10 @@
 
     <!-- Main Content Area -->
     <main class="flex-1 overflow-hidden relative w-full">
+      <!-- Loading Overlay -->
+      <div v-if="leadsStore.loading" class="absolute inset-0 flex items-center justify-center bg-white/70 z-10">
+        <i class="ph-bold ph-spinner-gap animate-spin text-4xl text-primary"></i>
+      </div>
       <!-- KANBAN VIEW -->
       <div v-if="currentView === 'kanban'" class="h-full w-full">
         <KanbanBoard
@@ -100,26 +109,33 @@
     />
 
     <!-- Mobile Bottom Navigation -->
-    <nav class="fixed bottom-0 left-0 right-0 md:hidden bg-white border-t border-slate-200 px-2 py-2 flex justify-around items-center gap-1 z-40 h-20">
+    <nav class="fixed bottom-0 left-0 right-0 md:hidden bg-white border-t border-slate-200 px-1 py-2 flex justify-around items-center z-40 h-20">
       <button
         @click="currentView = 'kanban'; showMobileTabs = true"
-        :class="['flex flex-col items-center justify-center gap-1 px-4 py-2 rounded-lg transition w-16', currentView === 'kanban' ? 'bg-slate-100 text-primary' : 'text-slate-600 hover:bg-slate-50']"
+        :class="['flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg transition w-14', currentView === 'kanban' ? 'bg-slate-100 text-primary' : 'text-slate-600 hover:bg-slate-50']"
       >
         <i class="ph-bold ph-kanban text-2xl"></i>
         <span class="text-xs font-semibold">Board</span>
       </button>
       <button
         @click="currentView = 'table'; showMobileTabs = false"
-        :class="['flex flex-col items-center justify-center gap-1 px-4 py-2 rounded-lg transition w-16', currentView === 'table' ? 'bg-slate-100 text-primary' : 'text-slate-600 hover:bg-slate-50']"
+        :class="['flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg transition w-14', currentView === 'table' ? 'bg-slate-100 text-primary' : 'text-slate-600 hover:bg-slate-50']"
       >
         <i class="ph-bold ph-table text-2xl"></i>
         <span class="text-xs font-semibold">Leads</span>
       </button>
       <button
-        @click="isMenuOpen = true"
-        class="flex flex-col items-center justify-center gap-1 px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition w-16"
+        @click="currentView = 'reports'; showMobileTabs = false"
+        :class="['flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg transition w-14', currentView === 'reports' ? 'bg-slate-100 text-primary' : 'text-slate-600 hover:bg-slate-50']"
       >
-        <i class="ph-bold ph-gear text-2xl"></i>
+        <i class="ph-bold ph-chart-bar text-2xl"></i>
+        <span class="text-xs font-semibold">Reports</span>
+      </button>
+      <button
+        @click="isMenuOpen = true"
+        class="flex flex-col items-center justify-center gap-1 px-3 py-2 rounded-lg text-slate-600 hover:bg-slate-50 transition w-14"
+      >
+        <i class="ph-bold ph-list text-2xl"></i>
         <span class="text-xs font-semibold">More</span>
       </button>
     </nav>
@@ -179,6 +195,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useLeadsStore } from '@/stores/leads'
+import { useAppStore } from '@/stores/app'
 import type { LeadStatus } from '@/types'
 import LeadModal from '@/components/LeadModal.vue'
 import SearchModal from '@/components/SearchModal.vue'
@@ -194,6 +211,7 @@ import UserManagementModal from '@/components/UserManagementModal.vue'
 
 const authStore = useAuthStore()
 const leadsStore = useLeadsStore()
+const appStore = useAppStore()
 
 const currentUser = computed(() => authStore.user)
 const activeStatus = ref<LeadStatus>('New')
@@ -232,8 +250,9 @@ const pendingPhoneNumber = ref<string>('')
 
 // Initialize on first load  
 onMounted(async () => {
-  // Load leads from server on initial mount
+  // Load leads and users on initial mount
   await leadsStore.fetchLeads()
+  appStore.fetchUsers()
 
   // Handle window resize
   const handleResize = () => {
@@ -248,6 +267,7 @@ onMounted(async () => {
 // Adaptive Polling
 const isUserActive = ref(true)
 const lastSyncTime = ref<Date>(new Date())
+const syncFeedbackStatus = ref<'idle' | 'syncing' | 'success' | 'error'>('idle')
 let syncIntervalId: number | null = null
 
 function setupAdaptivePolling() {
@@ -356,10 +376,16 @@ const handleMove = async (leadId: string, newStatus: LeadStatus) => {
 }
 
 const syncData = async () => {
+  if (syncFeedbackStatus.value === 'syncing') return
+  syncFeedbackStatus.value = 'syncing'
   try {
     await leadsStore.fetchLeads()
+    syncFeedbackStatus.value = 'success'
   } catch (error) {
     console.error('Sync failed:', error)
+    syncFeedbackStatus.value = 'error'
+  } finally {
+    setTimeout(() => { syncFeedbackStatus.value = 'idle' }, 2000)
   }
 }
 </script>

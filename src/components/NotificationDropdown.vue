@@ -22,7 +22,7 @@
         @click.self="isOpen = false"
       >
         <div
-          class="absolute right-4 top-16 w-96 max-w-[calc(100vw-2rem)] bg-white rounded-lg shadow-2xl border border-slate-200 max-h-[80vh] flex flex-col"
+          class="fixed right-4 top-14 w-96 max-w-[calc(100vw-2rem)] bg-white rounded-lg shadow-2xl border border-slate-200 max-h-[80vh] flex flex-col"
         >
           <!-- Header -->
           <div class="px-4 py-3 border-b border-slate-200 flex items-center justify-between shrink-0">

@@ -90,10 +90,13 @@
               </button>
               <button
                 @click="openLogs"
-                class="w-full text-left px-4 py-2.5 rounded-lg flex items-center gap-3 hover:bg-slate-50 transition text-slate-700"
+                disabled
+                class="w-full text-left px-4 py-2.5 rounded-lg flex items-center gap-3 text-slate-400 cursor-not-allowed"
+                title="Coming soon"
               >
                 <i class="ph-bold ph-scroll text-lg"></i>
                 <span class="font-medium">Session Logs</span>
+                <span class="ml-auto text-[10px] font-bold uppercase tracking-wide bg-slate-200 text-slate-500 px-1.5 py-0.5 rounded">Soon</span>
               </button>
             </div>
           </div>

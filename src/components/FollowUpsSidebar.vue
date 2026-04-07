@@ -30,8 +30,9 @@
             class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none"
           >
             <option value="">All Agents</option>
-            <option value="agent1">Agent 1</option>
-            <option value="agent2">Agent 2</option>
+            <option v-for="agent in agents" :key="agent.id" :value="agent.username">
+              {{ agent.name || agent.username }}
+            </option>
           </select>
         </div>
 
@@ -174,6 +175,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useLeadsStore } from '@/stores/leads'
+import { useAppStore } from '@/stores/app'
 import type { Lead } from '@/types'
 
 interface Props {
@@ -189,6 +191,11 @@ const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
 const leadsStore = useLeadsStore()
+const appStore = useAppStore()
+
+const agents = computed(() =>
+  appStore.users.filter(u => ['superuser', 'admin', 'agent'].includes(u.role))
+)
 const selectedAgent = ref('')
 const expandedSections = ref({
   overdue: true,

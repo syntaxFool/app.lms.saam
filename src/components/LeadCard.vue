@@ -70,7 +70,7 @@
       <div class="text-sm font-bold text-slate-900 mt-1">{{ formatCurrency(lead.value) }}</div>
 
       <!-- Action Buttons -->
-      <div class="flex gap-1.5 flex-wrap mt-1.5 w-full">
+      <div class="flex gap-1.5 flex-wrap mt-1.5 w-full" :class="lead.status === 'Lost' ? 'pointer-events-none opacity-40' : ''">
         <button
           @click.stop="emit('edit-activity', lead.id)"
           title="Activity"

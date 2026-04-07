@@ -1,4 +1,4 @@
-import type { ApiResponse, AuthUser } from '@/types'
+import type { ApiResponse, AuthUser, User } from '@/types'
 import { apiClient } from './api'
 
 interface LoginCredentials {
@@ -68,6 +68,15 @@ export const authService = {
       localStorage.removeItem('lms_auth_token')
       localStorage.removeItem('lms_user')
       return { success: true }
+    }
+  },
+
+  async getUsers(): Promise<ApiResponse<User[]>> {
+    try {
+      return await apiClient.get('/users') as ApiResponse<User[]>
+    } catch (error) {
+      console.error('Auth service get users error:', error)
+      return { success: false, error: 'Failed to fetch users' }
     }
   }
 }

@@ -6,8 +6,8 @@
       class="timeline-item relative pl-8 py-4 border-l-2 border-primary border-opacity-30 hover:bg-slate-50 rounded px-2 transition-colors"
     >
       <!-- Timeline Icon -->
-      <div class="absolute left-0 top-4 w-6 h-6 flex items-center justify-center text-lg">
-        {{ getActivityIcon(activity.type) }}
+      <div class="absolute left-0 top-4 w-6 h-6 flex items-center justify-center rounded-full bg-primary/10">
+        <i :class="getActivityIcon(activity.type)" class="text-primary text-xs"></i>
       </div>
 
       <!-- Activity Content -->
@@ -36,13 +36,13 @@ const props = defineProps<{
 const { formatDate } = useFollowUpTracking()
 
 const activityIcons: Record<ActivityType, string> = {
-  lead_created: '✨',
-  status_change: '📊',
-  assignment: '👤',
-  task: '✅',
-  follow_up: '📅',
-  field_update: '✏️',
-  lost_reason: '❌'
+  lead_created: 'ph-bold ph-plus-circle',
+  status_change: 'ph-bold ph-arrows-left-right',
+  assignment: 'ph-bold ph-user-switch',
+  task: 'ph-bold ph-check-square',
+  follow_up: 'ph-bold ph-clock',
+  field_update: 'ph-bold ph-pencil-simple',
+  lost_reason: 'ph-bold ph-x-circle'
 }
 
 const activityLabels: Record<ActivityType, string> = {

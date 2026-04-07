@@ -26,7 +26,7 @@
       <!-- KPI Cards -->
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
         <!-- Total Leads -->
-        <div class="bg-gradient-to-br from-blue-50 to-blue-50 rounded-xl shadow-sm border border-blue-200 p-6 hover:shadow-md transition">
+        <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl shadow-sm border border-blue-200 p-6 hover:shadow-md transition">
           <div class="flex items-center justify-between">
             <div>
               <p class="text-blue-600 text-sm font-semibold">Total Leads</p>
@@ -38,7 +38,7 @@
         </div>
 
         <!-- Pipeline Value -->
-        <div class="bg-gradient-to-br from-green-50 to-green-50 rounded-xl shadow-sm border border-green-200 p-6 hover:shadow-md transition">
+        <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-xl shadow-sm border border-green-200 p-6 hover:shadow-md transition">
           <div class="flex items-center justify-between">
             <div>
               <p class="text-green-600 text-sm font-semibold">Pipeline Value</p>
@@ -50,7 +50,7 @@
         </div>
 
         <!-- Won Deals -->
-        <div class="bg-gradient-to-br from-emerald-50 to-emerald-50 rounded-xl shadow-sm border border-emerald-200 p-6 hover:shadow-md transition">
+        <div class="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl shadow-sm border border-emerald-200 p-6 hover:shadow-md transition">
           <div class="flex items-center justify-between">
             <div>
               <p class="text-emerald-600 text-sm font-semibold">Won Deals</p>
@@ -62,7 +62,7 @@
         </div>
 
         <!-- Conversion Rate -->
-        <div class="bg-gradient-to-br from-purple-50 to-purple-50 rounded-xl shadow-sm border border-purple-200 p-6 hover:shadow-md transition">
+        <div class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl shadow-sm border border-purple-200 p-6 hover:shadow-md transition">
           <div class="flex items-center justify-between">
             <div>
               <p class="text-purple-600 text-sm font-semibold">Conversion Rate</p>

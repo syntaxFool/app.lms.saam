@@ -56,10 +56,10 @@
             class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm outline-none"
           >
             <option value="">All Agents</option>
-            <option value="Akash Singh">Akash Singh</option>
-            <option value="Meera Patel">Meera Patel</option>
-            <option value="Rajesh Kumar">Rajesh Kumar</option>
-            <option value="">Unassigned</option>
+            <option value="__unassigned__">Unassigned</option>
+            <option v-for="agent in agents" :key="agent.id" :value="agent.username">
+              {{ agent.name || agent.username }}
+            </option>
           </select>
         </div>
       </div>
@@ -352,7 +352,7 @@
             <td class="px-4 py-3 text-center">
               <button
                 @click="$emit('open', lead.id)"
-                class="text-blue-600 hover:text-blue-700 font-bold text-lg opacity-0 group-hover:opacity-100 transition"
+                class="text-blue-600 hover:text-blue-700 font-bold text-lg transition"
                 title="Edit Lead"
               >
                 <i class="ph-bold ph-pencil"></i>
@@ -388,9 +388,9 @@
               class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm outline-none"
             >
               <option value="">Choose an agent...</option>
-              <option value="Akash Singh">Akash Singh</option>
-              <option value="Meera Patel">Meera Patel</option>
-              <option value="Rajesh Kumar">Rajesh Kumar</option>
+              <option v-for="agent in agents" :key="agent.id" :value="agent.username">
+                {{ agent.name || agent.username }}
+              </option>
             </select>
           </div>
 
@@ -451,6 +451,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useLeadsStore } from '@/stores/leads'
+import { useAppStore } from '@/stores/app'
 import type { Lead } from '@/types'
 
 interface Props {
@@ -464,6 +465,11 @@ const emit = defineEmits<{
 }>()
 
 const leadsStore = useLeadsStore()
+const appStore = useAppStore()
+
+const agents = computed(() =>
+  appStore.users.filter(u => ['superuser', 'admin', 'agent'].includes(u.role))
+)
 
 const searchQuery = ref('')
 const statusFilter = ref('')
@@ -537,7 +543,7 @@ const filteredLeads = computed(() => {
   }
 
   // Assigned filter
-  if (assignedFilter.value === '') {
+  if (assignedFilter.value === '__unassigned__') {
     results = results.filter(lead => !lead.assignedTo)
   } else if (assignedFilter.value) {
     results = results.filter(lead => lead.assignedTo === assignedFilter.value)
