@@ -486,8 +486,26 @@ export const useLeadsStore = defineStore('leads', () => {
       addLog(`Updated ${lead.name}`, user?.name)
       editingLeadSnapshot.value = null
 
-      // Push to server
-      await apiClient.put(`/leads/${id}`, lead)
+      // Push to server - send only the fields that the backend schema expects
+      const payload = {
+        id: lead.id,
+        name: lead.name || undefined,
+        phone: lead.phone || undefined,
+        email: lead.email || undefined,
+        location: lead.location || undefined,
+        interest: lead.interest || undefined,
+        source: lead.source || undefined,
+        status: lead.status,
+        assignedTo: lead.assignedTo || undefined,
+        temperature: lead.temperature || undefined,
+        value: lead.value,
+        lostReason: lead.lostReason || undefined,
+        lostReasonType: lead.lostReasonType || undefined,
+        notes: lead.notes || undefined,
+        followUpDate: lead.followUpDate || undefined,
+      }
+      
+      await apiClient.put(`/leads/${id}`, payload)
       return { success: true, data: lead }
     } catch (error) {
       console.error('Update lead error:', error)
