@@ -1,11 +1,17 @@
 <template>
+  <!-- Normal View (Full Card) -->
   <div
-    @click="emit('open', lead.id)"
+    v-if="viewMode === 'normal'"
+    @click="handleClick"
+    @touchstart="handleTouchStart"
+    @touchend="handleTouchEnd"
+    @touchcancel="handleTouchCancel"
     class="bg-white rounded-xl shadow-sm border-l-4 cursor-pointer transition-all hover:shadow-md active:scale-[0.99]"
     :class="[
       isNoAction ? 'border-red-300 border-r border-t border-b bg-red-50/30' : isNoTask ? 'border-amber-300 border-r border-t border-b bg-amber-50/30' : 'border-slate-100 border-r border-t border-b',
       lead.status === 'Lost' ? 'grayscale opacity-60' : '',
-      temperatureScore.borderColor
+      temperatureScore.borderColor,
+      { 'ring-2 ring-primary ring-offset-2': isLongPressing }
     ]"
   >
     <!-- Card Header -->
@@ -140,26 +146,188 @@
       <div v-else class="flex-1"></div>
     </div>
   </div>
+
+  <!-- Compact View -->
+  <div
+    v-else-if="viewMode === 'compact'"
+    @click="handleClick"
+    @touchstart="handleTouchStart"
+    @touchend="handleTouchEnd"
+    @touchcancel="handleTouchCancel"
+    class="bg-white rounded-lg shadow-sm border-l-4 cursor-pointer transition-all hover:shadow-md active:scale-[0.99] p-2"
+    :class="[
+      lead.status === 'Lost' ? 'grayscale opacity-60' : '',
+      temperatureScore.borderColor,
+      { 'ring-2 ring-primary ring-offset-2': isLongPressing }
+    ]"
+  >
+    <div class="flex items-center justify-between gap-2">
+      <!-- Name & Badge -->
+      <div class="flex-1 min-w-0 flex items-center gap-1.5">
+        <h3 class="font-bold text-slate-800 text-sm truncate">{{ lead.name || 'Unnamed' }}</h3>
+        <span
+          v-if="isNoAction"
+          class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-100 text-red-700 animate-pulse shrink-0"
+        >
+          <i class="ph-bold ph-warning-circle text-xs"></i>
+        </span>
+        <span
+          v-else-if="isNoTask"
+          class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-amber-100 text-amber-700 shrink-0"
+        >
+          <i class="ph-bold ph-warning text-xs"></i>
+        </span>
+      </div>
+      <!-- Value -->
+      <div class="text-sm font-bold shrink-0" :class="lead.value > 0 ? 'text-emerald-600' : 'text-slate-400'">
+        {{ formatCurrency(lead.value) }}
+      </div>
+      <!-- Quick Action Button -->
+      <button
+        @click.stop="emit('edit-task', lead.id)"
+        :class="[
+          'p-1.5 rounded-lg border transition-colors shrink-0',
+          isNoAction
+            ? 'bg-red-50 text-red-600 border-red-200'
+            : isNoTask
+              ? 'bg-amber-50 text-amber-600 border-amber-200'
+              : 'bg-purple-50 text-purple-600 border-purple-200'
+        ]"
+      >
+        <i class="ph-bold ph-plus text-base"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- List View -->
+  <div
+    v-else-if="viewMode === 'list'"
+    @click="handleClick"
+    @touchstart="handleTouchStart"
+    @touchend="handleTouchEnd"
+    @touchcancel="handleTouchCancel"
+    class="bg-white border-l-4 cursor-pointer transition-all hover:bg-slate-50 active:bg-slate-100 px-2 py-1.5 flex items-center gap-2"
+    :class="[
+      lead.status === 'Lost' ? 'grayscale opacity-60' : '',
+      temperatureScore.borderColor,
+      { 'ring-2 ring-primary ring-offset-2': isLongPressing }
+    ]"
+  >
+    <!-- Name -->
+    <div class="flex-1 min-w-0">
+      <h3 class="font-semibold text-slate-800 text-xs truncate">{{ lead.name || 'Unnamed' }}</h3>
+    </div>
+    <!-- Phone -->
+    <div v-if="lead.phone" class="text-[10px] text-slate-500 w-20 truncate shrink-0">{{ lead.phone }}</div>
+    <div v-else class="text-[10px] text-slate-400 italic w-20 shrink-0">No phone</div>
+    <!-- Value -->
+    <div class="text-xs font-bold w-16 text-right shrink-0" :class="lead.value > 0 ? 'text-emerald-600' : 'text-slate-400'">
+      {{ formatCurrency(lead.value) }}
+    </div>
+    <!-- Badge -->
+    <div class="w-5 shrink-0">
+      <span
+        v-if="isNoAction"
+        class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-100 text-red-700 animate-pulse"
+      >
+        <i class="ph-bold ph-warning-circle text-[10px]"></i>
+      </span>
+      <span
+        v-else-if="isNoTask"
+        class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-amber-100 text-amber-700"
+      >
+        <i class="ph-bold ph-warning text-[10px]"></i>
+      </span>
+    </div>
+    <!-- Actions -->
+    <div class="flex gap-1 shrink-0">
+      <button
+        @click.stop="emit('edit-task', lead.id)"
+        :class="[
+          'p-1 rounded border transition-colors',
+          isNoAction ? 'bg-red-50 text-red-600 border-red-200' : isNoTask ? 'bg-amber-50 text-amber-600 border-amber-200' : 'bg-purple-50 text-purple-600 border-purple-200'
+        ]"
+      >
+        <i class="ph-bold ph-plus text-xs"></i>
+      </button>
+      <a
+        v-if="lead.phone"
+        :href="whatsappHref"
+        target="_blank"
+        @click.stop
+        class="p-1 bg-green-50 text-green-600 rounded border border-green-200"
+      >
+        <i class="ph-fill ph-whatsapp-logo text-xs"></i>
+      </a>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, withDefaults } from 'vue'
 import type { Lead, LeadStatus } from '@/types'
 import { useLeadScoring } from '@/composables/useLeadScoring'
 
-const props = defineProps<{
-  lead: Lead
-  getUserName?: (id?: string) => string
-}>()
+const props = withDefaults(
+  defineProps<{
+    lead: Lead
+    getUserName?: (id?: string) => string
+    viewMode?: 'normal' | 'compact' | 'list'
+  }>(),
+  {
+    viewMode: 'normal'
+  }
+)
 
 const emit = defineEmits<{
   open: [id: string]
   'edit-activity': [id: string]
   'edit-task': [id: string]
   move: [id: string, status: LeadStatus]
+  'long-press': [lead: Lead]
 }>()
 
 const { getTemperatureScore, formatCurrency } = useLeadScoring()
+
+// Long-press state
+const isLongPressing = ref(false)
+const longPressTimer = ref<number | null>(null)
+
+// Long-press handlers
+function handleTouchStart(e: TouchEvent) {
+  isLongPressing.value = false
+  longPressTimer.value = window.setTimeout(() => {
+    isLongPressing.value = true
+    // Vibrate if supported
+    if ('vibrate' in navigator) {
+      navigator.vibrate(50)
+    }
+    emit('long-press', props.lead)
+  }, 500) // 500ms long-press threshold
+}
+
+function handleTouchEnd() {
+  if (longPressTimer.value) {
+    clearTimeout(longPressTimer.value)
+    longPressTimer.value = null
+  }
+  isLongPressing.value = false
+}
+
+function handleTouchCancel() {
+  if (longPressTimer.value) {
+    clearTimeout(longPressTimer.value)
+    longPressTimer.value = null
+  }
+  isLongPressing.value = false
+}
+
+function handleClick() {
+  // Only emit open if it wasn't a long-press
+  if (!isLongPressing.value) {
+    emit('open', props.lead.id)
+  }
+}
 
 const statusOrder: LeadStatus[] = ['New', 'Contacted', 'Proposal', 'Won', 'Lost']
 

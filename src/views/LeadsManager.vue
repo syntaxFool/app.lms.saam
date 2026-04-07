@@ -67,6 +67,42 @@
       </div>
     </nav>
 
+    <!-- Card View Mode Toggle (Mobile Only, Kanban View Only) -->
+    <div v-if="currentView === 'kanban'" class="md:hidden bg-white border-b border-slate-200 px-3 py-2 shrink-0">
+      <div class="flex gap-1 bg-slate-100 rounded-lg p-1">
+        <button
+          @click="setCardViewMode('normal')"
+          :class="[
+            'flex-1 py-1.5 px-2 text-xs font-semibold rounded-md transition-all',
+            cardViewMode === 'normal' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600'
+          ]"
+        >
+          <i class="ph-bold ph-cards text-sm"></i>
+          <span class="ml-1">Cards</span>
+        </button>
+        <button
+          @click="setCardViewMode('compact')"
+          :class="[
+            'flex-1 py-1.5 px-2 text-xs font-semibold rounded-md transition-all',
+            cardViewMode === 'compact' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600'
+          ]"
+        >
+          <i class="ph-bold ph-rows text-sm"></i>
+          <span class="ml-1">Compact</span>
+        </button>
+        <button
+          @click="setCardViewMode('list')"
+          :class="[
+            'flex-1 py-1.5 px-2 text-xs font-semibold rounded-md transition-all',
+            cardViewMode === 'list' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600'
+          ]"
+        >
+          <i class="ph-bold ph-list-dashes text-sm"></i>
+          <span class="ml-1">List</span>
+        </button>
+      </div>
+    </div>
+
     <!-- Main Content Area -->
     <main class="flex-1 overflow-hidden relative w-full">
       <!-- Loading Overlay -->
@@ -79,6 +115,7 @@
           :leads="filteredLeads"
           :get-user-name="getUserName"
           :active-mobile-tab="activeMobileTab"
+          :view-mode="cardViewMode"
           @open="(id) => editLead(id, undefined, true)"
           @edit-activity="(id) => editLead(id, 'activity')"
           @edit-task="(id) => editLead(id, 'task')"
@@ -220,6 +257,9 @@ const activeMobileTab = ref<LeadStatus>('New')
 const currentView = ref('kanban')
 const showMobileTabs = ref(true)
 const isMdScreen = ref(window.innerWidth >= 768)
+const cardViewMode = ref<'normal' | 'compact' | 'list'>(
+  (localStorage.getItem('cardViewMode') as 'normal' | 'compact' | 'list') || 'normal'
+)
 
 const statusConfig = [
   { id: 'New', color: 'bg-blue-500' },
@@ -360,6 +400,11 @@ const handleSearchSelect = (lead: any) => {
   if (!lead?.id) return
   editLead(lead.id, undefined, true)
   isSearchOpen.value = false
+}
+
+const setCardViewMode = (mode: 'normal' | 'compact' | 'list') => {
+  cardViewMode.value = mode
+  localStorage.setItem('cardViewMode', mode)
 }
 
 const handleMenuViewChange = (view: string) => {

@@ -37,10 +37,12 @@
             :key="lead.id"
             :lead="lead"
             :get-user-name="getUserName"
+            :view-mode="viewMode"
             @open="emit('open', $event)"
             @edit-activity="emit('edit-activity', $event)"
             @edit-task="emit('edit-task', $event)"
             @move="(id: string, newStatus: LeadStatus) => emit('move', id, newStatus)"
+            @long-press="handleLongPress"
           />
 
           <div class="h-20 md:hidden"></div>
@@ -52,19 +54,32 @@
         </div>
       </div>
     </div>
+
+    <!-- Quick Actions Sheet -->
+    <QuickActionsSheet
+      :is-open="isSheetOpen"
+      :lead="selectedLead"
+      @close="closeSheet"
+      @edit-activity="handleSheetAction('activity', $event)"
+      @edit-task="handleSheetAction('task', $event)"
+      @edit-lead="handleSheetAction('edit', $event)"
+      @move-status="handleMoveStatus"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import type { Lead, LeadStatus } from '@/types'
 import LeadCard from './LeadCard.vue'
+import QuickActionsSheet from './QuickActionsSheet.vue'
 import { useLeadScoring } from '@/composables/useLeadScoring'
 
 const props = defineProps<{
   leads: Lead[]
   getUserName?: (id?: string) => string
   activeMobileTab?: LeadStatus
+  viewMode?: 'normal' | 'compact' | 'list'
 }>()
 
 const emit = defineEmits<{
@@ -75,6 +90,36 @@ const emit = defineEmits<{
 }>()
 
 const { formatCurrency } = useLeadScoring()
+
+// Quick Actions Sheet state
+const isSheetOpen = ref(false)
+const selectedLead = ref<Lead | null>(null)
+
+function handleLongPress(lead: Lead) {
+  selectedLead.value = lead
+  isSheetOpen.value = true
+}
+
+function closeSheet() {
+  isSheetOpen.value = false
+  setTimeout(() => {
+    selectedLead.value = null
+  }, 300) // Wait for animation
+}
+
+function handleSheetAction(type: 'activity' | 'task' | 'edit', id: string) {
+  if (type === 'activity') {
+    emit('edit-activity', id)
+  } else if (type === 'task') {
+    emit('edit-task', id)
+  } else if (type === 'edit') {
+    emit('open', id)
+  }
+}
+
+function handleMoveStatus(id: string, status: LeadStatus) {
+  emit('move', id, status)
+}
 
 const statuses: LeadStatus[] = ['New', 'Contacted', 'Proposal', 'Won', 'Lost']
 
