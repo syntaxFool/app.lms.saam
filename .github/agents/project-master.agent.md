@@ -35,17 +35,25 @@ Always follow this order — never skip steps:
 
 1. **Edit** the source files
 2. **Verify** — run `tsc --noEmit` in both `/` (frontend) and `/backend` (backend) — both must be clean
-3. **Build** — run `npm run build` (must succeed)
+3. **Build** — run `npm run build` locally to test (frontend only)
 4. **Sync** — `git add`, `git commit`, `git push origin master`
-5. **Upload** — rsync each changed file individually with separate rsync calls (rsync cannot accept multiple remote destinations in one call)
-6. **Rebuild** — `docker compose build <service> && docker compose up -d <service>`
-7. **Confirm** — check container started; smoke-test the endpoint; spot-check the live URL
+5. **Upload SOURCE files** — rsync changed .ts/.vue/.js files to server (NOT dist/ — Docker builds from source)
+6. **Rebuild** — `docker compose build <service> && docker compose up -d <service>` (rebuilds from source on server)
+7. **Confirm** — check container started; smoke-test the endpoint; spot-check the live URL; remind user to hard-refresh (Ctrl+Shift+R) for PWA cache
 
 **rsync pattern** — always one destination per call. **Always run rsync from the workspace root** (`/Drive/codeProject/Shanuzz/App-Tools/webApp x LMS`). If the terminal is in a subdirectory (e.g. after `cd backend`), `cd` back first or use the absolute path — otherwise rsync will double the path and fail with `change_dir .../backend/backend/src: No such file or directory`.
 ```bash
 rsync -avz -e "ssh -p 2222 -i ~/.ssh/id_ed25519_nas" \
   "local/path/to/file.ts" nas@154.84.215.26:/home/nas/lms-app/path/to/file.ts
 ```
+
+**Frontend deploy** — upload changed source files (components, stores, services), then rebuild:
+```bash
+rsync -avz -e "ssh -p 2222 -i ~/.ssh/id_ed25519_nas" \
+  src/components/MyComponent.vue nas@154.84.215.26:/home/nas/lms-app/src/components/MyComponent.vue
+ssh ... "cd /home/nas/lms-app && docker compose build frontend && docker compose up -d frontend"
+```
+⚠️ **Do NOT upload dist/** — the Dockerfile builds from source on the server.
 
 **Backend deploy** — upload `backend/src/` files, then rebuild:
 ```bash
@@ -83,7 +91,7 @@ Critical behavioral constraints — these are intentional, not bugs:
 
 ## Database Schema
 
-Key tables in `lmsdb` (PostgreSQL). Migrations are in `backend/db/migrations/` numbered `001–006`; next file must be `007_xxx.sql`.
+Key tables in `lmsdb` (PostgreSQL). Migrations are in `backend/db/migrations/` numbered `001–007`; next file must be `008_xxx.sql`.
 
 | Table | Key columns |
 |-------|-------------|
@@ -91,13 +99,15 @@ Key tables in `lmsdb` (PostgreSQL). Migrations are in `backend/db/migrations/` n
 | `tasks` | `id, lead_id FK, title, due_date TIMESTAMPTZ, status task_status, completed_at TIMESTAMPTZ, resolution TEXT, created_at` |
 | `activities` | `id, lead_id FK, type, note, user_id, created_at` |
 | `users` | `id, username, password_hash, role user_role, created_at` |
-| `app_settings` | branding (app_name, logo_url, primary_color, etc.) |
+| `app_settings` | key-value store: `app_name`, `app_logo`, `interests_list` (JSON array) |
 
 Applying a new migration (pipe via stdin — the migration file is local, not on the server):
 ```bash
 ssh -p 2222 -i ~/.ssh/id_ed25519_nas nas@154.84.215.26 \
-  "docker exec -i lms_db psql -U lms -d lmsdb" < backend/db/migrations/007_xxx.sql
+  "docker exec -i lms_db psql -U lms -d lmsdb" < backend/db/migrations/008_xxx.sql
 ```
+
+**Applied migrations**: 001_init, 002_rename_email_to_mobile, 003_leads_name_nullable, 004_app_settings, 005_task_datetime, 006_task_resolution, 007_configurable_interests
 
 ## Backend API Reference
 
@@ -146,6 +156,8 @@ The app is used primarily on mobile. Follow these established patterns:
 
 **Badge/chip sizing on cards**: Metadata badges use `text-[10px] px-1.5 py-0.5`. Avoid `text-xs px-2 py-1` — too bulky on mobile. Status icon badges (Alert/Task) are the exception: `w-6 h-6` circles.
 
+**UserManagementModal tabs**: Responsive tabs pattern — icon-only on mobile (`hidden sm:inline`), icon+text on desktop. Tab buttons: `py-2 text-xs sm:text-sm`, icons `text-base`. Example tabs: Users | Appearance | Interests.
+
 **z-index stack**: Modals at `z-50`; any modal above another modal uses `z-[60]`.
 
 **Service worker**: PWA aggressively caches. After every frontend deploy, hard-refresh needed (Ctrl+Shift+R on desktop; long-press reload on mobile).
@@ -170,6 +182,8 @@ The app is used primarily on mobile. Follow these established patterns:
 To debug: check backend logs (`docker logs lms_api --tail 30`). The `validate()` middleware returns the first failing field: `{ error: "fieldName: message" }`.
 
 **Tasks / data disappearing after refresh**: Tasks, activities, and notes are stored in the DB, **not** in the Lead row JSONB. Any store function that modifies these must call the backend API — mutating Pinia state only is silently lost on refresh. Pattern: call the API first, then update local Pinia state on success. If a new store function is added for tasks/activities, always wire it to `POST/PUT/DELETE /api/leads/:id/tasks` (or `/activities`).
+
+**"X is not a function" errors in production**: Store function exists locally but missing on server. The Docker build compiles from SOURCE files on the server, not from local dist/. If you add a new function to a store (e.g. `saveInterestsList` in `app.ts`), you must rsync the source file to the server and rebuild the container. Uploading dist/ alone won't work. Pattern: `rsync src/stores/app.ts` → rebuild frontend.
 
 ## Approach
 
