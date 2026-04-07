@@ -41,23 +41,26 @@
         </div>
       </div>
 
-      <!-- Assigned To + Status + Temperature -->
-      <div class="flex items-center gap-1 text-xs font-semibold flex-wrap">
-        <span
-          v-if="lead.assignedTo"
-          class="px-1.5 py-0.5 rounded-md bg-indigo-100 text-indigo-700 text-[10px] font-bold inline-flex items-center gap-0.5 whitespace-nowrap"
-        >
-          <i class="ph-bold ph-user text-indigo-600 text-[10px]"></i>
-          {{ assignedToName }}
-        </span>
-        <span class="px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[10px] font-bold inline-flex items-center gap-0.5">
-          <i class="ph-bold ph-folder text-[10px] text-slate-600"></i>
-          {{ lead.status }}
-        </span>
-        <span :class="[temperatureScore.tempColor, 'inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-bold']">
-          <i :class="['ph-bold', temperatureScore.tempIcon, 'text-[10px]']"></i>
-          {{ temperatureScore.temperature || 'N/A' }}
-        </span>
+      <!-- Assigned To + Status + Temperature + Value -->
+      <div class="flex items-center justify-between gap-2">
+        <div class="flex items-center gap-1 text-xs font-semibold flex-wrap">
+          <span
+            v-if="lead.assignedTo"
+            class="px-1.5 py-0.5 rounded-md bg-indigo-100 text-indigo-700 text-[10px] font-bold inline-flex items-center gap-0.5 whitespace-nowrap"
+          >
+            <i class="ph-bold ph-user text-indigo-600 text-[10px]"></i>
+            {{ assignedToName }}
+          </span>
+          <span class="px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[10px] font-bold inline-flex items-center gap-0.5">
+            <i class="ph-bold ph-folder text-[10px] text-slate-600"></i>
+            {{ lead.status }}
+          </span>
+          <span :class="[temperatureScore.tempColor, 'inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md text-[10px] font-bold']">
+            <i :class="['ph-bold', temperatureScore.tempIcon, 'text-[10px]']"></i>
+            {{ temperatureScore.temperature || 'N/A' }}
+          </span>
+        </div>
+        <div class="text-sm font-bold text-slate-900 shrink-0">{{ formatCurrency(lead.value) }}</div>
       </div>
 
       <!-- Interests -->
@@ -74,9 +77,6 @@
           +{{ interests.length - 2 }} more
         </div>
       </div>
-
-      <!-- Value -->
-      <div class="text-sm font-bold text-slate-900">{{ formatCurrency(lead.value) }}</div>
 
       <!-- Action Buttons -->
       <div class="flex gap-1.5 flex-wrap w-full" :class="lead.status === 'Lost' ? 'pointer-events-none opacity-40' : ''">
