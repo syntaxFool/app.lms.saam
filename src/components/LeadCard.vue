@@ -8,7 +8,7 @@
     ]"
   >
     <!-- Card Header -->
-    <div class="p-2.5 flex flex-col gap-1.5">
+    <div class="p-2.5 flex flex-col gap-2">
       <!-- Name + Badge -->
       <div class="flex justify-between items-start gap-1.5">
         <div class="flex flex-col gap-0.5 flex-1 min-w-0">
