@@ -231,7 +231,10 @@ const selectedLeadId = ref<string>('')
 const pendingPhoneNumber = ref<string>('')
 
 // Initialize on first load  
-onMounted(() => {
+onMounted(async () => {
+  // Load leads from server on initial mount
+  await leadsStore.fetchLeads()
+
   // Handle window resize
   const handleResize = () => {
     isMdScreen.value = window.innerWidth >= 768
