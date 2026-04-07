@@ -79,19 +79,19 @@
       </div>
 
       <!-- Action Buttons -->
-      <div class="flex gap-1.5 flex-wrap w-full" :class="lead.status === 'Lost' ? 'pointer-events-none opacity-40' : ''">
+      <div class="flex gap-2 flex-wrap w-full" :class="lead.status === 'Lost' ? 'pointer-events-none opacity-40' : ''">
         <button
           @click.stop="emit('edit-activity', lead.id)"
           title="Activity"
-          class="flex-1 flex items-center justify-center px-2 py-1.5 bg-blue-50 text-blue-600 rounded-lg border border-blue-200 hover:bg-blue-100 active:bg-blue-200 transition-colors"
+          class="flex-1 flex items-center justify-center px-3 py-2.5 sm:py-2 bg-blue-50 text-blue-600 rounded-lg border border-blue-200 hover:bg-blue-100 active:bg-blue-200 transition-colors min-h-[44px] sm:min-h-0"
         >
-          <i class="ph-bold ph-chat text-lg"></i>
+          <i class="ph-bold ph-chat text-xl sm:text-lg"></i>
         </button>
         <button
           @click.stop="emit('edit-task', lead.id)"
           title="Task"
           :class="[
-            'flex-1 flex items-center justify-center px-2 py-1.5 rounded-lg border transition-colors',
+            'flex-1 flex items-center justify-center px-3 py-2.5 sm:py-2 rounded-lg border transition-colors min-h-[44px] sm:min-h-0',
             isNoAction
               ? 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100'
               : isNoTask
@@ -99,16 +99,16 @@
                 : 'bg-purple-50 text-purple-600 border-purple-200 hover:bg-purple-100'
           ]"
         >
-          <i class="ph-bold ph-plus text-lg"></i>
+          <i class="ph-bold ph-plus text-xl sm:text-lg"></i>
         </button>
         <a
           v-if="lead.phone"
           :href="callHref"
           @click.stop
           title="Call"
-          class="flex-1 flex items-center justify-center px-2 py-1.5 bg-orange-50 text-orange-600 rounded-lg border border-orange-200 hover:bg-orange-100 active:bg-orange-200 transition-colors"
+          class="flex-1 flex items-center justify-center px-3 py-2.5 sm:py-2 bg-orange-50 text-orange-600 rounded-lg border border-orange-200 hover:bg-orange-100 active:bg-orange-200 transition-colors min-h-[44px] sm:min-h-0"
         >
-          <i class="ph-fill ph-phone text-lg"></i>
+          <i class="ph-fill ph-phone text-xl sm:text-lg"></i>
         </a>
         <a
           v-if="lead.phone"
@@ -116,9 +116,9 @@
           target="_blank"
           @click.stop
           title="WhatsApp"
-          class="flex-1 flex items-center justify-center px-2 py-1.5 bg-green-50 text-green-600 rounded-lg border border-green-200 hover:bg-green-100 active:bg-green-200 transition-colors"
+          class="flex-1 flex items-center justify-center px-3 py-2.5 sm:py-2 bg-green-50 text-green-600 rounded-lg border border-green-200 hover:bg-green-100 active:bg-green-200 transition-colors min-h-[44px] sm:min-h-0"
         >
-          <i class="ph-fill ph-whatsapp-logo text-lg"></i>
+          <i class="ph-fill ph-whatsapp-logo text-xl sm:text-lg"></i>
         </a>
       </div>
 
@@ -132,14 +132,14 @@
     </div>
 
     <!-- Navigation Buttons -->
-    <div class="flex gap-1.5 p-2 border-t border-slate-100 bg-slate-50">
+    <div class="flex gap-2 p-2.5 border-t border-slate-100 bg-slate-50">
       <button
         v-if="prevStatus"
         @click.stop="emit('move', lead.id, prevStatus)"
         title="Move left"
-        class="flex items-center justify-center flex-1 py-1.5 bg-slate-200 text-slate-700 rounded text-xs font-semibold hover:bg-slate-300 active:bg-slate-400 transition-colors"
+        class="flex items-center justify-center flex-1 py-2.5 sm:py-2 bg-slate-200 text-slate-700 rounded-lg text-sm font-semibold hover:bg-slate-300 active:bg-slate-400 transition-colors min-h-[44px] sm:min-h-0"
       >
-        <i class="ph-bold ph-arrow-left text-xs"></i>
+        <i class="ph-bold ph-arrow-left text-base"></i>
       </button>
       <div v-else class="flex-1"></div>
 
@@ -147,9 +147,9 @@
         v-if="nextStatus"
         @click.stop="emit('move', lead.id, nextStatus)"
         title="Move right"
-        class="flex items-center justify-center flex-1 py-1.5 bg-primary/15 text-primary rounded text-xs font-semibold hover:bg-primary/25 active:bg-primary/35 transition-colors"
+        class="flex items-center justify-center flex-1 py-2.5 sm:py-2 bg-primary/15 text-primary rounded-lg text-sm font-semibold hover:bg-primary/25 active:bg-primary/35 transition-colors min-h-[44px] sm:min-h-0"
       >
-        <i class="ph-bold ph-arrow-right text-xs"></i>
+        <i class="ph-bold ph-arrow-right text-base"></i>
       </button>
       <div v-else class="flex-1"></div>
     </div>
