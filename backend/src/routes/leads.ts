@@ -326,13 +326,14 @@ router.post('/:id/tasks', requireAuth, async (req: Request, res: Response): Prom
 
 // ─── PUT /api/leads/:id/tasks/:taskId ───
 router.put('/:id/tasks/:taskId', requireAuth, async (req: Request, res: Response): Promise<void> => {
-  const { status, completedAt } = req.body
+  const { status, completedAt, resolution } = req.body
   try {
     const row = await queryOne(
       `UPDATE tasks SET status = COALESCE($1, status),
-         completed_at = COALESCE($2::timestamptz, completed_at)
-       WHERE id = $3 AND lead_id = $4 RETURNING *`,
-      [status || null, completedAt || null, req.params.taskId, req.params.id]
+         completed_at = COALESCE($2::timestamptz, completed_at),
+         resolution = COALESCE($3, resolution)
+       WHERE id = $4 AND lead_id = $5 RETURNING *`,
+      [status || null, completedAt || null, resolution || null, req.params.taskId, req.params.id]
     )
     if (!row) { res.status(404).json({ success: false, error: 'Task not found' }); return }
     res.json({ success: true, data: row })

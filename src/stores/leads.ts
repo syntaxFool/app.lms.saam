@@ -631,7 +631,7 @@ export const useLeadsStore = defineStore('leads', () => {
     }
   }
 
-  async function toggleTaskStatus(leadId: string, taskId: string): Promise<boolean> {
+  async function toggleTaskStatus(leadId: string, taskId: string, resolution?: string): Promise<boolean> {
     const lead = leads.value.find(l => l.id === leadId)
     if (!lead || !lead.tasks) return false
 
@@ -645,12 +645,18 @@ export const useLeadsStore = defineStore('leads', () => {
       // Call backend API to update task status
       await apiClient.put(`/leads/${leadId}/tasks/${taskId}`, {
         status: newStatus,
-        completedAt: completedAt
+        completedAt: completedAt,
+        resolution: newStatus === 'completed' ? resolution : null
       })
 
       // Update local state
       task.status = newStatus
       task.completedAt = completedAt || undefined
+      if (newStatus === 'completed') {
+        task.resolution = resolution
+      } else {
+        task.resolution = undefined
+      }
 
       return true
     } catch (error) {

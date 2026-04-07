@@ -60,6 +60,7 @@ export interface Task {
   priority?: PriorityLevel
   createdAt: string
   completedAt?: string
+  resolution?: string
   createdBy?: string
   assignedTo?: string
 }

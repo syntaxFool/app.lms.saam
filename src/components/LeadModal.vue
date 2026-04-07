@@ -445,6 +445,10 @@
                         {{ task.title }}
                       </h4>
                       <p v-if="task.note" class="text-sm text-slate-600 mb-2">{{ task.note }}</p>
+                      <p v-if="task.status === 'completed' && task.resolution" class="text-sm text-green-700 bg-green-50 border border-green-200 rounded px-2 py-1 mb-2">
+                        <i class="ph-bold ph-check-circle mr-1"></i>
+                        <span class="font-medium">Resolution:</span> {{ task.resolution }}
+                      </p>
                       <div class="flex items-center gap-3 text-xs text-slate-500">
                         <span v-if="task.dueDate">
                           <i class="ph ph-calendar-blank mr-1"></i>
@@ -528,6 +532,11 @@
       @close="handleLostReasonClose"
       @submit="handleLostReasonSubmit"
     />
+    <TaskResolutionModal
+      :is-open="isTaskResolutionModalOpen"
+      @close="handleTaskResolutionClose"
+      @confirm="handleTaskResolutionConfirm"
+    />
   </Teleport>
 </template>
 
@@ -539,6 +548,7 @@ import { useCountryCodes } from '@/composables/useCountryCodes'
 import { useDateUtils } from '@/composables/useDateUtils'
 import type { Lead, ActivityType, LostReasonType } from '@/types'
 import LostReasonModal from './LostReasonModal.vue'
+import TaskResolutionModal from './TaskResolutionModal.vue'
 import CountryCodeSelect from './CountryCodeSelect.vue'
 
 const leadsStore = useLeadsStore()
@@ -587,6 +597,8 @@ const phoneError = ref('')
 
 // Lost Reason modal state
 const isLostReasonModalOpen = ref(false)
+const isTaskResolutionModalOpen = ref(false)
+const taskToComplete = ref<string | null>(null)
 const previousStatus = ref<string>('')
 
 // Activity & Task state
@@ -1005,10 +1017,37 @@ const addTask = async () => {
 const toggleTaskStatus = async (taskId: string) => {
   if (!props.leadId) return
   
+  const task = leadTasks.value.find(t => t.id === taskId)
+  if (!task) return
+  
+  // If marking as complete, show resolution modal first
+  if (task.status !== 'completed') {
+    taskToComplete.value = taskId
+    isTaskResolutionModalOpen.value = true
+    return
+  }
+  
+  // If unchecking (marking as pending), toggle immediately
   try {
     await leadsStore.toggleTaskStatus(props.leadId, taskId)
   } catch (error) {
     console.error('Failed to toggle task:', error)
+  }
+}
+
+const handleTaskResolutionClose = () => {
+  isTaskResolutionModalOpen.value = false
+  taskToComplete.value = null
+}
+
+const handleTaskResolutionConfirm = async (resolution: string) => {
+  if (!props.leadId || !taskToComplete.value) return
+  
+  try {
+    await leadsStore.toggleTaskStatus(props.leadId, taskToComplete.value, resolution)
+    taskToComplete.value = null
+  } catch (error) {
+    console.error('Failed to complete task:', error)
   }
 }
 
