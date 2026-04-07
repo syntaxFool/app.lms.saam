@@ -35,8 +35,8 @@ export const updateOwnProfileSchema = z.object({
 })
 
 // ── Leads ────────────────────────────────────────────────────────────────────
-const leadStatuses = ['New', 'Contacted', 'Qualified', 'Proposal', 'Negotiation', 'Won', 'Lost'] as const
-const temperatures = ['hot', 'warm', 'cold', ''] as const
+const leadStatuses = ['New', 'Contacted', 'Proposal', 'Won', 'Lost'] as const
+const temperatures = ['Hot', 'Warm', 'Cold', ''] as const
 
 export const createLeadSchema = z.object({
   name: z.string().max(200).optional().or(z.literal('')),

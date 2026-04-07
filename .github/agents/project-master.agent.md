@@ -21,7 +21,7 @@ You own the full cycle: code changes, TypeScript verification, production builds
 **Tailwind gotcha**: Only `z-50` and below have utility classes by default. Use `z-[60]` syntax (arbitrary values) for z-indices above 50.
 
 **Server**:
-- SSH: `ssh -p 2222 nas@154.84.215.26` (alias: `nas-office`)
+- SSH: `ssh -p 2222 -i ~/.ssh/id_ed25519_nas nas@154.84.215.26` (alias: `nas-office`)
 - App root: `/home/nas/lms-app/`
 - Services: `lms_web` (frontend), `lms_api` (backend), `lms_db` (postgres), `lms_nginx` (nginx)
 - Reverse proxy: `coolify-proxy` (Traefik v3) — handles TLS via Let's Encrypt
@@ -86,7 +86,7 @@ Key tables in `lmsdb` (PostgreSQL). Migrations are in `backend/db/migrations/` n
 
 | Table | Key columns |
 |-------|-------------|
-| `leads` | `id, name, mobile, status lead_status, source, stage, score, assigned_to, notes, created_at, updated_at` |
+| `leads` | `id, name, mobile, status lead_status, source, stage, score, assigned_to, notes, created_at, updated_at` | ⚠️ DB column is `mobile`; TypeScript type/field is `phone` — never write SQL using `phone` |
 | `tasks` | `id, lead_id FK, title, due_date TIMESTAMPTZ, status task_status, completed_at TIMESTAMPTZ, resolution TEXT, created_at` |
 | `activities` | `id, lead_id FK, type, note, user_id, created_at` |
 | `users` | `id, username, password_hash, role user_role, created_at` |
@@ -120,6 +120,32 @@ ssh -p 2222 -i ~/.ssh/id_ed25519_nas nas@154.84.215.26 \
 docker exec lms_api wget -qO- http://127.0.0.1:8080/api/settings
 ```
 (Use `127.0.0.1`, not `localhost` — Alpine images may not resolve it.)
+
+## Mobile UI Conventions
+
+The app is used primarily on mobile. Follow these established patterns:
+
+**Responsive layout**:
+- Use `md:` prefix for desktop overrides — mobile-first by default.
+- Kanban columns on mobile: `w-[calc(100vw-1.5rem)]`. Desktop: `md:w-72`.
+- Board padding: `p-2 md:p-6`. Column gap: `gap-2 md:gap-6`.
+- Mobile Kanban uses tab-based column switching — don't add horizontal scroll.
+
+**LeadCard display hierarchy** (top → bottom):
+1. **Name** (`text-sm font-bold`) — primary; phone shown below only if name present
+2. **Phone** (`text-xs`, with phone icon) — shown separately, not merged with name
+3. **Badges** — assigned user, status, temperature — all `text-[10px] px-1.5 py-0.5`
+4. **Interests** — max 2 shown with "+N more"
+5. **Value** — `text-sm font-bold`
+6. **Action buttons** — 4 equal-width: chat, task, call, WhatsApp (`py-1.5`, `text-lg` icons)
+7. **Notes** — 1-line truncated
+8. **Nav footer** — prev/next status arrows
+
+**Badge/chip sizing on cards**: Always `text-[10px] px-1.5 py-0.5`. Avoid `text-xs px-2 py-1` — too bulky on mobile.
+
+**z-index stack**: Modals at `z-50`; any modal above another modal uses `z-[60]`.
+
+**Service worker**: PWA aggressively caches. After every frontend deploy, hard-refresh needed (Ctrl+Shift+R on desktop; long-press reload on mobile).
 
 ## Diagnostic Runbook
 
