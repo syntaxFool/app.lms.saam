@@ -9,28 +9,31 @@
         <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
 
           <!-- Header -->
-          <div class="flex items-start justify-between p-6 border-b border-slate-200 flex-shrink-0">
-            <div>
-              <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
-                <i class="ph-bold ph-users text-primary"></i>
-                User Management
-              </h2>
-              <p class="text-xs text-slate-400 mt-1">{{ roleLimitsSummary }}</p>
-            </div>
-            <div class="flex items-center gap-2">
-              <button
-                v-if="canManageUsers && !showForm && activeTab === 'users'"
-                @click="startCreate"
-                class="flex items-center gap-1.5 bg-primary text-white text-sm font-semibold px-3 py-2 rounded-lg hover:bg-indigo-700 transition"
-              >
-                <i class="ph-bold ph-user-plus"></i> Add User
-              </button>
-              <button
-                @click="handleClose"
-                class="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition"
-              >
-                <i class="ph-bold ph-x text-lg"></i>
-              </button>
+          <div class="flex-shrink-0 border-b border-slate-200">
+            <div class="flex items-center justify-between p-4 sm:p-6">
+              <div class="flex-1 min-w-0">
+                <h2 class="text-lg sm:text-xl font-bold text-slate-800 flex items-center gap-2">
+                  <i class="ph-bold ph-users text-primary text-xl"></i>
+                  <span>User Management</span>
+                </h2>
+                <p class="text-[10px] sm:text-xs text-slate-500 mt-1.5 font-medium">{{ roleLimitsSummary }}</p>
+              </div>
+              <div class="flex items-center gap-2 ml-4">
+                <button
+                  v-if="canManageUsers && !showForm && activeTab === 'users'"
+                  @click="startCreate"
+                  class="flex items-center gap-1.5 bg-primary text-white text-sm font-semibold px-3 sm:px-4 py-2 sm:py-2.5 rounded-lg hover:bg-indigo-700 transition shadow-sm"
+                >
+                  <i class="ph-bold ph-user-plus text-base"></i>
+                  <span class="hidden xs:inline">Add User</span>
+                </button>
+                <button
+                  @click="handleClose"
+                  class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition"
+                >
+                  <i class="ph-bold ph-x text-xl"></i>
+                </button>
+              </div>
             </div>
           </div>
 
