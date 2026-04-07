@@ -152,58 +152,76 @@
 
 ## Phase 3: Advanced Features (Future Enhancement)
 
-### 3.1 Swipe Actions
+### 3.1 Swipe Actions ❌ REJECTED
 - Swipe right: Move to next status
 - Swipe left: Edit lead
 - Visual feedback with haptic response
 
+**Status:** User rejected - "we will never do Gestures"  
 **Effort:** 3-4 hours  
-**Dependencies:** Phase 1 complete, user feedback positive
+**Dependencies:** N/A - Not implementing
 
 ---
 
-### 3.2 Quick Actions Bottom Sheet
+### 3.2 Quick Actions Bottom Sheet ✅ COMPLETED
 - Tap card: Open detail modal (current behavior)
-- Long-press: Show action sheet with all actions
-- Faster than modal for quick status changes
+- Long-press (500ms): Show action sheet with all actions
+- 7 actions: Call, WhatsApp, Add Activity, Add Task, Edit Lead, Move Next Status, Move Prev Status
+- Vibration feedback on long-press trigger
+- Slide-up animation with backdrop
 
+**Implementation:**
+- `QuickActionsSheet.vue`: Bottom sheet component with z-index 60
+- `LeadCard.vue`: Added touch handlers with 500ms threshold
+- `KanbanBoard.vue`: Sheet state management and event routing
+- Visual feedback: Ring on long-press (`ring-2 ring-primary`)
+
+**Status:** Deployed to production (commit eec0bbf)  
 **Effort:** 2 hours  
-**Dependencies:** Phase 1 & 2 complete
+**Dependencies:** Phase 1 & 2 complete ✅
 
 ---
 
-### 3.3 Compact Card View Toggle
-- Add view mode toggle: Normal | Compact | List
-- Compact: Single line per lead (name, value, primary action)
-- List: Ultra-compact, 10+ leads per screen
+### 3.3 Compact Card View Toggle ✅ COMPLETED
+- View mode toggle: Normal | Compact | List (mobile-only, kanban view only)
+- Normal: Full card with all details (~145px height)
+- Compact: Single-line horizontal with name, badge, value, quick action (~60px height)
+- List: Table-row style with name, phone, value, mini actions (~45px height)
+- localStorage persistence for user preference
 
+**Implementation:**
+- `LeadsManager.vue`: Toggle UI below status tabs with 3 mode buttons
+- `KanbanBoard.vue`: Passes viewMode prop to LeadCard
+- `LeadCard.vue`: Three conditional templates based on viewMode prop
+- `setCardViewMode()`: Function to switch modes and persist to localStorage
+
+**Status:** Deployed to production (commit eec0bbf)  
 **Effort:** 4 hours  
-**Dependencies:** User feedback requesting denser view
+**Dependencies:** Phase 1 & 2 complete ✅
 
 ---
 
 ## Implementation Order (Recommended)
 
 **Week 1 - Quick Wins:**
-1. Lead name prominence (1.1) ✅
-2. Reduce footer height - Option A (1.2) ✅
-3. Optimize action buttons (1.4) ✅
-4. Remove redundant badge (1.3) ✅
+1. Lead name prominence (1.1) ✅ DEPLOYED
+2. Reduce footer height - Option A (1.2) ✅ DEPLOYED
+3. Optimize action buttons (1.4) ✅ DEPLOYED
+4. Remove redundant badge (1.3) ✅ DEPLOYED
 
 **Week 2 - Polish:**
-5. Card density improvements (2.1) ✅
-6. Visual hierarchy (2.2) ✅
-7. Alert prominence (2.3) ✅
-8. Empty state handling (2.4) ✅
+5. Card density improvements (2.1) ✅ DEPLOYED
+6. Visual hierarchy (2.2) ✅ DEPLOYED
+7. Alert prominence (2.3) ✅ DEPLOYED
+8. Empty state handling (2.4) ✅ DEPLOYED
 
-**Week 3 - Gather Feedback:**
-- Deploy to production
-- Collect user feedback (quick survey or session recordings)
-- Measure: time to complete common tasks, user session depth
+**Week 3 - Advanced Features:**
+9. Quick Actions Bottom Sheet (3.2) ✅ DEPLOYED (commit eec0bbf)
+10. Compact View Toggle (3.3) ✅ DEPLOYED (commit eec0bbf)
 
-**Week 4+ - Advanced Features:**
-- Implement Phase 3 based on feedback
-- A/B test different interaction patterns
+**Status:** ALL PHASES COMPLETE 🎉  
+**Live URL:** https://sa0lms.myaddr.tools  
+**Note:** Hard refresh (Ctrl+Shift+R) required to clear PWA cache after deployment
 
 ---
 
