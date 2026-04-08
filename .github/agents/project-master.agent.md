@@ -153,7 +153,7 @@ The app is used primarily on mobile but all features now also work on desktop. F
 **Card view modes** (Phase 3):
 - `cardViewMode` state in `LeadsManager.vue` — persisted to `localStorage('cardViewMode')`.
 - **Normal** (~70px/card): Minimal layout (default — no footer, single task button). **Compact** (~60px): Single row — name, alert badge, value, quick-action button. **List** (~45px): Table-row style — name, phone, value, mini actions.
-- Toggle UI: **Mobile-only** (`md:hidden`) — segmented control (Cards/Compact/List) below status tabs. Not shown on desktop.
+- Toggle UI: Visible on **all screen sizes** in kanban view. Mobile — full-width segmented control (flex-1 buttons). Desktop — compact button group (fixed px-4 width) with "Card View:" label on left.
 - Only visible in kanban view.
 - `viewMode` prop flows: `LeadsManager → KanbanBoard → LeadCard`.
 
