@@ -315,7 +315,9 @@ const getRelativeDate = (dateStr: string): string => {
   
   if (diffDays === 1) return 'Tomorrow'
   if (diffDays <= 7) return `${diffDays}d`
-  return followUpDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  const day = String(followUpDate.getDate()).padStart(2, '0')
+  const month = String(followUpDate.getMonth() + 1).padStart(2, '0')
+  return `${day}/${month}`
 }
 
 const getRelativeDateForLead = (lead: Lead): string => {

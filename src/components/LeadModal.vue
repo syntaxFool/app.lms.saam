@@ -941,7 +941,10 @@ const formatActivityTime = (timestamp: string): string => {
   if (minutes < 60) return `${minutes}m ago`
   if (hours < 24) return `${hours}h ago`
   if (days < 7) return `${days}d ago`
-  return date.toLocaleDateString()
+  const day = String(date.getDate()).padStart(2, '0')
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const year = date.getFullYear()
+  return `${day}/${month}/${year}`
 }
 
 // Task functions
@@ -1041,7 +1044,10 @@ const formatDate = (dateStr: string): string => {
   
   if (date.toDateString() === today.toDateString()) return 'Today'
   if (date.toDateString() === tomorrow.toDateString()) return 'Tomorrow'
-  return date.toLocaleDateString()
+  const day = String(date.getDate()).padStart(2, '0')
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const year = date.getFullYear()
+  return `${day}/${month}/${year}`
 }
 
 const formatTaskDate = (dateStr: string): string => {

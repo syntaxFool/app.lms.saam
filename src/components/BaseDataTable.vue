@@ -233,7 +233,12 @@ const getNestedValue = (obj: any, path: string): any => {
 const formatValue = (value: any, column: Column): string => {
   if (value === null || value === undefined) return '-'
   if (column.format) return column.format(value)
-  if (value instanceof Date) return value.toLocaleDateString()
+  if (value instanceof Date) {
+    const day = String(value.getDate()).padStart(2, '0')
+    const month = String(value.getMonth() + 1).padStart(2, '0')
+    const year = value.getFullYear()
+    return `${day}/${month}/${year}`
+  }
   return String(value)
 }
 
