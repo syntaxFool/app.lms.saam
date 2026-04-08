@@ -28,10 +28,20 @@
             <div class="space-y-1">
               <button
                 @click="switchView('kanban')"
+                @contextmenu.prevent="isCardViewSheetOpen = true"
+                @touchstart="startLongPress"
+                @touchend="cancelLongPress"
+                @touchcancel="cancelLongPress"
                 class="w-full text-left px-4 py-2.5 rounded-lg flex items-center gap-3 hover:bg-slate-50 transition text-slate-700"
               >
                 <i class="ph-bold ph-kanban text-lg"></i>
                 <span class="font-medium">Kanban Board</span>
+                
+                <!-- Visual hint: current mode icon + dots -->
+                <div class="ml-auto flex items-center gap-1">
+                  <i :class="modeIcon" class="text-sm text-primary"></i>
+                  <i class="ph-bold ph-dots-three text-sm text-slate-400"></i>
+                </div>
               </button>
               <button
                 @click="switchView('table')"
@@ -114,13 +124,22 @@
       </div>
     </div>
   </Teleport>
+
+  <!-- Card View Selection Sheet (both mobile and desktop) -->
+  <CardViewSheet
+    :is-open="isCardViewSheetOpen"
+    :current-mode="cardViewMode || 'normal'"
+    @close="isCardViewSheetOpen = false"
+    @select="handleCardViewSelect"
+  />
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useLeadsStore } from '@/stores/leads'
+import CardViewSheet from './CardViewSheet.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -128,15 +147,17 @@ const leadsStore = useLeadsStore()
 
 interface Props {
   isOpen: boolean
+  cardViewMode?: 'normal' | 'compact' | 'list'
 }
 
 interface Emits {
   (e: 'close'): void
   (e: 'view-change', view: string): void
   (e: 'open-settings'): void
+  (e: 'card-view-change', mode: 'normal' | 'compact' | 'list'): void
 }
 
-defineProps<Props>()
+const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
 const currentUser = computed(() => authStore.user)
@@ -151,6 +172,42 @@ const stats = computed(() => {
     active: leads.filter(l => !['Won', 'Lost'].includes(l.status)).length
   }
 })
+
+// Card view sheet state
+const isCardViewSheetOpen = ref(false)
+let longPressTimer: number | null = null
+
+// Mode icon for visual hint
+const modeIcon = computed(() => {
+  const mode = props.cardViewMode || 'normal'
+  return {
+    'normal': 'ph-bold ph-cards',
+    'compact': 'ph-bold ph-rows',
+    'list': 'ph-bold ph-list-dashes'
+  }[mode]
+})
+
+// Long-press handlers for mobile
+const startLongPress = () => {
+  longPressTimer = window.setTimeout(() => {
+    if ('vibrate' in navigator) navigator.vibrate(50)
+    isCardViewSheetOpen.value = true
+  }, 500)
+}
+
+const cancelLongPress = () => {
+  if (longPressTimer) {
+    clearTimeout(longPressTimer)
+    longPressTimer = null
+  }
+}
+
+// Handle card view mode selection
+const handleCardViewSelect = (mode: 'normal' | 'compact' | 'list') => {
+  emit('card-view-change', mode)
+  isCardViewSheetOpen.value = false
+  emit('close')  // also close sidebar
+}
 
 const closeMenu = () => {
   emit('close')

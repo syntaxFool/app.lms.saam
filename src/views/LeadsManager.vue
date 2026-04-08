@@ -67,48 +67,6 @@
       </div>
     </nav>
 
-    <!-- Card View Mode Toggle (Kanban View Only) -->
-    <div v-if="currentView === 'kanban'" class="bg-white border-b border-slate-200 px-3 py-2 shrink-0">
-      <div class="flex items-center justify-between gap-3">
-        <!-- Label (Desktop only) -->
-        <span class="hidden md:inline text-sm font-semibold text-slate-700">Card View:</span>
-        
-        <!-- Toggle Buttons -->
-        <div class="flex gap-1 bg-slate-100 rounded-lg p-1 flex-1 md:flex-initial">
-          <button
-            @click="setCardViewMode('normal')"
-            :class="[
-              'flex-1 md:flex-initial md:px-4 py-1.5 px-2 text-xs font-semibold rounded-md transition-all flex items-center justify-center gap-1',
-              cardViewMode === 'normal' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600'
-            ]"
-          >
-            <i class="ph-bold ph-cards text-sm"></i>
-            <span class="ml-1">Cards</span>
-          </button>
-          <button
-            @click="setCardViewMode('compact')"
-            :class="[
-              'flex-1 md:flex-initial md:px-4 py-1.5 px-2 text-xs font-semibold rounded-md transition-all flex items-center justify-center gap-1',
-              cardViewMode === 'compact' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600'
-            ]"
-          >
-            <i class="ph-bold ph-rows text-sm"></i>
-            <span class="ml-1">Compact</span>
-          </button>
-          <button
-            @click="setCardViewMode('list')"
-            :class="[
-              'flex-1 md:flex-initial md:px-4 py-1.5 px-2 text-xs font-semibold rounded-md transition-all flex items-center justify-center gap-1',
-              cardViewMode === 'list' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600'
-            ]"
-          >
-            <i class="ph-bold ph-list-dashes text-sm"></i>
-            <span class="ml-1">List</span>
-          </button>
-        </div>
-      </div>
-    </div>
-
     <!-- Main Content Area -->
     <main class="flex-1 overflow-hidden relative w-full">
       <!-- Loading Overlay -->
@@ -220,8 +178,10 @@
 
     <SideMenu
       :is-open="isMenuOpen"
+      :card-view-mode="cardViewMode"
       @close="isMenuOpen = false"
       @view-change="handleMenuViewChange"
+      @card-view-change="setCardViewMode"
       @open-settings="isUserManagementOpen = true"
     />
 
