@@ -169,10 +169,11 @@ The app is used primarily on mobile. Follow these established patterns:
 **Badge/chip sizing on cards**: Metadata badges use `text-[10px] px-1.5 py-0.5`. Alert/task badges: `w-7 h-7` circles.
 
 **Long-press bottom sheet** (`QuickActionsSheet.vue`):
-- 500ms long-press on any LeadCard triggers `emit('long-press', lead)`.
-- Sheet slides up from bottom (`z-[60]`) with backdrop. 7 actions with `min-h-[56px]` touch targets.
-- Vibration feedback: `navigator.vibrate(50)` on trigger.
-- Visual feedback: `ring-2 ring-primary` on card while pressing.
+- **Mobile**: 500ms long-press on any LeadCard triggers `emit('long-press', lead)`. Vibration feedback: `navigator.vibrate(50)`. Visual feedback: `ring-2 ring-primary` on card while pressing.
+- **Desktop**: Right-click (contextmenu) on any LeadCard opens the same quick actions.
+- Sheet appearance: Mobile — slides up from bottom (full width, `rounded-t-3xl`). Desktop — centered modal (`rounded-2xl`, min 320px width).
+- 7 actions with `min-h-[56px]` touch targets: Call, WhatsApp, Add Activity, Add Task, Edit Lead, Move Next/Previous Status.
+- Backdrop: `bg-black/50 backdrop-blur-sm` at `z-[60]`.
 - `KanbanBoard.vue` manages `isSheetOpen` + `selectedLead` state and routes events to parent.
 
 **Status tabs** (mobile): 4 tabs (New/Contacted/Proposal/Won) with `flex: 1` equal-width — all fit in 375px without scroll.
