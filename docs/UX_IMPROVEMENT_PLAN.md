@@ -252,6 +252,36 @@
 
 ---
 
+## Phase 6: Card View Toggle to Sidebar (Header Space Recovery)
+
+### 6.1 Move Toggle from Header to Sidebar ✅ COMPLETED
+- Removed always-visible 44px toggle bar from LeadsManager header
+- Added card view mode selector to sidebar "Kanban Board" button
+- Triggers: Desktop right-click, Mobile long-press (same pattern as card long-press)
+- Shows bottom sheet with Cards/Compact/List options (same sheet for both platforms)
+- Visual hint: current mode icon + dots (⋮) on Kanban Board button
+- Saves 44px header space (header now 114px vs 158px before)
+
+**Implementation:**
+- `CardViewSheet.vue`: New bottom sheet component at z-index 70 (above sidebar)
+- `SideMenu.vue`: Added right-click + long-press handlers, passes cardViewMode prop
+- `LeadsManager.vue`: Removed toggle bar, passes cardViewMode to SideMenu
+- Visual feedback: Vibration on long-press (500ms threshold)
+- Mode hint shows current mode: 🃏 (Cards), ≡ (Compact), ☰ (List)
+
+**Rationale:** 
+- 44px toggle bar took valuable header space
+- Sidebar already houses all view controls (Kanban/Table/Reports)
+- Consistent interaction pattern with card long-press (Phase 3)
+- Mode selection is infrequent (users rarely switch after choosing preference)
+- ~28% header space recovery (header now 72% of original size)
+
+**Status:** Deployed to production (commit 45b7061)  
+**Effort:** 2 hours  
+**Dependencies:** Phase 3 complete (consistent bottom sheet pattern) ✅
+
+---
+
 ## Implementation Order (Recommended)
 
 **Week 1 - Quick Wins:**
@@ -273,6 +303,9 @@
 **Week 4 - Density Optimization:**
 11. Single Primary Action Button (4.1) ✅ DEPLOYED (commit 7c15dc9)
 12. Remove Navigation Footer (5.1) ✅ DEPLOYED (commit fa053eb)
+
+**Week 5 - Header Space Recovery:**
+13. Card View Toggle to Sidebar (6.1) ✅ DEPLOYED (commit 45b7061)
 
 **Status:** ALL PHASES COMPLETE 🎉  
 **Live URL:** https://sa0lms.myaddr.tools  
