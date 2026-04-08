@@ -1,15 +1,15 @@
 <template>
   <Teleport to="body">
-    <div v-if="isOpen" class="fixed inset-0 z-40 lg:relative lg:z-0">
-      <!-- Backdrop (mobile only) -->
-      <div class="lg:hidden absolute inset-0 bg-slate-900/40 backdrop-blur-sm" @click="close"></div>
+    <div v-if="isOpen" class="fixed inset-0 z-40">
+      <!-- Backdrop -->
+      <div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm lg:bg-slate-900/20" @click="close"></div>
 
       <!-- Sidebar -->
       <div 
         :class="[
-          'fixed lg:relative right-0 top-0 h-full bg-white border-l border-slate-200 shadow-xl lg:shadow-none transition-transform duration-300 z-50 flex flex-col',
+          'fixed right-0 top-0 h-full bg-white border-l border-slate-200 shadow-xl transition-transform duration-300 z-50 flex flex-col',
           'w-80 lg:w-96',
-          isOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'
+          isOpen ? 'translate-x-0' : 'translate-x-full'
         ]"
       >
         <!-- Header -->
@@ -19,7 +19,7 @@
               <i class="ph-bold ph-calendar-check text-primary"></i>
               Follow-ups
             </h3>
-            <button @click="close" class="lg:hidden p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg">
+            <button @click="close" class="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg">
               <i class="ph-bold ph-x text-xl"></i>
             </button>
           </div>
