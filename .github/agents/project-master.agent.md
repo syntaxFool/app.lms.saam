@@ -164,7 +164,6 @@ The app is used primarily on mobile but all features now also work on desktop. F
 4. **Interests** — `hidden md:flex` (hidden on mobile for density). Max 2 + "+N more".
 5. **Action button** — Single full-width Task button with "Add Task" text label (`min-h-[42px]` touch target). Color changes based on alert state: red (no-action), amber (no-task), purple (normal). Call/WhatsApp accessible via long-press bottom sheet.
 6. **Notes** — `hidden md:block` (hidden on mobile for density).
-7. **Nav footer** — prev/next arrows, `min-h-[36px]`.
 
 **Temperature as border** (NOT a badge): Lead temperature is shown as `border-l-4` on the card:
 - Hot → `border-l-red-500`, Warm → `border-l-amber-500`, Cold → `border-l-blue-500`
