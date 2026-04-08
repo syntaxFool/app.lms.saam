@@ -32,7 +32,7 @@ app.use(express.json({ limit: '1mb' }))
 // ─── Global rate limit ───
 app.use(rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 1000, // Increased from 300 to 1000 for active users with polling
+  max: 5000, // Supports ~30 concurrent users with polling (10s interval = 6 req/min per user)
   standardHeaders: true,
   legacyHeaders: false,
   message: { success: false, error: 'Too many requests, please slow down' },
