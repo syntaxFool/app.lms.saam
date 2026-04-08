@@ -82,13 +82,30 @@ export function useFollowUpTracking() {
   }
 
   /**
+   * Normalize date string to YYYY-MM-DD format
+   */
+  function normalizeDateString(dateStr: string): string {
+    // If it's an ISO datetime, extract just the date part
+    if (dateStr.includes('T')) {
+      const istDate = getISTDate(new Date(dateStr))
+      const year = istDate.getFullYear()
+      const month = String(istDate.getMonth() + 1).padStart(2, '0')
+      const day = String(istDate.getDate()).padStart(2, '0')
+      return `${year}-${month}-${day}`
+    }
+    // Already in YYYY-MM-DD format
+    return dateStr
+  }
+
+  /**
    * Check if a lead's follow-up is overdue
    */
   function isFollowUpOverdue(lead: Lead): boolean {
     const followUpDate = getFollowUpDate(lead)
     if (!followUpDate) return false
+    const normalizedDate = normalizeDateString(followUpDate)
     const today = getISTToday()
-    return followUpDate < today
+    return normalizedDate < today
   }
 
   /**
@@ -97,8 +114,9 @@ export function useFollowUpTracking() {
   function isFollowUpToday(lead: Lead): boolean {
     const followUpDate = getFollowUpDate(lead)
     if (!followUpDate) return false
+    const normalizedDate = normalizeDateString(followUpDate)
     const today = getISTToday()
-    return followUpDate === today
+    return normalizedDate === today
   }
 
   /**
@@ -107,8 +125,9 @@ export function useFollowUpTracking() {
   function isFollowUpUpcoming(lead: Lead): boolean {
     const followUpDate = getFollowUpDate(lead)
     if (!followUpDate) return false
+    const normalizedDate = normalizeDateString(followUpDate)
     const today = getISTToday()
-    return followUpDate > today
+    return normalizedDate > today
   }
 
   /**
