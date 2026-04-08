@@ -20,6 +20,8 @@ You own the full cycle: code changes, TypeScript verification, production builds
 
 **Tailwind gotcha**: Only `z-50` and below have utility classes by default. Use `z-[60]` syntax (arbitrary values) for z-indices above 50.
 
+**Teleport gotcha**: Components that use `<Teleport to="body">` are detached from their parent DOM context. Never apply `lg:relative` or context-dependent positioning inside a teleported element — `relative` has no parent to anchor to and the element won't render correctly on desktop. Always keep teleported sidebars/modals `fixed`.
+
 **Server**:
 - SSH: `ssh -p 2222 -i ~/.ssh/id_ed25519_nas nas@154.84.215.26` (alias: `nas-office`)
 - App root: `/home/nas/lms-app/`
@@ -91,7 +93,7 @@ Critical behavioral constraints — these are intentional, not bugs:
 
 ## Database Schema
 
-Key tables in `lmsdb` (PostgreSQL). Migrations are in `backend/db/migrations/` numbered `001–007`; next file must be `008_xxx.sql`.
+Key tables in `lmsdb` (PostgreSQL). Migrations are in `backend/db/migrations/` numbered `001–008`; next file must be `009_xxx.sql`.
 
 | Table | Key columns |
 |-------|-------------|
@@ -99,15 +101,15 @@ Key tables in `lmsdb` (PostgreSQL). Migrations are in `backend/db/migrations/` n
 | `tasks` | `id, lead_id FK, title, due_date TIMESTAMPTZ, status task_status, completed_at TIMESTAMPTZ, resolution TEXT, created_at` |
 | `activities` | `id, lead_id FK, type, note, user_id, created_at` |
 | `users` | `id, username, password_hash, role user_role, created_at` |
-| `app_settings` | key-value store: `app_name`, `app_logo`, `interests_list` (JSON array) |
+| `app_settings` | key-value store: `app_name`, `app_logo`, `interests_list` (JSON array), `sources_list` (JSON array) |
 
 Applying a new migration (pipe via stdin — the migration file is local, not on the server):
 ```bash
 ssh -p 2222 -i ~/.ssh/id_ed25519_nas nas@154.84.215.26 \
-  "docker exec -i lms_db psql -U lms -d lmsdb" < backend/db/migrations/008_xxx.sql
+  "docker exec -i lms_db psql -U lms -d lmsdb" < backend/db/migrations/009_xxx.sql
 ```
 
-**Applied migrations**: 001_init, 002_rename_email_to_mobile, 003_leads_name_nullable, 004_app_settings, 005_task_datetime, 006_task_resolution, 007_configurable_interests
+**Applied migrations**: 001_init, 002_rename_email_to_mobile, 003_leads_name_nullable, 004_app_settings, 005_task_datetime, 006_task_resolution, 007_configurable_interests, 008_configurable_sources
 
 ## Backend API Reference
 
@@ -142,23 +144,42 @@ The app is used primarily on mobile. Follow these established patterns:
 - Board padding: `p-2 md:p-6`. Column gap: `gap-2 md:gap-6`.
 - Mobile Kanban uses tab-based column switching — don't add horizontal scroll.
 
-**LeadCard display hierarchy** (top → bottom):
-1. **Name + Alert/Task badge** — one row: name (`text-sm font-bold`) on left, status icon on right
-   - Alert/Task badges are **icon-only circles** (`w-6 h-6 rounded-full`) — red for no-action, amber for no-pending-task. Never use text labels in these badges.
-2. **Phone** (`text-xs`, with phone icon) — separate line below name
-3. **Badges row + Value** — one `justify-between` row: `[Status] [Temp]` badges on left, `₹Value` on right (`text-sm font-bold shrink-0`)
-4. **Interests** — max 2 shown with "+N more" (`text-[10px]`)
-5. **Action buttons** — 4 equal-width: chat, task, call, WhatsApp (`py-1.5`, `text-lg` icons)
-6. **Notes** — 1-line truncated (only if present)
-7. **Nav footer** — prev/next status arrows
+**Card view modes** (new in Phase 3):
+- `cardViewMode` state in `LeadsManager.vue` — persisted to `localStorage('cardViewMode')`.
+- **Normal** (~145px/card): Full layout (default). **Compact** (~60px): Single row — name, alert badge, value, quick-action button. **List** (~45px): Table-row style — name, phone, value, mini actions.
+- Toggle UI: Mobile-only bar below status tabs, only visible in kanban view.
+- `viewMode` prop flows: `LeadsManager → KanbanBoard → LeadCard`.
 
-**Card spacing**: Main content area uses `p-2.5` padding and `gap-2` between all sections.
+**LeadCard (Normal mode) layout** (top → bottom):
+1. **Name + Alert badge** — name (`text-base font-bold`), alert/task badge (icon-only circle `w-7 h-7`) on right. "Unnamed Lead" shown if name is null.
+2. **Phone** (`text-xs`, with phone icon) or "No phone" italic.
+3. **AssignedTo badge + Value** — assignedTo on left (hidden if null/empty), value `text-lg font-bold` in `text-emerald-600` if >0 else `text-slate-400`.
+4. **Interests** — `hidden md:flex` (hidden on mobile for density). Max 2 + "+N more".
+5. **Action buttons** — 3 on mobile: Task (purple), Call (orange), WhatsApp (green). `min-h-[42px]` touch targets.
+6. **Notes** — `hidden md:block` (hidden on mobile for density).
+7. **Nav footer** — prev/next arrows, `min-h-[36px]`.
 
-**Badge/chip sizing on cards**: Metadata badges use `text-[10px] px-1.5 py-0.5`. Avoid `text-xs px-2 py-1` — too bulky on mobile. Status icon badges (Alert/Task) are the exception: `w-6 h-6` circles.
+**Temperature as border** (NOT a badge): Lead temperature is shown as `border-l-4` on the card:
+- Hot → `border-l-red-500`, Warm → `border-l-amber-500`, Cold → `border-l-blue-500`
+- The `borderColor` property comes from `useLeadScoring` composable.
+- Alert state (no-action/no-task) overrides the border color with red/amber and adds background tint.
 
-**UserManagementModal tabs**: Responsive tabs pattern — icon-only on mobile (`hidden sm:inline`), icon+text on desktop. Tab buttons: `py-2 text-xs sm:text-sm`, icons `text-base`. Example tabs: Users | Appearance | Interests.
+**Card spacing**: Main content uses `p-1.5 md:p-2` padding, `gap-1` between sections.
 
-**z-index stack**: Modals at `z-50`; any modal above another modal uses `z-[60]`.
+**Badge/chip sizing on cards**: Metadata badges use `text-[10px] px-1.5 py-0.5`. Alert/task badges: `w-7 h-7` circles.
+
+**Long-press bottom sheet** (`QuickActionsSheet.vue`):
+- 500ms long-press on any LeadCard triggers `emit('long-press', lead)`.
+- Sheet slides up from bottom (`z-[60]`) with backdrop. 7 actions with `min-h-[56px]` touch targets.
+- Vibration feedback: `navigator.vibrate(50)` on trigger.
+- Visual feedback: `ring-2 ring-primary` on card while pressing.
+- `KanbanBoard.vue` manages `isSheetOpen` + `selectedLead` state and routes events to parent.
+
+**Status tabs** (mobile): 4 tabs (New/Contacted/Proposal/Won) with `flex: 1` equal-width — all fit in 375px without scroll.
+
+**UserManagementModal tabs**: Icon-only on mobile (`hidden sm:inline`), icon+text on desktop. Example tabs: Users | Appearance | Interests | Sources.
+
+**z-index stack**: Modals at `z-50`; sheet/modal above another modal uses `z-[60]`.
 
 **Service worker**: PWA aggressively caches. After every frontend deploy, hard-refresh needed (Ctrl+Shift+R on desktop; long-press reload on mobile).
 
