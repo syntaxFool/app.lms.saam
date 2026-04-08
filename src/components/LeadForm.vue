@@ -51,7 +51,7 @@
               v-model="formData.name"
               type="text"
               class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary outline-none transition"
-              placeholder="e.g. Acme Corp"
+              placeholder="e.g. Chand Babu"
             />
           </div>
 

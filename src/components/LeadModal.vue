@@ -88,7 +88,7 @@
                   type="text"
                   :disabled="modalMode === 'view'"
                   class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary focus:border-primary outline-none transition disabled:bg-slate-50 disabled:cursor-not-allowed"
-                  placeholder="e.g. Acme Corp"
+                  placeholder="e.g. Chand Babu"
                 />
               </div>
 
