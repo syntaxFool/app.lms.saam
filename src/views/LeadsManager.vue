@@ -220,8 +220,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useLeadsStore } from '@/stores/leads'
 import { useAppStore } from '@/stores/app'
 import { useMoonLoading } from '@/composables/useMoonLoading'
-import { useFollowUpTracking } from '@/composables/useFollowUpTracking'
-import type { LeadStatus } from '@/types'
+import type { LeadStatus, Lead } from '@/types'
 import LeadModal from '@/components/LeadModal.vue'
 import SearchModal from '@/components/SearchModal.vue'
 import SideMenu from '@/components/SideMenu.vue'
@@ -238,15 +237,42 @@ const authStore = useAuthStore()
 const leadsStore = useLeadsStore()
 const appStore = useAppStore()
 const syncMoon = useMoonLoading()
-const { isFollowUpOverdue, isFollowUpToday } = useFollowUpTracking()
 
 const currentUser = computed(() => authStore.user)
 
-// Urgent follow-ups tracking
+// Helper: Get the earliest relevant date from followUpDate or pending tasks (same as sidebar)
+const getEarliestDate = (lead: Lead): Date | null => {
+  const dates: Date[] = []
+  
+  // Add followUpDate if exists
+  if (lead.followUpDate) {
+    dates.push(new Date(lead.followUpDate))
+  }
+  
+  // Add pending task due dates
+  if (lead.tasks) {
+    lead.tasks
+      .filter(task => task.status === 'pending' && task.dueDate)
+      .forEach(task => dates.push(new Date(task.dueDate!)))
+  }
+  
+  if (dates.length === 0) return null
+  return new Date(Math.min(...dates.map(d => d.getTime())))
+}
+
+// Urgent follow-ups tracking (using same logic as sidebar)
 const urgentFollowUpsCount = computed(() => {
-  return leadsStore.leads.filter(lead => 
-    isFollowUpOverdue(lead) || isFollowUpToday(lead)
-  ).length
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  
+  return leadsStore.leads.filter(lead => {
+    const earliestDate = getEarliestDate(lead)
+    if (!earliestDate) return false
+    earliestDate.setHours(0, 0, 0, 0)
+    
+    // Is overdue or is today
+    return earliestDate.getTime() <= today.getTime()
+  }).length
 })
 
 const hasUrgentFollowUps = computed(() => urgentFollowUpsCount.value > 0)
