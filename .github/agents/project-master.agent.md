@@ -162,7 +162,7 @@ The app is used primarily on mobile but all features now also work on desktop. F
 2. **Phone** (`text-xs`, with phone icon) or "No phone" italic.
 3. **AssignedTo badge + Value** — assignedTo on left (hidden if null/empty), value `text-lg font-bold` in `text-emerald-600` if >0 else `text-slate-400`.
 4. **Interests** — `hidden md:flex` (hidden on mobile for density). Max 2 + "+N more".
-5. **Action buttons** — 3 on mobile: Task (purple), Call (orange), WhatsApp (green). `min-h-[42px]` touch targets.
+5. **Action button** — Single full-width Task button with "Add Task" text label (`min-h-[42px]` touch target). Color changes based on alert state: red (no-action), amber (no-task), purple (normal). Call/WhatsApp accessible via long-press bottom sheet.
 6. **Notes** — `hidden md:block` (hidden on mobile for density).
 7. **Nav footer** — prev/next arrows, `min-h-[36px]`.
 
