@@ -204,20 +204,37 @@ export const useLeadsStore = defineStore('leads', () => {
   }
 
   // ============ ACTIVITY MANAGEMENT ============
-  function addActivity(leadId: string, activity: Omit<Activity, 'id' | 'timestamp' | 'createdBy' | 'role'>, user?: Pick<import('@/types').AuthUser, 'name' | 'role'>): void {
+  async function addActivity(leadId: string, activity: Omit<Activity, 'id' | 'timestamp' | 'createdBy' | 'role'>): Promise<boolean> {
     const lead = leads.value.find(l => l.id === leadId)
-    if (!lead) return
+    if (!lead) return false
 
-    const authStore = useAuthStore()
-    if (!lead.activities) lead.activities = []
+    try {
+      // Call backend API to persist activity
+      const response = await apiClient.post(`/leads/${leadId}/activities`, {
+        type: activity.type,
+        note: activity.note
+      })
 
-    lead.activities.unshift({
-      id: generateId(),
-      timestamp: formatDateTime(),
-      createdBy: user?.name || authStore.user?.name || 'System',
-      role: user?.role || authStore.user?.role,
-      ...activity
-    })
+      if (!response.data?.data) return false
+
+      // Add the backend-created activity to local state
+      if (!lead.activities) lead.activities = []
+      
+      const newActivity: Activity = {
+        id: response.data.data.id,
+        timestamp: response.data.data.created_at,
+        createdBy: response.data.data.created_by,
+        role: response.data.data.role,
+        type: response.data.data.type,
+        note: response.data.data.note
+      }
+      
+      lead.activities.unshift(newActivity)
+      return true
+    } catch (error) {
+      console.error('Add activity error:', error)
+      return false
+    }
   }
 
   // ============ LEAD SCORING & METRICS ============
@@ -429,17 +446,17 @@ export const useLeadsStore = defineStore('leads', () => {
         tasks: []
       }
 
-      // Add initial activity
-      addActivity(newLead.id, {
-        type: 'lead_created',
-        note: `Lead created: ${leadData.name}`
-      }, user)
-
       leads.value.push(newLead)
       addLog(`Created lead ${newLead.name}`, user?.name)
 
-      // Push to server
-      await apiClient.post('/leads', newLead)
+      // Push to server (backend auto-creates 'lead_created' activity and returns full lead)
+      const response = await apiClient.post('/leads', newLead)
+      
+      // Use backend-created lead data (includes activities)
+      if (response.data?.data) {
+        Object.assign(newLead, response.data.data)
+      }
+      
       return { success: true, data: newLead }
     } catch (error) {
       console.error('Create lead error:', error)
@@ -468,19 +485,19 @@ export const useLeadsStore = defineStore('leads', () => {
       lead.lastModified = formatDateTime()
       lead.lastModifiedBy = user?.name || 'System'
 
-      // Log activities for status/assignment changes
+      // Log activities for status/assignment changes (don't await - fire and forget)
       if (updates.status && editingLeadSnapshot.value?.lead.status !== updates.status) {
         addActivity(id, {
           type: 'status_change',
           note: `Status changed from ${editingLeadSnapshot.value?.lead.status} to ${updates.status}`
-        }, user)
+        }).catch(err => console.error('Failed to log status change activity:', err))
       }
 
       if (updates.assignedTo && editingLeadSnapshot.value?.lead.assignedTo !== updates.assignedTo) {
         addActivity(id, {
           type: 'assignment',
           note: `Lead reassigned to ${updates.assignedTo}`
-        }, user)
+        }).catch(err => console.error('Failed to log assignment activity:', err))
       }
 
       addLog(`Updated ${lead.name}`, user?.name)
@@ -547,7 +564,8 @@ export const useLeadsStore = defineStore('leads', () => {
           lead.assignedTo = assignToUser
           lead.lastModified = formatDateTime()
           lead.lastModifiedBy = user?.name || 'System'
-          addActivity(id, { type: 'assignment', note: `Bulk assigned to ${assignToUser}` }, user)
+          addActivity(id, { type: 'assignment', note: `Bulk assigned to ${assignToUser}` })
+            .catch(err => console.error('Failed to log bulk assignment activity:', err))
           updateCount++
         }
       }

@@ -323,17 +323,21 @@
                 <div class="flex gap-2">
                   <button
                     @click="addActivity('note')"
-                    :disabled="!newActivity.trim()"
+                    :disabled="!newActivity.trim() || isAddingActivity"
                     class="flex-1 bg-blue-500 text-white text-sm font-semibold py-2 rounded-lg hover:bg-blue-600 disabled:bg-slate-300 disabled:cursor-not-allowed transition"
                   >
-                    <i class="ph-bold ph-note mr-1"></i> Add Note
+                    <i v-if="isAddingActivity" class="ph-bold ph-spinner-gap animate-spin mr-1"></i>
+                    <i v-else class="ph-bold ph-note mr-1"></i>
+                    {{ isAddingActivity ? 'Adding...' : 'Add Note' }}
                   </button>
                   <button
                     @click="addActivity('call')"
-                    :disabled="!newActivity.trim()"
+                    :disabled="!newActivity.trim() || isAddingActivity"
                     class="flex-1 bg-green-500 text-white text-sm font-semibold py-2 rounded-lg hover:bg-green-600 disabled:bg-slate-300 disabled:cursor-not-allowed transition"
                   >
-                    <i class="ph-bold ph-phone mr-1"></i> Log Call
+                    <i v-if="isAddingActivity" class="ph-bold ph-spinner-gap animate-spin mr-1"></i>
+                    <i v-else class="ph-bold ph-phone mr-1"></i>
+                    {{ isAddingActivity ? 'Adding...' : 'Log Call' }}
                   </button>
                 </div>
               </div>
@@ -613,6 +617,7 @@ const previousStatus = ref<string>('')
 
 // Activity & Task state
 const newActivity = ref('')
+const isAddingActivity = ref(false)
 const newTaskTitle = ref('')
 const newTaskNote = ref('')
 const newTaskDueDate = ref('')
@@ -892,16 +897,24 @@ const handleLostReasonSubmit = (data: { reasonType: LostReasonType; details: str
 
 // Activity functions
 const addActivity = async (type: ActivityType) => {
-  if (!newActivity.value.trim() || !props.leadId) return
+  if (!newActivity.value.trim() || !props.leadId || isAddingActivity.value) return
   
+  isAddingActivity.value = true
   try {
-    await leadsStore.addActivity(props.leadId, {
+    const success = await leadsStore.addActivity(props.leadId, {
       type,
       note: newActivity.value.trim()
     })
-    newActivity.value = ''
+    
+    if (success) {
+      newActivity.value = ''
+    } else {
+      console.error('Failed to add activity')
+    }
   } catch (error) {
     console.error('Failed to add activity:', error)
+  } finally {
+    isAddingActivity.value = false
   }
 }
 
