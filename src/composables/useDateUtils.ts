@@ -68,20 +68,28 @@ export function useDateUtils() {
   }
 
   /**
-   * Format date with time (e.g., "Dec 20, 2025 10:30 AM")
+   * Format date with time (e.g., "20/12/2025 10:30 AM")
    */
-  function formatToDateTime(dateString: string, locale = 'en-IN'): string {
+  function formatToDateTime(dateString: string): string {
     if (!dateString) return ''
     try {
       const date = new Date(dateString)
       const istDate = getISTDate(date)
-      return istDate.toLocaleDateString(locale, {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      })
+      
+      // Format date as DD/MM/YYYY
+      const day = String(istDate.getDate()).padStart(2, '0')
+      const month = String(istDate.getMonth() + 1).padStart(2, '0')
+      const year = istDate.getFullYear()
+      
+      // Format time as HH:MM AM/PM
+      let hours = istDate.getHours()
+      const minutes = String(istDate.getMinutes()).padStart(2, '0')
+      const ampm = hours >= 12 ? 'PM' : 'AM'
+      hours = hours % 12
+      hours = hours ? hours : 12 // 0 should be 12
+      const hoursStr = String(hours).padStart(2, '0')
+      
+      return `${day}/${month}/${year} ${hoursStr}:${minutes} ${ampm}`
     } catch {
       return dateString
     }
