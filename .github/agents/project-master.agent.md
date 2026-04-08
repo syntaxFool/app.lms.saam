@@ -144,10 +144,11 @@ The app is used primarily on mobile. Follow these established patterns:
 - Board padding: `p-2 md:p-6`. Column gap: `gap-2 md:gap-6`.
 - Mobile Kanban uses tab-based column switching — don't add horizontal scroll.
 
-**Card view modes** (new in Phase 3):
+**Card view modes** (Phase 3):
 - `cardViewMode` state in `LeadsManager.vue` — persisted to `localStorage('cardViewMode')`.
 - **Normal** (~145px/card): Full layout (default). **Compact** (~60px): Single row — name, alert badge, value, quick-action button. **List** (~45px): Table-row style — name, phone, value, mini actions.
-- Toggle UI: Mobile-only bar below status tabs, only visible in kanban view.
+- Toggle UI: Visible on all screen sizes. Mobile — full-width segmented control. Desktop — compact button group with label.
+- Only visible in kanban view.
 - `viewMode` prop flows: `LeadsManager → KanbanBoard → LeadCard`.
 
 **LeadCard (Normal mode) layout** (top → bottom):
