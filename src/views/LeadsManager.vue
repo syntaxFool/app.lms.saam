@@ -35,7 +35,7 @@
         <button @click="syncData" class="p-2 rounded-full transition relative group"
           :class="syncFeedbackStatus === 'success' ? 'text-green-600 hover:bg-green-50' : syncFeedbackStatus === 'error' ? 'text-red-500 hover:bg-red-50' : 'text-blue-600 hover:bg-blue-50'"
         >
-          <i v-if="syncFeedbackStatus === 'syncing'" class="ph-bold ph-spinner-gap animate-spin text-lg sm:text-xl"></i>
+          <span v-if="syncFeedbackStatus === 'syncing'" class="text-2xl">{{ syncMoon.getCurrentMoon() }}</span>
           <i v-else-if="syncFeedbackStatus === 'success'" class="ph-bold ph-check-circle text-lg sm:text-xl"></i>
           <i v-else-if="syncFeedbackStatus === 'error'" class="ph-bold ph-warning-circle text-lg sm:text-xl"></i>
           <i v-else class="ph-bold ph-arrows-clockwise text-lg sm:text-xl"></i>
@@ -240,6 +240,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useLeadsStore } from '@/stores/leads'
 import { useAppStore } from '@/stores/app'
+import { useMoonLoading } from '@/composables/useMoonLoading'
 import type { LeadStatus } from '@/types'
 import LeadModal from '@/components/LeadModal.vue'
 import SearchModal from '@/components/SearchModal.vue'
@@ -256,6 +257,7 @@ import UserManagementModal from '@/components/UserManagementModal.vue'
 const authStore = useAuthStore()
 const leadsStore = useLeadsStore()
 const appStore = useAppStore()
+const syncMoon = useMoonLoading()
 
 const currentUser = computed(() => authStore.user)
 const activeStatus = ref<LeadStatus>('New')
@@ -440,6 +442,7 @@ const handleMove = async (leadId: string, newStatus: LeadStatus) => {
 const syncData = async () => {
   if (syncFeedbackStatus.value === 'syncing') return
   syncFeedbackStatus.value = 'syncing'
+  syncMoon.start()
   try {
     await leadsStore.fetchLeads()
     syncFeedbackStatus.value = 'success'
@@ -447,6 +450,7 @@ const syncData = async () => {
     console.error('Sync failed:', error)
     syncFeedbackStatus.value = 'error'
   } finally {
+    syncMoon.stop()
     setTimeout(() => { syncFeedbackStatus.value = 'idle' }, 2000)
   }
 }

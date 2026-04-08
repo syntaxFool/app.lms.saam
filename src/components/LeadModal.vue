@@ -326,7 +326,7 @@
                     :disabled="!newActivity.trim() || isAddingActivity"
                     class="flex-1 bg-blue-500 text-white text-sm font-semibold py-2 rounded-lg hover:bg-blue-600 disabled:bg-slate-300 disabled:cursor-not-allowed transition"
                   >
-                    <i v-if="isAddingActivity" class="ph-bold ph-spinner-gap animate-spin mr-1"></i>
+                    <span v-if="isAddingActivity" class="inline-block text-lg animate-pulse">{{ activityMoon.getCurrentMoon() }}</span>
                     <i v-else class="ph-bold ph-note mr-1"></i>
                     {{ isAddingActivity ? 'Adding...' : 'Add Note' }}
                   </button>
@@ -335,7 +335,7 @@
                     :disabled="!newActivity.trim() || isAddingActivity"
                     class="flex-1 bg-green-500 text-white text-sm font-semibold py-2 rounded-lg hover:bg-green-600 disabled:bg-slate-300 disabled:cursor-not-allowed transition"
                   >
-                    <i v-if="isAddingActivity" class="ph-bold ph-spinner-gap animate-spin mr-1"></i>
+                    <span v-if="isAddingActivity" class="inline-block text-lg animate-pulse">{{ activityMoon.getCurrentMoon() }}</span>
                     <i v-else class="ph-bold ph-phone mr-1"></i>
                     {{ isAddingActivity ? 'Adding...' : 'Log Call' }}
                   </button>
@@ -423,10 +423,12 @@
                 </div>
                 <button
                   @click="addTask"
-                  :disabled="!newTaskTitle.trim()"
+                  :disabled="!newTaskTitle.trim() || isAddingTask"
                   class="w-full px-4 bg-primary text-white text-sm font-semibold py-2 rounded-lg hover:bg-indigo-600 disabled:bg-slate-300 disabled:cursor-not-allowed transition"
                 >
-                  <i class="ph-bold ph-plus mr-1"></i> Add Task
+                  <span v-if="isAddingTask" class="inline-block text-lg animate-pulse">{{ taskMoon.getCurrentMoon() }}</span>
+                  <i v-else class="ph-bold ph-plus mr-1"></i>
+                  {{ isAddingTask ? 'Adding...' : 'Add Task' }}
                 </button>
               </div>
 
@@ -525,9 +527,11 @@
           <button
             v-if="modalMode !== 'view'"
             @click="submitForm"
-            class="flex-1 bg-primary text-white font-bold py-2.5 rounded-lg hover:bg-indigo-600 transition"
+            :disabled="isSaving"
+            class="flex-1 bg-primary text-white font-bold py-2.5 rounded-lg hover:bg-indigo-600 disabled:bg-indigo-400 disabled:cursor-not-allowed transition"
           >
-            {{ modalMode === 'add' ? 'Create Lead' : 'Update Lead' }}
+            <span v-if="isSaving" class="inline-block text-xl animate-pulse">{{ saveMoon.getCurrentMoon() }}</span>
+            {{ isSaving ? 'Saving...' : (modalMode === 'add' ? 'Create Lead' : 'Update Lead') }}
           </button>
           <button
             v-else
@@ -560,6 +564,7 @@ import { useLeadsStore } from '@/stores/leads'
 import { useAppStore } from '@/stores/app'
 import { useCountryCodes } from '@/composables/useCountryCodes'
 import { useDateUtils } from '@/composables/useDateUtils'
+import { useMoonLoading } from '@/composables/useMoonLoading'
 import type { Lead, ActivityType, LostReasonType } from '@/types'
 import LostReasonModal from './LostReasonModal.vue'
 import TaskResolutionModal from './TaskResolutionModal.vue'
@@ -579,6 +584,9 @@ const {
 } = useCountryCodes()
 
 const { formatToDateTime } = useDateUtils()
+const saveMoon = useMoonLoading()
+const taskMoon = useMoonLoading()
+const activityMoon = useMoonLoading()
 
 interface Props {
   isOpen: boolean
@@ -618,6 +626,8 @@ const previousStatus = ref<string>('')
 // Activity & Task state
 const newActivity = ref('')
 const isAddingActivity = ref(false)
+const isSaving = ref(false)
+const isAddingTask = ref(false)
 const newTaskTitle = ref('')
 const newTaskNote = ref('')
 const newTaskDueDate = ref('')
@@ -806,6 +816,7 @@ const resetForm = () => {
 }
 
 const submitForm = async () => {
+  if (isSaving.value) return
   formError.value = ''
 
   if (!phoneNumber.value || !validatePhoneLength(phonePrefix.value, phoneNumber.value)) {
@@ -816,6 +827,8 @@ const submitForm = async () => {
   // Combine country code and phone number
   const fullPhoneNumber = `${phonePrefix.value} ${phoneNumber.value}`
 
+  isSaving.value = true
+  saveMoon.start()
   try {
     if (modalMode.value === 'add') {
       const result = await leadsStore.addNewLead({
@@ -859,6 +872,9 @@ const submitForm = async () => {
     closeModal()
   } catch (error) {
     formError.value = error instanceof Error ? error.message : 'Failed to save lead'
+  } finally {
+    isSaving.value = false
+    saveMoon.stop()
   }
 }
 
@@ -900,6 +916,7 @@ const addActivity = async (type: ActivityType) => {
   if (!newActivity.value.trim() || !props.leadId || isAddingActivity.value) return
   
   isAddingActivity.value = true
+  activityMoon.start()
   try {
     const success = await leadsStore.addActivity(props.leadId, {
       type,
@@ -915,6 +932,7 @@ const addActivity = async (type: ActivityType) => {
     console.error('Failed to add activity:', error)
   } finally {
     isAddingActivity.value = false
+    activityMoon.stop()
   }
 }
 
@@ -986,8 +1004,10 @@ const formatActivityTime = (timestamp: string): string => {
 
 // Task functions
 const addTask = async () => {
-  if (!newTaskTitle.value.trim() || !props.leadId) return
+  if (!newTaskTitle.value.trim() || !props.leadId || isAddingTask.value) return
   
+  isAddingTask.value = true
+  taskMoon.start()
   try {
     // Convert YYYY-MM-DD + time to ISO format
     let dueDate: string | undefined = undefined
@@ -1013,6 +1033,9 @@ const addTask = async () => {
     newTaskDueTime.value = ''
   } catch (error) {
     console.error('Failed to add task:', error)
+  } finally {
+    isAddingTask.value = false
+    taskMoon.stop()
   }
 }
 
