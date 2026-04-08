@@ -25,8 +25,27 @@
 
       <!-- Right Side: Actions -->
       <div class="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-        <button @click="isFollowUpsSidebarOpen = !isFollowUpsSidebarOpen" class="p-2 text-primary hover:bg-primary/10 rounded-full transition">
-          <i class="ph-bold ph-calendar-check text-lg sm:text-xl"></i>
+        <button 
+          @click="isFollowUpsSidebarOpen = !isFollowUpsSidebarOpen" 
+          class="relative p-2 rounded-full transition"
+          :class="hasUrgentFollowUps ? 'text-red-500 hover:bg-red-50' : 'text-primary hover:bg-primary/10'"
+        >
+          <!-- Pulsing ring animation (only when urgent AND sidebar closed) -->
+          <span 
+            v-if="hasUrgentFollowUps && !isFollowUpsSidebarOpen" 
+            class="absolute inset-0 rounded-full bg-red-500 opacity-75 animate-ping"
+          ></span>
+          
+          <!-- Icon -->
+          <i class="ph-bold ph-calendar-check text-lg sm:text-xl relative z-10"></i>
+          
+          <!-- Count badge -->
+          <span 
+            v-if="hasUrgentFollowUps" 
+            class="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center z-20"
+          >
+            {{ urgentFollowUpsCount > 99 ? '99+' : urgentFollowUpsCount }}
+          </span>
         </button>
         <button @click="isSearchOpen = !isSearchOpen" class="p-2 text-slate-600 hover:bg-slate-100 rounded-full transition">
           <i class="ph-bold ph-magnifying-glass text-lg sm:text-xl"></i>
@@ -201,6 +220,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useLeadsStore } from '@/stores/leads'
 import { useAppStore } from '@/stores/app'
 import { useMoonLoading } from '@/composables/useMoonLoading'
+import { useFollowUpTracking } from '@/composables/useFollowUpTracking'
 import type { LeadStatus } from '@/types'
 import LeadModal from '@/components/LeadModal.vue'
 import SearchModal from '@/components/SearchModal.vue'
@@ -218,8 +238,18 @@ const authStore = useAuthStore()
 const leadsStore = useLeadsStore()
 const appStore = useAppStore()
 const syncMoon = useMoonLoading()
+const { isFollowUpOverdue, isFollowUpToday } = useFollowUpTracking()
 
 const currentUser = computed(() => authStore.user)
+
+// Urgent follow-ups tracking
+const urgentFollowUpsCount = computed(() => {
+  return leadsStore.leads.filter(lead => 
+    isFollowUpOverdue(lead) || isFollowUpToday(lead)
+  ).length
+})
+
+const hasUrgentFollowUps = computed(() => urgentFollowUpsCount.value > 0)
 const activeStatus = ref<LeadStatus>('New')
 const activeMobileTab = ref<LeadStatus>('New')
 const currentView = ref('kanban')
