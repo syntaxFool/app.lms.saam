@@ -104,29 +104,6 @@
         {{ lead.notes }}
       </div>
     </div>
-
-    <!-- Navigation Buttons -->
-    <div class="flex gap-1.5 p-1 md:p-1.5 border-t border-slate-100 bg-slate-50">
-      <button
-        v-if="prevStatus"
-        @click.stop="emit('move', lead.id, prevStatus)"
-        title="Move left"
-        class="flex items-center justify-center flex-1 py-1.5 sm:py-1 bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold hover:bg-slate-300 active:bg-slate-400 transition-colors min-h-[36px] sm:min-h-0"
-      >
-        <i class="ph-bold ph-arrow-left text-sm"></i>
-      </button>
-      <div v-else class="flex-1"></div>
-
-      <button
-        v-if="nextStatus"
-        @click.stop="emit('move', lead.id, nextStatus)"
-        title="Move right"
-        class="flex items-center justify-center flex-1 py-1.5 sm:py-1 bg-primary/15 text-primary rounded-lg text-xs font-semibold hover:bg-primary/25 active:bg-primary/35 transition-colors min-h-[36px] sm:min-h-0"
-      >
-        <i class="ph-bold ph-arrow-right text-sm"></i>
-      </button>
-      <div v-else class="flex-1"></div>
-    </div>
   </div>
 
   <!-- Compact View -->
