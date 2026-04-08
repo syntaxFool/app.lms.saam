@@ -91,7 +91,7 @@ DB credentials are in `/home/nas/lms-app/.env` (`DB_USER=lms`, `DB_NAME=lmsdb`).
 Critical behavioral constraints — these are intentional, not bugs:
 
 - **Superuser protected**: `username === 'superuser'` is the built-in default admin. Edit and delete buttons are hidden in `UserManagementModal.vue` for this account. Never remove this guard.
-- **Kanban → Lost blocked**: Moving a lead to `'Lost'` via Kanban drag or the right-arrow button is intentionally disabled. Lost status must be set via the edit modal, which triggers `LostReasonModal.vue` to capture a reason.
+- **Kanban → Lost blocked**: Moving a lead to `'Lost'` via Kanban drag or the Quick Actions bottom sheet's "Move to Next Status" is intentionally disabled. Lost status must be set via the edit modal, which triggers `LostReasonModal.vue` to capture a reason.
 - **Task completion → resolution**: Checking a task complete in `LeadModal.vue` opens `TaskResolutionModal.vue` first. The resolution text is saved to the `resolution` column in the `tasks` table. Unchecking (reverting to pending) is immediate with no modal.
 - **Lost leads in Kanban**: Already-lost leads CAN be moved left (back to `'Won'`) — only the forward direction is blocked.
 - **Tasks/activities in DB**: Stored in separate `tasks` and `activities` tables with `lead_id FK`, never in a JSONB blob. All store mutations must call the backend API first.
@@ -152,8 +152,8 @@ The app is used primarily on mobile but all features now also work on desktop. F
 
 **Card view modes** (Phase 3):
 - `cardViewMode` state in `LeadsManager.vue` — persisted to `localStorage('cardViewMode')`.
-- **Normal** (~145px/card): Full layout (default). **Compact** (~60px): Single row — name, alert badge, value, quick-action button. **List** (~45px): Table-row style — name, phone, value, mini actions.
-- Toggle UI: Visible on all screen sizes. Mobile — full-width segmented control. Desktop — compact button group with label.
+- **Normal** (~70px/card): Minimal layout (default — no footer, single task button). **Compact** (~60px): Single row — name, alert badge, value, quick-action button. **List** (~45px): Table-row style — name, phone, value, mini actions.
+- Toggle UI: **Mobile-only** (`md:hidden`) — segmented control (Cards/Compact/List) below status tabs. Not shown on desktop.
 - Only visible in kanban view.
 - `viewMode` prop flows: `LeadsManager → KanbanBoard → LeadCard`.
 
