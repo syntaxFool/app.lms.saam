@@ -396,9 +396,7 @@
                 <div class="flex gap-2 mb-2">
                   <input
                     v-model="newTaskDueDate"
-                    type="text"
-                    placeholder="DD/MM/YYYY"
-                    maxlength="10"
+                    type="date"
                     class="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none"
                   />
                   <input
@@ -951,18 +949,15 @@ const addTask = async () => {
   if (!newTaskTitle.value.trim() || !props.leadId) return
   
   try {
-    // Convert DD/MM/YYYY + time to ISO format
+    // Convert YYYY-MM-DD + time to ISO format
     let dueDate: string | undefined = undefined
     if (newTaskDueDate.value) {
-      const dateMatch = newTaskDueDate.value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/)
-      if (dateMatch) {
-        const [, day, month, year] = dateMatch
-        const isoDate = `${year}-${month}-${day}`
-        if (newTaskDueTime.value) {
-          dueDate = `${isoDate}T${newTaskDueTime.value}:00`
-        } else {
-          dueDate = `${isoDate}T00:00:00`
-        }
+      // HTML5 date input returns YYYY-MM-DD format directly
+      const isoDate = newTaskDueDate.value
+      if (newTaskDueTime.value) {
+        dueDate = `${isoDate}T${newTaskDueTime.value}:00`
+      } else {
+        dueDate = `${isoDate}T00:00:00`
       }
     }
     
