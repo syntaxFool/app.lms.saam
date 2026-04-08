@@ -78,42 +78,23 @@
         </div>
       </div>
 
-      <!-- Action Buttons -->
-      <div class="flex gap-1.5 flex-wrap w-full" :class="lead.status === 'Lost' ? 'pointer-events-none opacity-40' : ''">
-        <button
-          @click.stop="emit('edit-task', lead.id)"
-          title="Task"
-          :class="[
-            'flex-1 flex items-center justify-center px-2 py-2 sm:py-1.5 rounded-lg border transition-colors min-h-[42px] sm:min-h-0',
-            isNoAction
-              ? 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100'
-              : isNoTask
-                ? 'bg-amber-50 text-amber-600 border-amber-200 hover:bg-amber-100'
-                : 'bg-purple-50 text-purple-600 border-purple-200 hover:bg-purple-100'
-          ]"
-        >
-          <i class="ph-bold ph-plus text-lg"></i>
-        </button>
-        <a
-          v-if="lead.phone"
-          :href="callHref"
-          @click.stop
-          title="Call"
-          class="flex-1 flex items-center justify-center px-2 py-2 sm:py-1.5 bg-orange-50 text-orange-600 rounded-lg border border-orange-200 hover:bg-orange-100 active:bg-orange-200 transition-colors min-h-[42px] sm:min-h-0"
-        >
-          <i class="ph-fill ph-phone text-lg"></i>
-        </a>
-        <a
-          v-if="lead.phone"
-          :href="whatsappHref"
-          target="_blank"
-          @click.stop
-          title="WhatsApp"
-          class="flex-1 flex items-center justify-center px-2 py-2 sm:py-1.5 bg-green-50 text-green-600 rounded-lg border border-green-200 hover:bg-green-100 active:bg-green-200 transition-colors min-h-[42px] sm:min-h-0"
-        >
-          <i class="ph-fill ph-whatsapp-logo text-lg"></i>
-        </a>
-      </div>
+      <!-- Primary Action Button -->
+      <button
+        @click.stop="emit('edit-task', lead.id)"
+        title="Add Task"
+        :class="[
+          'w-full flex items-center justify-center gap-1 px-2 py-2 sm:py-1.5 rounded-lg border transition-colors min-h-[42px] sm:min-h-0',
+          isNoAction
+            ? 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100'
+            : isNoTask
+              ? 'bg-amber-50 text-amber-600 border-amber-200 hover:bg-amber-100'
+              : 'bg-purple-50 text-purple-600 border-purple-200 hover:bg-purple-100',
+          lead.status === 'Lost' ? 'pointer-events-none opacity-40' : ''
+        ]"
+      >
+        <i class="ph-bold ph-plus text-lg"></i>
+        <span class="text-xs font-semibold">Add Task</span>
+      </button>
 
       <!-- Notes - Hidden on mobile for density -->
       <div
