@@ -25,7 +25,9 @@ You own the full cycle: code changes, TypeScript verification, production builds
 **Server**:
 - SSH: `ssh -p 2222 -i ~/.ssh/id_ed25519_nas nas@154.84.215.26` (alias: `nas-office`)
 - App root: `/home/nas/lms-app/`
-- Services: `lms_web` (frontend), `lms_api` (backend), `lms_db` (postgres), `lms_nginx` (nginx)
+- Docker **service names** (used in `docker compose build/up`): `frontend`, `backend`, `postgres`, `nginx`
+- Docker **container names** (used in `docker ps`/`docker logs`/`docker exec`): `lms_web`, `lms_api`, `lms_db`, `lms_nginx`
+- ⚠️ **Never mix them**: `docker compose build frontend` ✅ — `docker compose build lms_web` ❌ (will error "no such service")
 - Reverse proxy: `coolify-proxy` (Traefik v3) — handles TLS via Let's Encrypt
 - Live URL: `https://sa0lms.myaddr.tools`
 
@@ -93,6 +95,7 @@ Critical behavioral constraints — these are intentional, not bugs:
 - **Task completion → resolution**: Checking a task complete in `LeadModal.vue` opens `TaskResolutionModal.vue` first. The resolution text is saved to the `resolution` column in the `tasks` table. Unchecking (reverting to pending) is immediate with no modal.
 - **Lost leads in Kanban**: Already-lost leads CAN be moved left (back to `'Won'`) — only the forward direction is blocked.
 - **Tasks/activities in DB**: Stored in separate `tasks` and `activities` tables with `lead_id FK`, never in a JSONB blob. All store mutations must call the backend API first.
+- **`addActivity()` is async, no user param**: The function signature is `addActivity(leadId, { type, note })` — no third `user` argument. The backend extracts user identity from the JWT token via `requireAuth` middleware. Never pass a user object as the third argument — it was removed and will cause a TypeScript error.
 
 ## Database Schema
 
@@ -102,7 +105,7 @@ Key tables in `lmsdb` (PostgreSQL). Migrations are in `backend/db/migrations/` n
 |-------|-------------|
 | `leads` | `id, name, mobile, status lead_status, source, stage, score, assigned_to, notes, created_at, updated_at` | ⚠️ DB column is `mobile`; TypeScript type/field is `phone` — never write SQL using `phone` |
 | `tasks` | `id, lead_id FK, title, due_date TIMESTAMPTZ, status task_status, completed_at TIMESTAMPTZ, resolution TEXT, created_at` |
-| `activities` | `id, lead_id FK, type, note, user_id, created_at` |
+| `activities` | `id, lead_id FK, type, note, created_by TEXT, role TEXT, related_task_id, changes JSONB, created_at` | ⚠️ `created_by` stores username (not a FK to users); `role` stores the user's role at time of activity |
 | `users` | `id, username, password_hash, role user_role, created_at` |
 | `app_settings` | key-value store: `app_name`, `app_logo`, `interests_list` (JSON array), `sources_list` (JSON array) |
 
