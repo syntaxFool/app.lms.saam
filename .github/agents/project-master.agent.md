@@ -79,6 +79,8 @@ DB credentials are in `/home/nas/lms-app/.env` (`DB_USER=lms`, `DB_NAME=lmsdb`).
 - **z-index**: Use `z-[N]` (e.g. `z-[60]`) for values above 50. `z-60` is NOT a valid Tailwind class.
 - **State**: All cross-component state through Pinia stores (`src/stores/`). No prop-drilling for global data.
 - **API calls**: Always go through `src/services/api.ts`. Never use `fetch` directly in components.
+- **Date formatting**: Never use `toLocaleDateString()` — it outputs browser-locale format (MM/DD/YYYY in US). Always format explicitly: `DD/MM/YYYY` for dates, `DD/MM/YYYY HH:MM AM/PM` for datetime. Use `useDateUtils.ts` `formatToDisplay()` / `formatToDateTime()`, or build the string manually with `.getDate()`, `.getMonth()+1`, `.getFullYear()`. The `formatToDateTime()` function in `useDateUtils.ts` has already been fixed to return `DD/MM/YYYY HH:MM AM/PM`.
+- **Task date input**: HTML5 `type="date"` returns `YYYY-MM-DD` (not DD/MM/YYYY). `type="time"` returns `HH:MM`. Combine as `${date}T${time}:00` for ISO datetime storage.
 - **Lead update payload**: `updateLeadData()` in `src/stores/leads.ts` must send **only the schema-defined fields** to `PUT /api/leads/:id` — never the raw Lead object. The Lead interface includes `activities[]`, `tasks[]`, `createdAt`, `lastModified`, etc. which are not in the backend Zod schema and will cause 400 errors. Always construct an explicit `payload` object with only: `name, phone, email, location, interest, source, status, assignedTo, temperature, value, lostReason, lostReasonType, notes, followUpDate`.
 
 ## Business Rules
@@ -134,9 +136,9 @@ docker exec lms_api wget -qO- http://127.0.0.1:8080/api/settings
 ```
 (Use `127.0.0.1`, not `localhost` — Alpine images may not resolve it.)
 
-## Mobile UI Conventions
+## UI Conventions
 
-The app is used primarily on mobile. Follow these established patterns:
+The app is used primarily on mobile but all features now also work on desktop. Follow these established patterns:
 
 **Responsive layout**:
 - Use `md:` prefix for desktop overrides — mobile-first by default.
@@ -168,6 +170,8 @@ The app is used primarily on mobile. Follow these established patterns:
 **Card spacing**: Main content uses `p-1.5 md:p-2` padding, `gap-1` between sections.
 
 **Badge/chip sizing on cards**: Metadata badges use `text-[10px] px-1.5 py-0.5`. Alert/task badges: `w-7 h-7` circles.
+
+**Quick task title suggestions** (`LeadModal.vue`): The `taskSuggestions` array (defined near the task state refs in `<script setup>`) holds 8 preset task titles shown as clickable chips above the task title input. Clicking a chip fills the title field. To add/remove presets, edit the `taskSuggestions` array directly in `LeadModal.vue`.
 
 **Long-press bottom sheet** (`QuickActionsSheet.vue`):
 - **Mobile**: 500ms long-press on any LeadCard triggers `emit('long-press', lead)`. Vibration feedback: `navigator.vibrate(50)`. Visual feedback: `ring-2 ring-primary` on card while pressing.
