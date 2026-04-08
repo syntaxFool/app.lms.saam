@@ -380,6 +380,18 @@
             <div v-else>
               <!-- Add Task Form -->
               <div class="bg-white border border-slate-200 rounded-xl p-4 mb-6">
+                <!-- Quick Task Suggestions -->
+                <div class="mb-3 flex flex-wrap gap-1.5">
+                  <button
+                    v-for="suggestion in taskSuggestions"
+                    :key="suggestion"
+                    @click="newTaskTitle = suggestion"
+                    class="px-2 py-1 text-xs bg-slate-100 hover:bg-primary hover:text-white text-slate-600 rounded-md transition"
+                  >
+                    {{ suggestion }}
+                  </button>
+                </div>
+                
                 <input
                   v-model="newTaskTitle"
                   type="text"
@@ -605,6 +617,18 @@ const newTaskTitle = ref('')
 const newTaskNote = ref('')
 const newTaskDueDate = ref('')
 const newTaskDueTime = ref('')
+
+// Task title suggestions
+const taskSuggestions = [
+  'Need To Call',
+  'Need To WhatsApp',
+  'Need To Share Details',
+  'Need To Send Proposal',
+  'Need To Follow Up',
+  'Need To Schedule Meeting',
+  'Need To Send Email',
+  'Need To Enroll'
+]
 
 // Autocomplete state
 const showInterestSuggestions = ref(false)
