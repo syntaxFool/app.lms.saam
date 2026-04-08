@@ -3,6 +3,7 @@
   <div
     v-if="viewMode === 'normal'"
     @click="handleClick"
+    @contextmenu.prevent="handleContextMenu"
     @touchstart="handleTouchStart"
     @touchend="handleTouchEnd"
     @touchcancel="handleTouchCancel"
@@ -151,6 +152,7 @@
   <div
     v-else-if="viewMode === 'compact'"
     @click="handleClick"
+    @contextmenu.prevent="handleContextMenu"
     @touchstart="handleTouchStart"
     @touchend="handleTouchEnd"
     @touchcancel="handleTouchCancel"
@@ -203,6 +205,7 @@
   <div
     v-else-if="viewMode === 'list'"
     @click="handleClick"
+    @contextmenu.prevent="handleContextMenu"
     @touchstart="handleTouchStart"
     @touchend="handleTouchEnd"
     @touchcancel="handleTouchCancel"
@@ -293,7 +296,13 @@ const { getTemperatureScore, formatCurrency } = useLeadScoring()
 const isLongPressing = ref(false)
 const longPressTimer = ref<number | null>(null)
 
-// Long-press handlers
+// Right-click handler for desktop
+function handleContextMenu(e: MouseEvent) {
+  e.preventDefault()
+  emit('long-press', props.lead)
+}
+
+// Long-press handlers for mobile
 function handleTouchStart(e: TouchEvent) {
   isLongPressing.value = false
   longPressTimer.value = window.setTimeout(() => {

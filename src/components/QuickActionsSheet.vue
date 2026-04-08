@@ -1,13 +1,13 @@
 <template>
   <Transition name="sheet">
-    <div v-if="isOpen" class="fixed inset-0 z-[60] flex items-end" @click="close">
+    <div v-if="isOpen" class="fixed inset-0 z-[60] flex items-end md:items-center md:justify-center" @click="close">
       <!-- Backdrop -->
       <div class="absolute inset-0 bg-black/50 backdrop-blur-sm"></div>
       
-      <!-- Sheet -->
+      <!-- Sheet / Context Menu -->
       <div
         @click.stop
-        class="relative w-full bg-white rounded-t-3xl shadow-2xl max-h-[85vh] overflow-y-auto"
+        class="relative w-full md:w-auto md:min-w-[320px] md:max-w-md bg-white rounded-t-3xl md:rounded-2xl shadow-2xl max-h-[85vh] overflow-y-auto"
       >
         <!-- Handle -->
         <div class="flex justify-center pt-3 pb-2">
