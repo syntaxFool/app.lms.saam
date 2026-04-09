@@ -1,29 +1,29 @@
 <template>
   <div class="h-full w-full flex flex-col bg-white rounded-lg shadow-sm border border-slate-200">
     <!-- Filter Bar -->
-    <div class="p-4 md:p-6 border-b border-slate-200 bg-slate-50 sticky top-0 z-20 shrink-0">
+    <div class="p-2 md:p-4 border-b border-slate-200 bg-slate-50 sticky top-0 z-20 shrink-0">
       <!-- Primary Filters -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 mb-2">
         <!-- Search -->
         <div>
-          <label class="block text-xs font-medium text-slate-600 mb-2">Search</label>
+          <label class="block text-xs font-medium text-slate-600 mb-1">Search</label>
           <div class="relative">
-            <i class="ph-bold ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg"></i>
+            <i class="ph-bold ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-base"></i>
             <input
               v-model="searchQuery"
               type="text"
               placeholder="Name, email, phone..."
-              class="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm outline-none"
+              class="w-full pl-9 pr-3 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm outline-none"
             />
           </div>
         </div>
 
         <!-- Status Filter -->
         <div>
-          <label class="block text-xs font-medium text-slate-600 mb-2">Status</label>
+          <label class="block text-xs font-medium text-slate-600 mb-1">Status</label>
           <select
             v-model="statusFilter"
-            class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm outline-none"
+            class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm outline-none"
           >
             <option value="">All Status</option>
             <option value="New">New</option>
@@ -36,10 +36,10 @@
 
         <!-- Temperature Filter -->
         <div>
-          <label class="block text-xs font-medium text-slate-600 mb-2">Temperature</label>
+          <label class="block text-xs font-medium text-slate-600 mb-1">Temperature</label>
           <select
             v-model="temperatureFilter"
-            class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm outline-none"
+            class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm outline-none"
           >
             <option value="">All Temperature</option>
             <option value="Hot">🔴 Hot</option>
@@ -50,10 +50,10 @@
 
         <!-- Assigned To Filter -->
         <div>
-          <label class="block text-xs font-medium text-slate-600 mb-2">Assigned To</label>
+          <label class="block text-xs font-medium text-slate-600 mb-1">Assigned To</label>
           <select
             v-model="assignedFilter"
-            class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm outline-none"
+            class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm outline-none"
           >
             <option value="">All Agents</option>
             <option value="__unassigned__">Unassigned</option>
@@ -85,32 +85,32 @@
       </div>
 
       <!-- Advanced Filters -->
-      <div v-if="showAdvancedFilters" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-4 pt-4 border-t border-slate-300">
+      <div v-if="showAdvancedFilters" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 md:gap-4 mt-2 pt-2 border-t border-slate-300">
         <!-- Follow-up Date Range -->
         <div>
-          <label class="block text-xs font-medium text-slate-600 mb-2">Follow-up Date From</label>
+          <label class="block text-xs font-medium text-slate-600 mb-1">Follow-up Date From</label>
           <input
             v-model="followUpDateFrom"
             type="date"
-            class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm outline-none"
+            class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm outline-none"
           />
         </div>
 
         <div>
-          <label class="block text-xs font-medium text-slate-600 mb-2">Follow-up Date To</label>
+          <label class="block text-xs font-medium text-slate-600 mb-1">Follow-up Date To</label>
           <input
             v-model="followUpDateTo"
             type="date"
-            class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm outline-none"
+            class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm outline-none"
           />
         </div>
 
         <!-- Source Filter -->
         <div>
-          <label class="block text-xs font-medium text-slate-600 mb-2">Source</label>
+          <label class="block text-xs font-medium text-slate-600 mb-1">Source</label>
           <select
             v-model="sourceFilter"
-            class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm outline-none"
+            class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm outline-none"
           >
             <option value="">All Sources</option>
             <option value="Website">Website</option>
@@ -127,10 +127,10 @@
 
         <!-- Interest Filter -->
         <div>
-          <label class="block text-xs font-medium text-slate-600 mb-2">Interest</label>
+          <label class="block text-xs font-medium text-slate-600 mb-1">Interest</label>
           <select
             v-model="interestFilter"
-            class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm outline-none"
+            class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm outline-none"
           >
             <option value="">All Interests</option>
             <option value="Full Stack Development">Full Stack Development</option>
@@ -147,10 +147,10 @@
 
         <!-- Location Filter -->
         <div>
-          <label class="block text-xs font-medium text-slate-600 mb-2">Location</label>
+          <label class="block text-xs font-medium text-slate-600 mb-1">Location</label>
           <select
             v-model="locationFilter"
-            class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm outline-none"
+            class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm outline-none"
           >
             <option value="">All Locations</option>
             <option value="Mumbai">Mumbai</option>
@@ -167,18 +167,18 @@
 
         <!-- Value Range -->
         <div>
-          <label class="block text-xs font-medium text-slate-600 mb-2">Min Value (₹)</label>
+          <label class="block text-xs font-medium text-slate-600 mb-1">Min Value (₹)</label>
           <input
             v-model.number="minValue"
             type="number"
             placeholder="0"
-            class="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm outline-none"
+            class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm outline-none"
           />
         </div>
       </div>
 
       <!-- Active Filters Tags -->
-      <div v-if="hasActiveFilters" class="flex flex-wrap gap-2 mt-4 pt-4 border-t border-slate-300">
+      <div v-if="hasActiveFilters" class="flex flex-wrap gap-2 mt-2 pt-2 border-t border-slate-300">
         <span v-if="searchQuery" class="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
           Search: {{ searchQuery }}
           <button @click="searchQuery = ''" class="hover:text-blue-900"><i class="ph-bold ph-x text-xs"></i></button>
