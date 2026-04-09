@@ -100,66 +100,112 @@
         </div>
       </div>
 
-      <!-- Charts Section -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
-        <!-- Pipeline Status -->
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 md:p-6">
-          <h2 class="text-base md:text-lg font-bold text-slate-800 mb-4">Pipeline by Status</h2>
-          <div class="space-y-3">
-            <div
-              v-for="(count, status) in metrics.byStatus"
-              :key="status"
-              class="flex items-center justify-between"
-            >
-              <div class="flex items-center gap-2">
-                <div
-                  class="w-3 h-3 rounded-full"
-                  :class="getStatusColor(status as keyof typeof metrics.byStatus)"
-                ></div>
-                <span class="text-sm font-medium text-slate-700">{{ status }}</span>
-              </div>
-              <div class="flex items-center gap-4">
-                <div class="w-24 h-2 bg-slate-100 rounded-full overflow-hidden">
-                  <div
-                    class="h-full"
-                    :class="getStatusColor(status as keyof typeof metrics.byStatus)"
-                    :style="{ width: `${metrics.total > 0 ? (count / metrics.total) * 100 : 0}%` }"
-                  ></div>
-                </div>
-                <span class="text-sm font-bold text-slate-700 w-8 text-right">{{ count }}</span>
-              </div>
-            </div>
+      <!-- Pipeline & Temperature Section -->
+      <div class="border-b border-slate-200 bg-white rounded-xl shadow-sm">
+        <button
+          @click="toggleSection('pipeline')"
+          class="w-full p-4 flex items-center justify-between hover:bg-slate-50 transition-colors rounded-t-xl"
+        >
+          <div class="flex items-center gap-3">
+            <i :class="sections.pipeline ? 'ph-bold ph-caret-down' : 'ph-bold ph-caret-right'" class="text-slate-600 text-lg"></i>
+            <span class="font-bold text-slate-800 text-sm md:text-base">Pipeline Breakdown</span>
+            <span class="text-xs text-slate-500">({{ metrics.total }} leads)</span>
           </div>
-        </div>
+          <span class="hidden sm:inline text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded font-medium">
+            {{ sections.pipeline ? 'Collapse' : 'Expand' }}
+          </span>
+        </button>
+        
+        <Transition
+          name="expand"
+          @enter="onEnter"
+          @after-enter="onAfterEnter"
+          @leave="onLeave"
+          @after-leave="onAfterLeave"
+        >
+          <div v-if="sections.pipeline" class="overflow-hidden">
+            <div class="p-4 md:p-6 pt-0 grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+              <!-- Pipeline Status -->
+              <div>
+                <h2 class="text-base md:text-lg font-bold text-slate-800 mb-4">Pipeline by Status</h2>
+                <div class="space-y-3">
+                  <div
+                    v-for="(count, status) in metrics.byStatus"
+                    :key="status"
+                    class="flex items-center justify-between"
+                  >
+                    <div class="flex items-center gap-2">
+                      <div
+                        class="w-3 h-3 rounded-full"
+                        :class="getStatusColor(status as keyof typeof metrics.byStatus)"
+                      ></div>
+                      <span class="text-sm font-medium text-slate-700">{{ status }}</span>
+                    </div>
+                    <div class="flex items-center gap-4">
+                      <div class="w-24 h-2 bg-slate-100 rounded-full overflow-hidden">
+                        <div
+                          class="h-full"
+                          :class="getStatusColor(status as keyof typeof metrics.byStatus)"
+                          :style="{ width: `${metrics.total > 0 ? (count / metrics.total) * 100 : 0}%` }"
+                        ></div>
+                      </div>
+                      <span class="text-sm font-bold text-slate-700 w-8 text-right">{{ count }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
 
-        <!-- Temperature Distribution -->
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-          <h2 class="text-lg font-bold text-slate-800 mb-4">Lead Temperature</h2>
-          <div class="space-y-3">
-            <div v-for="(count, temp) in tempDistribution" :key="temp" class="flex items-center justify-between">
-              <span class="text-sm font-medium text-slate-700">{{ temp || 'Not Set' }}</span>
-              <div class="flex items-center gap-4">
-                <div class="w-24 h-2 bg-slate-100 rounded-full overflow-hidden">
-                  <div
-                    class="h-full"
-                    :class="getTempColor(temp)"
-                    :style="{ width: `${metrics.total > 0 ? (count / metrics.total) * 100 : 0}%` }"
-                  ></div>
+              <!-- Temperature Distribution -->
+              <div>
+                <h2 class="text-base md:text-lg font-bold text-slate-800 mb-4">Lead Temperature</h2>
+                <div class="space-y-3">
+                  <div v-for="(count, temp) in tempDistribution" :key="temp" class="flex items-center justify-between">
+                    <span class="text-sm font-medium text-slate-700">{{ temp || 'Not Set' }}</span>
+                    <div class="flex items-center gap-4">
+                      <div class="w-24 h-2 bg-slate-100 rounded-full overflow-hidden">
+                        <div
+                          class="h-full"
+                          :class="getTempColor(temp)"
+                          :style="{ width: `${metrics.total > 0 ? (count / metrics.total) * 100 : 0}%` }"
+                        ></div>
+                      </div>
+                      <span class="text-sm font-bold text-slate-700 w-8 text-right">{{ count }}</span>
+                    </div>
+                  </div>
                 </div>
-                <span class="text-sm font-bold text-slate-700 w-8 text-right">{{ count }}</span>
               </div>
             </div>
           </div>
-        </div>
+        </Transition>
       </div>
 
-      <!-- Agent Performance -->
-      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-        <h2 class="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
-          <i class="ph-bold ph-users text-blue-600"></i> Agent Performance
-        </h2>
-        <div v-if="Object.keys(agentMetrics).length > 0" class="overflow-x-auto">
-          <table class="w-full text-sm text-slate-700">
+      <!-- Agent Performance Section -->
+      <div class="border-b border-slate-200 bg-white rounded-xl shadow-sm">
+        <button
+          @click="toggleSection('agents')"
+          class="w-full p-4 flex items-center justify-between hover:bg-slate-50 transition-colors rounded-t-xl"
+        >
+          <div class="flex items-center gap-3">
+            <i :class="sections.agents ? 'ph-bold ph-caret-down' : 'ph-bold ph-caret-right'" class="text-slate-600 text-lg"></i>
+            <span class="font-bold text-slate-800 text-sm md:text-base">Agent Performance</span>
+            <span class="text-xs text-slate-500">({{ Object.keys(agentMetrics).length }} agents)</span>
+          </div>
+          <span class="hidden sm:inline text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded font-medium">
+            {{ sections.agents ? 'Collapse' : 'Expand' }}
+          </span>
+        </button>
+        
+        <Transition
+          name="expand"
+          @enter="onEnter"
+          @after-enter="onAfterEnter"
+          @leave="onLeave"
+          @after-leave="onAfterLeave"
+        >
+          <div v-if="sections.agents" class="overflow-hidden">
+            <div class="p-4 md:p-6 pt-0">
+              <div v-if="Object.keys(agentMetrics).length > 0" class="overflow-x-auto">
+                <table class="w-full text-sm text-slate-700">
             <thead>
               <tr class="border-b-2 border-slate-200 text-slate-600 text-xs uppercase tracking-wider font-bold bg-slate-50">
                 <th class="pb-3 px-4 font-bold text-left">Agent Name</th>
@@ -213,22 +259,53 @@
                   {{ formatCurrency(agentData.pipelineValue) }}
                 </td>
               </tr>
-            </tbody>
-          </table>
-        </div>
-        <div v-else class="text-center py-8">
-          <p class="text-slate-500">No agent data available. Add users to see performance metrics.</p>
-        </div>
+                  </tbody>
+                </table>
+              </div>
+              <div v-else class="text-center py-8">
+                <p class="text-slate-500">No agent data available. Add users to see performance metrics.</p>
+              </div>
+            </div>
+          </div>
+        </Transition>
       </div>
 
-      <!-- Analytics Charts -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <ConversionFunnelChart :leads="filteredLeads" />
-        <PipelineValueChart :leads="filteredLeads" />
-      </div>
+      <!-- Analytics Charts Section -->
+      <div class="border-b border-slate-200 bg-white rounded-xl shadow-sm">
+        <button
+          @click="toggleSection('charts')"
+          class="w-full p-4 flex items-center justify-between hover:bg-slate-50 transition-colors rounded-t-xl"
+        >
+          <div class="flex items-center gap-3">
+            <i :class="sections.charts ? 'ph-bold ph-caret-down' : 'ph-bold ph-caret-right'" class="text-slate-600 text-lg"></i>
+            <span class="font-bold text-slate-800 text-sm md:text-base">Charts & Visualizations</span>
+            <span class="text-xs text-slate-500">(3 charts)</span>
+          </div>
+          <span class="hidden sm:inline text-xs bg-slate-100 text-slate-600 px-2 py-1 rounded font-medium">
+            {{ sections.charts ? 'Collapse' : 'Expand' }}
+          </span>
+        </button>
+        
+        <Transition
+          name="expand"
+          @enter="onEnter"
+          @after-enter="onAfterEnter"
+          @leave="onLeave"
+          @after-leave="onAfterLeave"
+        >
+          <div v-if="sections.charts" class="overflow-hidden">
+            <div class="p-4 md:p-6 pt-0 space-y-4 md:space-y-6">
+              <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+                <ConversionFunnelChart :leads="filteredLeads" />
+                <PipelineValueChart :leads="filteredLeads" />
+              </div>
 
-      <div class="grid grid-cols-1">
-        <LeadSourceChart :leads="filteredLeads" />
+              <div class="grid grid-cols-1">
+                <LeadSourceChart :leads="filteredLeads" />
+              </div>
+            </div>
+          </div>
+        </Transition>
       </div>
     </div>
   </div>
@@ -258,6 +335,31 @@ const dateRange = ref({
   preset: 'this-month',
   compareMode: false
 })
+
+// Collapsible sections state
+const isMobile = ref(window.innerWidth < 768)
+const sections = ref({
+  pipeline: !isMobile.value,
+  agents: !isMobile.value,
+  charts: !isMobile.value
+})
+
+// Load saved section states from localStorage
+const savedSections = localStorage.getItem('analytics_sections')
+if (savedSections) {
+  try {
+    const parsed = JSON.parse(savedSections)
+    sections.value = { ...sections.value, ...parsed }
+  } catch (e) {
+    // Ignore parse errors
+  }
+}
+
+// Save section states to localStorage
+function toggleSection(section: keyof typeof sections.value) {
+  sections.value[section] = !sections.value[section]
+  localStorage.setItem('analytics_sections', JSON.stringify(sections.value))
+}
 
 function getMonthStart(): string {
   const today = new Date()
@@ -419,4 +521,41 @@ function getTempColor(temp: string): string {
   }
   return colors[temp] || 'bg-slate-300'
 }
+
+// Transition handlers for expand/collapse animation
+function onEnter(el: Element) {
+  const element = el as HTMLElement
+  element.style.height = '0'
+}
+
+function onAfterEnter(el: Element) {
+  const element = el as HTMLElement
+  element.style.height = 'auto'
+}
+
+function onLeave(el: Element) {
+  const element = el as HTMLElement
+  element.style.height = `${element.scrollHeight}px`
+  // Force reflow
+  element.offsetHeight
+  element.style.height = '0'
+}
+
+function onAfterLeave(el: Element) {
+  const element = el as HTMLElement
+  element.style.height = 'auto'
+}
 </script>
+
+<style scoped>
+.expand-enter-active,
+.expand-leave-active {
+  transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+.expand-enter-from,
+.expand-leave-to {
+  height: 0;
+}
+</style>
