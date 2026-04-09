@@ -1,84 +1,110 @@
 <template>
   <div class="h-full w-full overflow-auto bg-slate-50">
-    <div class="p-6 space-y-6">
-      <!-- Header -->
-      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h1 class="text-3xl font-bold text-slate-800 mb-2">📊 Analytics Dashboard</h1>
-          <p class="text-slate-500">Pipeline performance, conversion metrics, and team insights</p>
-        </div>
+    <div class="p-3 md:p-6 space-y-4 md:space-y-6">
+      <!-- Compact Header -->
+      <div class="flex items-center justify-between">
+        <h1 class="text-lg md:text-2xl font-bold text-slate-800 flex items-center gap-2">
+          <i class="ph-bold ph-chart-bar text-primary"></i>
+          Analytics
+        </h1>
         <div class="flex items-center gap-2">
-          <label class="text-slate-600 font-medium">Filter by:</label>
-          <select
-            v-model="dateFilter"
-            @change="updateReports"
-            class="px-4 py-2 border border-slate-300 rounded-lg bg-white text-slate-800 font-medium cursor-pointer hover:border-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          <!-- Date Range Button -->
+          <button
+            @click="showDatePicker = true"
+            class="flex items-center gap-2 px-3 md:px-4 py-2 bg-white border-2 border-slate-300 
+                   rounded-lg hover:border-slate-400 transition-colors text-sm font-semibold"
           >
-            <option value="till-date">Till Date</option>
-            <option value="this-day">This Day</option>
-            <option value="this-week">This Week</option>
-            <option value="this-month">This Month</option>
-            <option value="this-year">This Year</option>
-          </select>
+            <i class="ph-bold ph-calendar text-lg text-slate-600"></i>
+            <span class="hidden sm:inline text-slate-700">{{ dateRangeLabel }}</span>
+          </button>
+          
+          <!-- More Actions Menu -->
+          <button
+            class="p-2 hover:bg-white border-2 border-transparent hover:border-slate-300 
+                   rounded-lg transition-colors"
+          >
+            <i class="ph-bold ph-dots-three-vertical text-xl text-slate-600"></i>
+          </button>
         </div>
       </div>
+      
+      <!-- DateRangePicker Component -->
+      <DateRangePicker
+        :is-open="showDatePicker"
+        :start-date="dateRange.startDate"
+        :end-date="dateRange.endDate"
+        :preset="dateRange.preset"
+        :compare-mode="dateRange.compareMode"
+        @close="showDatePicker = false"
+        @apply="applyDateRange"
+      />
 
-      <!-- KPI Cards -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+      <!-- Compact KPI Grid -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
         <!-- Total Leads -->
-        <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl shadow-sm border border-blue-200 p-6 hover:shadow-md transition">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-blue-600 text-sm font-semibold">Total Leads</p>
-              <p class="text-4xl font-bold text-blue-900 mt-2">{{ metrics.total }}</p>
-              <p class="text-xs text-blue-500 mt-2">Active in pipeline</p>
-            </div>
-            <i class="ph-bold ph-users text-5xl text-blue-400 opacity-30"></i>
+        <div class="bg-blue-50 rounded-lg md:rounded-xl border-l-4 border-blue-500 p-3 md:p-4 hover:shadow-md transition">
+          <div class="text-[10px] md:text-xs text-blue-600 font-semibold uppercase tracking-wide">Leads</div>
+          <div class="text-2xl md:text-3xl font-bold text-blue-900 mt-1">{{ metrics.total }}</div>
+          <div v-if="metricDeltas" class="text-[10px] md:text-xs mt-1 font-semibold flex items-center gap-1"
+               :class="metricDeltas.total.direction === 'up' ? 'text-green-600' : metricDeltas.total.direction === 'down' ? 'text-red-600' : 'text-slate-500'">
+            <i v-if="metricDeltas.total.direction === 'up'" class="ph-bold ph-arrow-up"></i>
+            <i v-else-if="metricDeltas.total.direction === 'down'" class="ph-bold ph-arrow-down"></i>
+            <i v-else class="ph-bold ph-minus"></i>
+            <span>{{ Math.abs(metricDeltas.total.value) }} vs prev</span>
           </div>
+          <div v-else class="text-[10px] md:text-xs text-blue-500 mt-1">Active in pipeline</div>
         </div>
 
         <!-- Pipeline Value -->
-        <div class="bg-gradient-to-br from-green-50 to-green-100 rounded-xl shadow-sm border border-green-200 p-6 hover:shadow-md transition">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-green-600 text-sm font-semibold">Pipeline Value</p>
-              <p class="text-3xl font-bold text-green-900 mt-2">{{ formatCurrency(metrics.totalValue) }}</p>
-              <p class="text-xs text-green-500 mt-2">Total opportunity</p>
-            </div>
-            <i class="ph-bold ph-currency-inr text-5xl text-green-400 opacity-30"></i>
+        <div class="bg-green-50 rounded-lg md:rounded-xl border-l-4 border-green-500 p-3 md:p-4 hover:shadow-md transition">
+          <div class="text-[10px] md:text-xs text-green-600 font-semibold uppercase tracking-wide">Pipeline</div>
+          <div class="text-xl md:text-2xl font-bold text-green-900 mt-1">
+            {{ formatCurrency(metrics.totalValue).replace('₹', '₹').replace(',', 'L').substring(0, 6) }}
           </div>
+          <div v-if="metricDeltas" class="text-[10px] md:text-xs mt-1 font-semibold flex items-center gap-1"
+               :class="metricDeltas.totalValue.direction === 'up' ? 'text-green-600' : metricDeltas.totalValue.direction === 'down' ? 'text-red-600' : 'text-slate-500'">
+            <i v-if="metricDeltas.totalValue.direction === 'up'" class="ph-bold ph-arrow-up"></i>
+            <i v-else-if="metricDeltas.totalValue.direction === 'down'" class="ph-bold ph-arrow-down"></i>
+            <i v-else class="ph-bold ph-minus"></i>
+            <span>{{ metricDeltas.totalValue.percentage.toFixed(0) }}% vs prev</span>
+          </div>
+          <div v-else class="text-[10px] md:text-xs text-green-500 mt-1">Total opportunity</div>
         </div>
 
         <!-- Won Deals -->
-        <div class="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl shadow-sm border border-emerald-200 p-6 hover:shadow-md transition">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-emerald-600 text-sm font-semibold">Won Deals</p>
-              <p class="text-4xl font-bold text-emerald-900 mt-2">{{ metrics.byStatus.Won }}</p>
-              <p class="text-xs text-emerald-500 mt-2">{{ formatCurrency(metrics.wonValue) }} closed</p>
-            </div>
-            <i class="ph-bold ph-trophy text-5xl text-emerald-400 opacity-30"></i>
+        <div class="bg-emerald-50 rounded-lg md:rounded-xl border-l-4 border-emerald-500 p-3 md:p-4 hover:shadow-md transition">
+          <div class="text-[10px] md:text-xs text-emerald-600 font-semibold uppercase tracking-wide">Won</div>
+          <div class="text-2xl md:text-3xl font-bold text-emerald-900 mt-1">{{ metrics.byStatus.Won }}</div>
+          <div v-if="metricDeltas" class="text-[10px] md:text-xs mt-1 font-semibold flex items-center gap-1"
+               :class="metricDeltas.won.direction === 'up' ? 'text-green-600' : metricDeltas.won.direction === 'down' ? 'text-red-600' : 'text-slate-500'">
+            <i v-if="metricDeltas.won.direction === 'up'" class="ph-bold ph-arrow-up"></i>
+            <i v-else-if="metricDeltas.won.direction === 'down'" class="ph-bold ph-arrow-down"></i>
+            <i v-else class="ph-bold ph-minus"></i>
+            <span>{{ Math.abs(metricDeltas.won.value) }} vs prev</span>
           </div>
+          <div v-else class="text-[10px] md:text-xs text-emerald-500 mt-1">{{ formatCurrency(metrics.wonValue) }}</div>
         </div>
 
         <!-- Conversion Rate -->
-        <div class="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl shadow-sm border border-purple-200 p-6 hover:shadow-md transition">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-purple-600 text-sm font-semibold">Conversion Rate</p>
-              <p class="text-4xl font-bold text-purple-900 mt-2">{{ metrics.conversionRate }}%</p>
-              <p class="text-xs text-purple-500 mt-2">Win to total ratio</p>
-            </div>
-            <i class="ph-bold ph-trend-up text-5xl text-purple-400 opacity-30"></i>
+        <div class="bg-purple-50 rounded-lg md:rounded-xl border-l-4 border-purple-500 p-3 md:p-4 hover:shadow-md transition">
+          <div class="text-[10px] md:text-xs text-purple-600 font-semibold uppercase tracking-wide">Conv.</div>
+          <div class="text-2xl md:text-3xl font-bold text-purple-900 mt-1">{{ metrics.conversionRate }}%</div>
+          <div v-if="metricDeltas" class="text-[10px] md:text-xs mt-1 font-semibold flex items-center gap-1"
+               :class="metricDeltas.conversionRate.direction === 'up' ? 'text-green-600' : metricDeltas.conversionRate.direction === 'down' ? 'text-red-600' : 'text-slate-500'">
+            <i v-if="metricDeltas.conversionRate.direction === 'up'" class="ph-bold ph-arrow-up"></i>
+            <i v-else-if="metricDeltas.conversionRate.direction === 'down'" class="ph-bold ph-arrow-down"></i>
+            <i v-else class="ph-bold ph-minus"></i>
+            <span>{{ metricDeltas.conversionRate.percentage.toFixed(1) }}% vs prev</span>
           </div>
+          <div v-else class="text-[10px] md:text-xs text-purple-500 mt-1">Win to total ratio</div>
         </div>
       </div>
 
       <!-- Charts Section -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
         <!-- Pipeline Status -->
-        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-          <h2 class="text-lg font-bold text-slate-800 mb-4">Pipeline by Status</h2>
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 md:p-6">
+          <h2 class="text-base md:text-lg font-bold text-slate-800 mb-4">Pipeline by Status</h2>
           <div class="space-y-3">
             <div
               v-for="(count, status) in metrics.byStatus"
@@ -212,6 +238,7 @@
 import { ref, computed } from 'vue'
 import type { Lead, User } from '@/types'
 import { useLeadScoring } from '@/composables/useLeadScoring'
+import DateRangePicker from '@/components/DateRangePicker.vue'
 import ConversionFunnelChart from '@/components/charts/ConversionFunnelChart.vue'
 import PipelineValueChart from '@/components/charts/PipelineValueChart.vue'
 import LeadSourceChart from '@/components/charts/LeadSourceChart.vue'
@@ -223,38 +250,117 @@ const props = defineProps<{
 
 const { formatCurrency, calculatePipelineMetrics } = useLeadScoring()
 
-const dateFilter = ref('till-date')
+// Date range state
+const showDatePicker = ref(false)
+const dateRange = ref({
+  startDate: getMonthStart(),
+  endDate: getTodayDate(),
+  preset: 'this-month',
+  compareMode: false
+})
+
+function getMonthStart(): string {
+  const today = new Date()
+  const year = today.getFullYear()
+  const month = String(today.getMonth() + 1).padStart(2, '0')
+  return `${year}-${month}-01`
+}
+
+function getTodayDate(): string {
+  const today = new Date()
+  const year = today.getFullYear()
+  const month = String(today.getMonth() + 1).padStart(2, '0')
+  const day = String(today.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+function applyDateRange(range: typeof dateRange.value) {
+  dateRange.value = range
+}
+
+const dateRangeLabel = computed(() => {
+  const presetLabels: Record<string, string> = {
+    'today': 'Today',
+    'yesterday': 'Yesterday',
+    'this-week': 'This Week',
+    'last-week': 'Last Week',
+    'this-month': 'This Month',
+    'last-month': 'Last Month',
+    'this-quarter': 'This Quarter',
+    'this-year': 'This Year',
+    'all-time': 'All Time',
+    'custom': 'Custom'
+  }
+  return presetLabels[dateRange.value.preset] || 'This Month'
+})
 
 const filteredLeads = computed(() => {
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
+  const startDate = new Date(dateRange.value.startDate)
+  startDate.setHours(0, 0, 0, 0)
+  const endDate = new Date(dateRange.value.endDate)
+  endDate.setHours(23, 59, 59, 999)
 
   return props.leads.filter(lead => {
     const leadDate = new Date(lead.createdAt)
-    leadDate.setHours(0, 0, 0, 0)
+    return leadDate >= startDate && leadDate <= endDate
+  })
+})
 
-    switch (dateFilter.value) {
-      case 'this-day':
-        return leadDate.getTime() === today.getTime()
-      case 'this-week': {
-        const weekStart = new Date(today)
-        weekStart.setDate(today.getDate() - today.getDay())
-        const weekEnd = new Date(weekStart)
-        weekEnd.setDate(weekStart.getDate() + 6)
-        return leadDate >= weekStart && leadDate <= weekEnd
-      }
-      case 'this-month':
-        return leadDate.getMonth() === today.getMonth() && leadDate.getFullYear() === today.getFullYear()
-      case 'this-year':
-        return leadDate.getFullYear() === today.getFullYear()
-      case 'till-date':
-      default:
-        return true
-    }
+// Comparison period leads (for delta calculations)
+const comparisonLeads = computed(() => {
+  if (!dateRange.value.compareMode) return []
+  
+  const start = new Date(dateRange.value.startDate)
+  const end = new Date(dateRange.value.endDate)
+  const duration = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24))
+  
+  const compStartDate = new Date(start)
+  compStartDate.setDate(start.getDate() - duration - 1)
+  compStartDate.setHours(0, 0, 0, 0)
+  
+  const compEndDate = new Date(start)
+  compEndDate.setDate(start.getDate() - 1)
+  compEndDate.setHours(23, 59, 59, 999)
+  
+  return props.leads.filter(lead => {
+    const leadDate = new Date(lead.createdAt)
+    return leadDate >= compStartDate && leadDate <= compEndDate
   })
 })
 
 const metrics = computed(() => calculatePipelineMetrics(filteredLeads.value))
+
+const comparisonMetrics = computed(() => {
+  if (!dateRange.value.compareMode || comparisonLeads.value.length === 0) {
+    return null
+  }
+  return calculatePipelineMetrics(comparisonLeads.value)
+})
+
+// Calculate deltas for comparison
+const metricDeltas = computed(() => {
+  if (!comparisonMetrics.value) return null
+  
+  return {
+    total: calculateDelta(metrics.value.total, comparisonMetrics.value.total),
+    totalValue: calculateDelta(metrics.value.totalValue, comparisonMetrics.value.totalValue),
+    won: calculateDelta(metrics.value.byStatus.Won, comparisonMetrics.value.byStatus.Won),
+    conversionRate: calculateDelta(
+      parseFloat(metrics.value.conversionRate), 
+      parseFloat(comparisonMetrics.value.conversionRate)
+    )
+  }
+})
+
+function calculateDelta(current: number, previous: number): { value: number; percentage: number; direction: 'up' | 'down' | 'same' } {
+  const diff = current - previous
+  const percentage = previous > 0 ? (diff / previous) * 100 : 0
+  return {
+    value: diff,
+    percentage: Math.abs(percentage),
+    direction: diff > 0 ? 'up' : diff < 0 ? 'down' : 'same'
+  }
+}
 
 const tempDistribution = computed(() => {
   const dist: Record<string, number> = { Hot: 0, Warm: 0, Cold: 0, 'Not Set': 0 }
@@ -292,10 +398,6 @@ const agentMetrics = computed(() => {
 
   return agents
 })
-
-function updateReports() {
-  // Trigger any necessary updates when date filter changes
-}
 
 function getStatusColor(status: string): string {
   const colors: Record<string, string> = {
