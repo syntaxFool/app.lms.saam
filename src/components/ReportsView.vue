@@ -19,12 +19,43 @@
           </button>
           
           <!-- More Actions Menu -->
-          <button
-            class="p-2 hover:bg-white border-2 border-transparent hover:border-slate-300 
-                   rounded-lg transition-colors"
-          >
-            <i class="ph-bold ph-dots-three-vertical text-xl text-slate-600"></i>
-          </button>
+          <div class="relative">
+            <button
+              @click="showExportMenu = !showExportMenu"
+              class="p-2 hover:bg-white border-2 border-transparent hover:border-slate-300 
+                     rounded-lg transition-colors relative"
+              :class="showExportMenu ? 'bg-white border-slate-300' : ''"
+            >
+              <i class="ph-bold ph-dots-three-vertical text-xl text-slate-600"></i>
+            </button>
+            
+            <!-- Export Dropdown -->
+            <Transition
+              enter-active-class="transition ease-out duration-100"
+              enter-from-class="transform opacity-0 scale-95"
+              enter-to-class="transform opacity-100 scale-100"
+              leave-active-class="transition ease-in duration-75"
+              leave-from-class="transform opacity-100 scale-100"
+              leave-to-class="transform opacity-0 scale-95"
+            >
+              <div v-if="showExportMenu" class="absolute right-0 top-12 w-48 bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-50">
+                <button
+                  @click="exportToCSV(); showExportMenu = false"
+                  class="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-3"
+                >
+                  <i class="ph-bold ph-file-csv text-lg text-green-600"></i>
+                  <span>Export to CSV</span>
+                </button>
+                <button
+                  @click="refreshData(); showExportMenu = false"
+                  class="w-full px-4 py-2 text-left text-sm text-slate-700 hover:bg-slate-50 flex items-center gap-3"
+                >
+                  <i class="ph-bold ph-arrow-clockwise text-lg text-blue-600"></i>
+                  <span>Refresh Data</span>
+                </button>
+              </div>
+            </Transition>
+          </div>
         </div>
       </div>
       
@@ -369,7 +400,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import type { Lead, User } from '@/types'
 import { useLeadScoring } from '@/composables/useLeadScoring'
 import DateRangePicker from '@/components/DateRangePicker.vue'
@@ -386,6 +417,7 @@ const { formatCurrency, calculatePipelineMetrics } = useLeadScoring()
 
 // Date range state
 const showDatePicker = ref(false)
+const showExportMenu = ref(false)
 const dateRange = ref({
   startDate: getMonthStart(),
   endDate: getTodayDate(),
@@ -416,6 +448,70 @@ if (savedSections) {
 function toggleSection(section: keyof typeof sections.value) {
   sections.value[section] = !sections.value[section]
   localStorage.setItem('analytics_sections', JSON.stringify(sections.value))
+}
+
+// Export functionality
+function exportToCSV() {
+  const csvRows: string[] = []
+  
+  // Header
+  csvRows.push('Shanuzz Academy LMS - Analytics Report')
+  csvRows.push(`Date Range: ${dateRangeLabel.value}`)
+  csvRows.push(`Generated: ${new Date().toLocaleString('en-IN')}`)
+  csvRows.push('')
+  
+  // KPI Summary
+  csvRows.push('KEY METRICS')
+  csvRows.push('Metric,Value')
+  csvRows.push(`Total Leads,${metrics.value.total}`)
+  csvRows.push(`Pipeline Value,${formatCurrency(metrics.value.totalValue)}`)
+  csvRows.push(`Won Deals,${metrics.value.byStatus.Won}`)
+  csvRows.push(`Conversion Rate,${metrics.value.conversionRate}%`)
+  csvRows.push('')
+  
+  // Pipeline Breakdown
+  csvRows.push('PIPELINE BY STATUS')
+  csvRows.push('Status,Count,Percentage')
+  Object.entries(metrics.value.byStatus).forEach(([status, count]) => {
+    const percentage = metrics.value.total > 0 ? ((count / metrics.value.total) * 100).toFixed(1) : '0'
+    csvRows.push(`${status},${count},${percentage}%`)
+  })
+  csvRows.push('')
+  
+  // Temperature Distribution
+  csvRows.push('LEAD TEMPERATURE')
+  csvRows.push('Temperature,Count,Percentage')
+  Object.entries(tempDistribution.value).forEach(([temp, count]) => {
+    const percentage = metrics.value.total > 0 ? ((count / metrics.value.total) * 100).toFixed(1) : '0'
+    csvRows.push(`${temp || 'Not Set'},${count},${percentage}%`)
+  })
+  csvRows.push('')
+  
+  // Agent Performance
+  if (Object.keys(agentMetrics.value).length > 0) {
+    csvRows.push('AGENT PERFORMANCE')
+    csvRows.push('Agent Name,Assigned,Won,Lost,Win Rate,Pipeline Value')
+    Object.entries(agentMetrics.value).forEach(([key, data]) => {
+      csvRows.push(`${data.name},${data.assigned},${data.won},${data.lost},${data.winRate}%,${formatCurrency(data.pipelineValue)}`)
+    })
+  }
+  
+  // Create and download CSV
+  const csvContent = csvRows.join('\n')
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+  const link = document.createElement('a')
+  const url = URL.createObjectURL(blob)
+  link.setAttribute('href', url)
+  link.setAttribute('download', `analytics-report-${new Date().toISOString().split('T')[0]}.csv`)
+  link.style.visibility = 'hidden'
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+}
+
+function refreshData() {
+  // Emit refresh event or reload the page
+  window.location.reload()
 }
 
 function getMonthStart(): string {
@@ -602,6 +698,22 @@ function onAfterLeave(el: Element) {
   const element = el as HTMLElement
   element.style.height = 'auto'
 }
+
+// Click outside handler for export menu
+function handleClickOutside(event: MouseEvent) {
+  const target = event.target as HTMLElement
+  if (showExportMenu.value && !target.closest('.relative')) {
+    showExportMenu.value = false
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside)
+})
 </script>
 
 <style scoped>
