@@ -1,226 +1,75 @@
 <template>
   <div class="h-full w-full flex flex-col bg-white rounded-lg shadow-sm border border-slate-200">
-    <!-- Filter Bar -->
-    <div class="p-2 md:p-4 border-b border-slate-200 bg-slate-50 sticky top-0 z-20 shrink-0">
-      <!-- Primary Filters -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 mb-2">
-        <!-- Search -->
-        <div>
-          <label class="block text-xs font-medium text-slate-600 mb-1">Search</label>
-          <div class="relative">
-            <i class="ph-bold ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-base"></i>
-            <input
-              v-model="searchQuery"
-              type="text"
-              placeholder="Name, email, phone..."
-              class="w-full pl-9 pr-3 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm outline-none"
-            />
-          </div>
+    <!-- Minimal Filter Header -->
+    <div class="p-3 border-b border-slate-200 bg-slate-50 sticky top-0 z-20 shrink-0">
+      <!-- Single Row: Search + Filter Button -->
+      <div class="flex items-center gap-2">
+        <!-- Search Input -->
+        <div class="flex-1 relative">
+          <i class="ph-bold ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg"></i>
+          <input
+            v-model="searchQuery"
+            type="text"
+            placeholder="Search leads..."
+            class="w-full pl-10 pr-3 py-2.5 bg-white border border-slate-300 rounded-lg 
+                   focus:ring-2 focus:ring-primary focus:border-primary transition-all text-sm outline-none"
+          />
         </div>
-
-        <!-- Status Filter -->
-        <div>
-          <label class="block text-xs font-medium text-slate-600 mb-1">Status</label>
-          <select
-            v-model="statusFilter"
-            class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm outline-none"
-          >
-            <option value="">All Status</option>
-            <option value="New">New</option>
-            <option value="Contacted">Contacted</option>
-            <option value="Proposal">Proposal</option>
-            <option value="Won">Won</option>
-            <option value="Lost">Lost</option>
-          </select>
-        </div>
-
-        <!-- Temperature Filter -->
-        <div>
-          <label class="block text-xs font-medium text-slate-600 mb-1">Temperature</label>
-          <select
-            v-model="temperatureFilter"
-            class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm outline-none"
-          >
-            <option value="">All Temperature</option>
-            <option value="Hot">🔴 Hot</option>
-            <option value="Warm">🟠 Warm</option>
-            <option value="Cold">🔵 Cold</option>
-          </select>
-        </div>
-
-        <!-- Assigned To Filter -->
-        <div>
-          <label class="block text-xs font-medium text-slate-600 mb-1">Assigned To</label>
-          <select
-            v-model="assignedFilter"
-            class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm outline-none"
-          >
-            <option value="">All Agents</option>
-            <option value="__unassigned__">Unassigned</option>
-            <option v-for="agent in agents" :key="agent.id" :value="agent.username">
-              {{ agent.name || agent.username }}
-            </option>
-          </select>
-        </div>
-      </div>
-
-      <!-- Advanced Filters Toggle -->
-      <div class="flex items-center justify-between">
-        <button
-          @click="showAdvancedFilters = !showAdvancedFilters"
-          class="text-sm font-medium text-blue-600 hover:text-blue-700 flex items-center gap-2 transition-colors"
-        >
-          <i :class="`ph-bold ph-caret-${showAdvancedFilters ? 'up' : 'down'}`"></i>
-          {{ showAdvancedFilters ? 'Hide' : 'Show' }} Advanced Filters
-        </button>
         
+        <!-- Filter Button with Badge -->
         <button
-          v-if="hasActiveFilters"
-          @click="clearAllFilters"
-          class="text-sm font-medium text-slate-600 hover:text-slate-700 flex items-center gap-2 transition-colors"
+          @click="showFilterSheet = true"
+          class="relative p-2.5 rounded-lg border-2 border-slate-300 hover:bg-slate-100 
+                 active:bg-slate-200 transition-colors shrink-0"
         >
-          <i class="ph-bold ph-x-circle"></i>
-          Clear All Filters
+          <i class="ph-bold ph-funnel text-xl text-slate-700"></i>
+          <span
+            v-if="activeFilterCount > 0"
+            class="absolute -top-1.5 -right-1.5 bg-primary text-white text-xs 
+                   font-bold rounded-full w-5 h-5 flex items-center justify-center shadow-md"
+          >
+            {{ activeFilterCount }}
+          </span>
         </button>
       </div>
-
-      <!-- Advanced Filters -->
-      <div v-if="showAdvancedFilters" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 md:gap-4 mt-2 pt-2 border-t border-slate-300">
-        <!-- Follow-up Date Range -->
-        <div>
-          <label class="block text-xs font-medium text-slate-600 mb-1">Follow-up Date From</label>
-          <input
-            v-model="followUpDateFrom"
-            type="date"
-            class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm outline-none"
-          />
-        </div>
-
-        <div>
-          <label class="block text-xs font-medium text-slate-600 mb-1">Follow-up Date To</label>
-          <input
-            v-model="followUpDateTo"
-            type="date"
-            class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm outline-none"
-          />
-        </div>
-
-        <!-- Source Filter -->
-        <div>
-          <label class="block text-xs font-medium text-slate-600 mb-1">Source</label>
-          <select
-            v-model="sourceFilter"
-            class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm outline-none"
+      
+      <!-- Active Filter Chips -->
+      <div v-if="activeFilterChips.length > 0" class="flex flex-wrap gap-2 mt-3">
+        <span
+          v-for="chip in activeFilterChips"
+          :key="chip.key"
+          class="inline-flex items-center gap-1.5 pl-3 pr-2 py-1.5 
+                 bg-primary/10 text-primary rounded-full text-xs font-semibold"
+        >
+          {{ chip.label }}
+          <button
+            @click="clearFilter(chip.key)"
+            class="hover:bg-primary/20 rounded-full p-0.5 transition-colors"
           >
-            <option value="">All Sources</option>
-            <option value="Website">Website</option>
-            <option value="Facebook">Facebook</option>
-            <option value="Instagram">Instagram</option>
-            <option value="LinkedIn">LinkedIn</option>
-            <option value="Referral">Referral</option>
-            <option value="WhatsApp">WhatsApp</option>
-            <option value="Walk-in">Walk-in</option>
-            <option value="Call">Call</option>
-            <option value="Other">Other</option>
-          </select>
-        </div>
-
-        <!-- Interest Filter -->
-        <div>
-          <label class="block text-xs font-medium text-slate-600 mb-1">Interest</label>
-          <select
-            v-model="interestFilter"
-            class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm outline-none"
-          >
-            <option value="">All Interests</option>
-            <option value="Full Stack Development">Full Stack Development</option>
-            <option value="Data Science">Data Science</option>
-            <option value="UI/UX Design">UI/UX Design</option>
-            <option value="Digital Marketing">Digital Marketing</option>
-            <option value="Mobile App Development">Mobile App Development</option>
-            <option value="Cloud Computing">Cloud Computing</option>
-            <option value="Cybersecurity">Cybersecurity</option>
-            <option value="Business Analytics">Business Analytics</option>
-            <option value="Other">Other</option>
-          </select>
-        </div>
-
-        <!-- Location Filter -->
-        <div>
-          <label class="block text-xs font-medium text-slate-600 mb-1">Location</label>
-          <select
-            v-model="locationFilter"
-            class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm outline-none"
-          >
-            <option value="">All Locations</option>
-            <option value="Mumbai">Mumbai</option>
-            <option value="Delhi">Delhi</option>
-            <option value="Bangalore">Bangalore</option>
-            <option value="Hyderabad">Hyderabad</option>
-            <option value="Chennai">Chennai</option>
-            <option value="Kolkata">Kolkata</option>
-            <option value="Pune">Pune</option>
-            <option value="Ahmedabad">Ahmedabad</option>
-            <option value="Other">Other</option>
-          </select>
-        </div>
-
-        <!-- Value Range -->
-        <div>
-          <label class="block text-xs font-medium text-slate-600 mb-1">Min Value (₹)</label>
-          <input
-            v-model.number="minValue"
-            type="number"
-            placeholder="0"
-            class="w-full px-3 py-2 bg-white border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all text-sm outline-none"
-          />
-        </div>
-      </div>
-
-      <!-- Active Filters Tags -->
-      <div v-if="hasActiveFilters" class="flex flex-wrap gap-2 mt-2 pt-2 border-t border-slate-300">
-        <span v-if="searchQuery" class="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
-          Search: {{ searchQuery }}
-          <button @click="searchQuery = ''" class="hover:text-blue-900"><i class="ph-bold ph-x text-xs"></i></button>
+            <i class="ph-bold ph-x text-xs"></i>
+          </button>
         </span>
-        <span v-if="statusFilter" class="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
-          Status: {{ statusFilter }}
-          <button @click="statusFilter = ''" class="hover:text-blue-900"><i class="ph-bold ph-x text-xs"></i></button>
-        </span>
-        <span v-if="temperatureFilter" class="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
-          Temperature: {{ temperatureFilter }}
-          <button @click="temperatureFilter = ''" class="hover:text-blue-900"><i class="ph-bold ph-x text-xs"></i></button>
-        </span>
-        <span v-if="assignedFilter" class="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
-          Agent: {{ assignedFilter || 'Unassigned' }}
-          <button @click="assignedFilter = ''" class="hover:text-blue-900"><i class="ph-bold ph-x text-xs"></i></button>
-        </span>
-        <span v-if="sourceFilter" class="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
-          Source: {{ sourceFilter }}
-          <button @click="sourceFilter = ''" class="hover:text-blue-900"><i class="ph-bold ph-x text-xs"></i></button>
-        </span>
-        <span v-if="interestFilter" class="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
-          Interest: {{ interestFilter }}
-          <button @click="interestFilter = ''" class="hover:text-blue-900"><i class="ph-bold ph-x text-xs"></i></button>
-        </span>
-        <span v-if="locationFilter" class="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
-          Location: {{ locationFilter }}
-          <button @click="locationFilter = ''" class="hover:text-blue-900"><i class="ph-bold ph-x text-xs"></i></button>
-        </span>
-        <span v-if="followUpDateFrom" class="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
-          From: {{ followUpDateFrom }}
-          <button @click="followUpDateFrom = ''" class="hover:text-blue-900"><i class="ph-bold ph-x text-xs"></i></button>
-        </span>
-        <span v-if="followUpDateTo" class="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
-          To: {{ followUpDateTo }}
-          <button @click="followUpDateTo = ''" class="hover:text-blue-900"><i class="ph-bold ph-x text-xs"></i></button>
-        </span>
-        <span v-if="minValue && minValue > 0" class="inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
-          Min: ₹{{ minValue }}
-          <button @click="minValue = 0" class="hover:text-blue-900"><i class="ph-bold ph-x text-xs"></i></button>
-        </span>
+        <button
+          @click="clearAllFilters"
+          class="inline-flex items-center gap-1 px-3 py-1.5 
+                 bg-slate-200 text-slate-700 rounded-full text-xs font-semibold
+                 hover:bg-slate-300 transition-colors"
+        >
+          <i class="ph-bold ph-x-circle text-xs"></i>
+          Clear All
+        </button>
       </div>
     </div>
+
+    <!-- FilterSheet Component -->
+    <FilterSheet
+      :is-open="showFilterSheet"
+      :filters="currentFilters"
+      :agents="agents"
+      @close="showFilterSheet = false"
+      @apply="applyFilters"
+      @clear="clearAllFilters"
+    />
 
     <!-- Bulk Actions Bar -->
     <div v-if="selectedLeads.length > 0" class="px-4 md:px-6 py-3 bg-blue-50 border-b border-blue-200 flex items-center justify-between shrink-0">
@@ -452,6 +301,7 @@
 import { ref, computed } from 'vue'
 import { useLeadsStore } from '@/stores/leads'
 import { useAppStore } from '@/stores/app'
+import FilterSheet from './FilterSheet.vue'
 import type { Lead } from '@/types'
 
 interface Props {
@@ -481,7 +331,7 @@ const locationFilter = ref('')
 const followUpDateFrom = ref('')
 const followUpDateTo = ref('')
 const minValue = ref(0)
-const showAdvancedFilters = ref(false)
+const showFilterSheet = ref(false)
 const sortColumn = ref<'name' | 'status' | 'value' | null>(null)
 const sortDirection = ref<'asc' | 'desc'>('asc')
 
@@ -493,7 +343,6 @@ const bulkAssignAgent = ref('')
 
 const hasActiveFilters = computed(() => {
   return !!(
-    searchQuery.value ||
     statusFilter.value ||
     temperatureFilter.value ||
     assignedFilter.value ||
@@ -506,6 +355,66 @@ const hasActiveFilters = computed(() => {
   )
 })
 
+const activeFilterCount = computed(() => {
+  let count = 0
+  if (statusFilter.value) count++
+  if (temperatureFilter.value) count++
+  if (assignedFilter.value) count++
+  if (sourceFilter.value) count++
+  if (interestFilter.value) count++
+  if (locationFilter.value) count++
+  if (followUpDateFrom.value) count++
+  if (followUpDateTo.value) count++
+  if (minValue.value && minValue.value > 0) count++
+  return count
+})
+
+const activeFilterChips = computed(() => {
+  const chips: Array<{ key: string; label: string }> = []
+  if (statusFilter.value) chips.push({ key: 'status', label: `Status: ${statusFilter.value}` })
+  if (temperatureFilter.value) {
+    const tempEmoji = temperatureFilter.value === 'Hot' ? '🔴' : temperatureFilter.value === 'Warm' ? '🟠' : '🔵'
+    chips.push({ key: 'temperature', label: `${tempEmoji} ${temperatureFilter.value}` })
+  }
+  if (assignedFilter.value) {
+    const label = assignedFilter.value === '__unassigned__' ? 'Unassigned' : assignedFilter.value
+    chips.push({ key: 'assigned', label: `Agent: ${label}` })
+  }
+  if (sourceFilter.value) chips.push({ key: 'source', label: `Source: ${sourceFilter.value}` })
+  if (interestFilter.value) chips.push({ key: 'interest', label: `Interest: ${interestFilter.value}` })
+  if (locationFilter.value) chips.push({ key: 'location', label: `Location: ${locationFilter.value}` })
+  if (followUpDateFrom.value) chips.push({ key: 'followUpFrom', label: `From: ${followUpDateFrom.value}` })
+  if (followUpDateTo.value) chips.push({ key: 'followUpTo', label: `To: ${followUpDateTo.value}` })
+  if (minValue.value && minValue.value > 0) chips.push({ key: 'minValue', label: `Min: ₹${minValue.value.toLocaleString('en-IN')}` })
+  return chips
+})
+
+const currentFilters = computed(() => ({
+  status: statusFilter.value,
+  temperature: temperatureFilter.value,
+  assigned: assignedFilter.value,
+  source: sourceFilter.value,
+  interest: interestFilter.value,
+  location: locationFilter.value,
+  followUpDateFrom: followUpDateFrom.value,
+  followUpDateTo: followUpDateTo.value,
+  minValue: minValue.value
+}))
+
+function clearFilter(key: string) {
+  switch (key) {
+    case 'status': statusFilter.value = ''; break
+    case 'temperature': temperatureFilter.value = ''; break
+    case 'assigned': assignedFilter.value = ''; break
+    case 'source': sourceFilter.value = ''; break
+    case 'interest': interestFilter.value = ''; break
+    case 'location': locationFilter.value = ''; break
+    case 'followUpFrom': followUpDateFrom.value = ''; break
+    case 'followUpTo': followUpDateTo.value = ''; break
+    case 'minValue': minValue.value = 0; break
+  }
+}
+
 function clearAllFilters() {
   searchQuery.value = ''
   statusFilter.value = ''
@@ -517,6 +426,19 @@ function clearAllFilters() {
   followUpDateFrom.value = ''
   followUpDateTo.value = ''
   minValue.value = 0
+  showFilterSheet.value = false
+}
+
+function applyFilters(filters: typeof currentFilters.value) {
+  statusFilter.value = filters.status
+  temperatureFilter.value = filters.temperature
+  assignedFilter.value = filters.assigned
+  sourceFilter.value = filters.source
+  interestFilter.value = filters.interest
+  locationFilter.value = filters.location
+  followUpDateFrom.value = filters.followUpDateFrom
+  followUpDateTo.value = filters.followUpDateTo
+  minValue.value = filters.minValue
 }
 
 const filteredLeads = computed(() => {
