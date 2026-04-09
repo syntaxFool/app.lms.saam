@@ -204,7 +204,63 @@
         >
           <div v-if="sections.agents" class="overflow-hidden">
             <div class="p-4 md:p-6 pt-0">
-              <div v-if="Object.keys(agentMetrics).length > 0" class="overflow-x-auto">
+              <!-- Mobile Cards View -->
+              <div v-if="Object.keys(agentMetrics).length > 0" class="md:hidden space-y-3">
+                <div v-for="(agentData, key) in agentMetrics" :key="key" class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
+                  <!-- Agent Header -->
+                  <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-2">
+                      <span class="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center font-bold text-indigo-700">
+                        {{ agentData.name?.charAt(0).toUpperCase() }}
+                      </span>
+                      <span class="font-semibold text-slate-800">{{ agentData.name }}</span>
+                    </div>
+                    <span class="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded font-medium">
+                      {{ agentData.assigned }} leads
+                    </span>
+                  </div>
+                  
+                  <!-- Metrics Grid -->
+                  <div class="grid grid-cols-3 gap-3 text-center mb-3">
+                    <div>
+                      <div class="text-xs text-slate-500 mb-1">Won</div>
+                      <div class="text-lg font-bold text-green-600">{{ agentData.won }}</div>
+                    </div>
+                    <div>
+                      <div class="text-xs text-slate-500 mb-1">Lost</div>
+                      <div class="text-lg font-bold text-red-600">{{ agentData.lost }}</div>
+                    </div>
+                    <div>
+                      <div class="text-xs text-slate-500 mb-1">Win Rate</div>
+                      <div class="text-lg font-bold text-slate-800">{{ agentData.winRate }}%</div>
+                    </div>
+                  </div>
+                  
+                  <!-- Win Rate Bar -->
+                  <div class="mb-3">
+                    <div class="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                      <div
+                        class="h-full transition-all duration-300"
+                        :style="{
+                          width: `${Math.min(100, agentData.winRate)}%`,
+                          backgroundColor: agentData.winRate >= 50 ? '#10b981' : agentData.winRate >= 25 ? '#f59e0b' : '#ef4444'
+                        }"
+                      ></div>
+                    </div>
+                  </div>
+                  
+                  <!-- Pipeline Value -->
+                  <div class="pt-3 border-t border-slate-200">
+                    <div class="flex items-center justify-between">
+                      <span class="text-xs text-slate-500">Pipeline Value</span>
+                      <span class="text-lg font-bold text-slate-800">{{ formatCurrency(agentData.pipelineValue) }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Desktop Table View -->
+              <div v-if="Object.keys(agentMetrics).length > 0" class="hidden md:block overflow-x-auto">
                 <table class="w-full text-sm text-slate-700">
             <thead>
               <tr class="border-b-2 border-slate-200 text-slate-600 text-xs uppercase tracking-wider font-bold bg-slate-50">
@@ -262,7 +318,8 @@
                   </tbody>
                 </table>
               </div>
-              <div v-else class="text-center py-8">
+              
+              <div v-if="Object.keys(agentMetrics).length === 0" class="text-center py-8">
                 <p class="text-slate-500">No agent data available. Add users to see performance metrics.</p>
               </div>
             </div>
