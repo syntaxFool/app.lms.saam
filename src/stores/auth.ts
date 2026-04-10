@@ -55,6 +55,14 @@ export const useAuthStore = defineStore('auth', () => {
   const isSuperuser = computed(() => userRole.value === 'superuser')
   const isAdmin = computed(() => ['superuser', 'admin'].includes(userRole.value))
   const isAgent = computed(() => ['superuser', 'admin', 'agent'].includes(userRole.value))
+  
+  // Lead visibility permissions
+  const canSeeAllLeads = computed(() => 
+    ['superuser', 'admin', 'user'].includes(userRole.value)
+  )
+  const canFilterByAssignedTo = computed(() => 
+    ['superuser', 'admin'].includes(userRole.value)
+  )
 
   // ============ PERMISSION CHECKING ============
   function loadPermissions() {
@@ -184,6 +192,7 @@ export const useAuthStore = defineStore('auth', () => {
         lastLogin.value = new Date().toISOString()
 
         localStorage.setItem('lms_auth_token', token.value)
+        localStorage.setItem('lms_user', JSON.stringify(user.value))
         localStorage.setItem('lms_last_login', lastLogin.value)
 
         // Load permissions for the user
@@ -206,28 +215,52 @@ export const useAuthStore = defineStore('auth', () => {
     permissions.value = []
     lastLogin.value = null
     localStorage.removeItem('lms_auth_token')
+    localStorage.removeItem('lms_user')
     localStorage.removeItem('lms_last_login')
     // Redirect to login will be handled by router guard
   }
 
+  // Helper to check if JWT token is expired
+  function isTokenExpired(token: string): boolean {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]))
+      const exp = payload.exp * 1000 // Convert to milliseconds
+      return Date.now() > exp
+    } catch {
+      return true
+    }
+  }
+
   async function checkAuth() {
     const savedToken = localStorage.getItem('lms_auth_token')
-    if (savedToken) {
-      token.value = savedToken
-      try {
-        const response = await authService.validateToken(savedToken)
-        if (response.success && response.data) {
-          user.value = response.data
-          lastLogin.value = localStorage.getItem('lms_last_login')
-          loadPermissions()
-        } else {
-          // Token is invalid, clear it
-          logout()
-        }
-      } catch (error) {
-        console.error('Token validation error:', error)
+    
+    if (!savedToken) {
+      logout()
+      return
+    }
+    
+    // Check if token is expired before making API call
+    if (isTokenExpired(savedToken)) {
+      console.warn('Token expired, logging out')
+      logout()
+      return
+    }
+    
+    token.value = savedToken
+    try {
+      const response = await authService.validateToken(savedToken)
+      if (response.success && response.data) {
+        user.value = response.data
+        localStorage.setItem('lms_user', JSON.stringify(user.value))
+        lastLogin.value = localStorage.getItem('lms_last_login')
+        loadPermissions()
+      } else {
+        // Token is invalid, clear it
         logout()
       }
+    } catch (error) {
+      console.error('Token validation error:', error)
+      logout()
     }
   }
 
@@ -283,6 +316,8 @@ export const useAuthStore = defineStore('auth', () => {
     isSuperuser,
     isAdmin,
     isAgent,
+    canSeeAllLeads,
+    canFilterByAssignedTo,
     
     // Permission Checks
     hasPermission,

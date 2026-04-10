@@ -73,8 +73,8 @@
                 </select>
               </div>
 
-              <!-- Assigned To Filter -->
-              <div class="md:col-span-2">
+              <!-- Assigned To Filter (Hidden for agents) -->
+              <div v-if="authStore.canFilterByAssignedTo" class="md:col-span-2">
                 <label class="block text-sm font-medium text-slate-700 mb-1.5">Assigned To</label>
                 <select
                   v-model="localFilters.assigned"
@@ -237,6 +237,9 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import { useAuthStore } from '@/stores/auth'
+
+const authStore = useAuthStore()
 
 interface FilterState {
   status: string

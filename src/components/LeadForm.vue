@@ -274,9 +274,12 @@
 import { ref, computed, watch } from 'vue'
 import type { Lead, User, LeadStatus } from '@/types'
 import { useCountryCodes } from '@/composables/useCountryCodes'
+import { useAuthStore } from '@/stores/auth'
 import ActivityTimeline from './ActivityTimeline.vue'
 import TaskList from './TaskList.vue'
 import CountryCodeSelect from './CountryCodeSelect.vue'
+
+const authStore = useAuthStore()
 
 const props = defineProps<{
   modelValue: boolean
@@ -363,7 +366,7 @@ function resetForm() {
     temperature: '',
     value: 0,
     notes: '',
-    assignedTo: ''
+    assignedTo: authStore.user?.username || '' // Auto-assign to current user
   }
   phoneNumber.value = ''
   phonePrefix.value = '+91'

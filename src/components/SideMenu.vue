@@ -29,16 +29,30 @@
               <button
                 @click="switchView('kanban')"
                 @contextmenu.prevent="isCardViewSheetOpen = true"
-                @touchstart="startLongPress"
-                @touchend="cancelLongPress"
-                @touchcancel="cancelLongPress"
+                @touchstart="startCardViewLongPress"
+                @touchend="cancelCardViewLongPress"
+                @touchcancel="cancelCardViewLongPress"
                 class="w-full text-left px-4 py-2.5 rounded-lg flex items-center gap-3 hover:bg-slate-50 transition text-slate-700"
               >
                 <i class="ph-bold ph-kanban text-lg"></i>
                 <span class="font-medium">Kanban Board</span>
                 
-                <!-- Visual hint: current mode icon + dots -->
+                <!-- Visual hint: lead scope + card view mode icons + dots -->
                 <div class="ml-auto flex items-center gap-1">
+                  <!-- Lead scope indicator (admin only) -->
+                  <button
+                    v-if="authStore.canFilterByAssignedTo"
+                    @click.stop="isLeadScopeSheetOpen = true"
+                    :class="[
+                      'p-1 rounded hover:bg-slate-200 transition',
+                      kanbanFilterMode === 'me' ? 'text-purple-600' : 'text-indigo-600'
+                    ]"
+                    :title="kanbanFilterMode === 'all' ? 'Showing all leads' : 'Showing my leads'"
+                  >
+                    <i :class="scopeIcon" class="text-sm"></i>
+                  </button>
+                  
+                  <!-- Card view mode indicator -->
                   <i :class="modeIcon" class="text-sm text-primary"></i>
                   <i class="ph-bold ph-dots-three text-sm text-slate-400"></i>
                 </div>
@@ -132,6 +146,15 @@
     @close="isCardViewSheetOpen = false"
     @select="handleCardViewSelect"
   />
+  
+  <!-- Lead Scope Selection Sheet (admin/superuser only) -->
+  <LeadScopeSheet
+    v-if="authStore.canFilterByAssignedTo"
+    :is-open="isLeadScopeSheetOpen"
+    :current-mode="kanbanFilterMode || 'all'"
+    @close="isLeadScopeSheetOpen = false"
+    @select="handleLeadScopeSelect"
+  />
 </template>
 
 <script setup lang="ts">
@@ -140,6 +163,7 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useLeadsStore } from '@/stores/leads'
 import CardViewSheet from './CardViewSheet.vue'
+import LeadScopeSheet from './LeadScopeSheet.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -148,6 +172,7 @@ const leadsStore = useLeadsStore()
 interface Props {
   isOpen: boolean
   cardViewMode?: 'normal' | 'compact' | 'list'
+  kanbanFilterMode?: 'all' | 'me'
 }
 
 interface Emits {
@@ -155,6 +180,7 @@ interface Emits {
   (e: 'view-change', view: string): void
   (e: 'open-settings'): void
   (e: 'card-view-change', mode: 'normal' | 'compact' | 'list'): void
+  (e: 'lead-scope-change', mode: 'all' | 'me'): void
 }
 
 const props = defineProps<Props>()
@@ -175,9 +201,10 @@ const stats = computed(() => {
 
 // Card view sheet state
 const isCardViewSheetOpen = ref(false)
-let longPressTimer: number | null = null
+const isLeadScopeSheetOpen = ref(false)
+let cardViewLongPressTimer: number | null = null
 
-// Mode icon for visual hint
+// Mode icons for visual hint
 const modeIcon = computed(() => {
   const mode = props.cardViewMode || 'normal'
   return {
@@ -187,18 +214,23 @@ const modeIcon = computed(() => {
   }[mode]
 })
 
-// Long-press handlers for mobile
-const startLongPress = () => {
-  longPressTimer = window.setTimeout(() => {
+const scopeIcon = computed(() => {
+  const mode = props.kanbanFilterMode || 'all'
+  return mode === 'all' ? 'ph-bold ph-users-three' : 'ph-bold ph-user'
+})
+
+// Long-press handlers for card view (mobile)
+const startCardViewLongPress = () => {
+  cardViewLongPressTimer = window.setTimeout(() => {
     if ('vibrate' in navigator) navigator.vibrate(50)
     isCardViewSheetOpen.value = true
   }, 500)
 }
 
-const cancelLongPress = () => {
-  if (longPressTimer) {
-    clearTimeout(longPressTimer)
-    longPressTimer = null
+const cancelCardViewLongPress = () => {
+  if (cardViewLongPressTimer) {
+    clearTimeout(cardViewLongPressTimer)
+    cardViewLongPressTimer = null
   }
 }
 
@@ -206,6 +238,13 @@ const cancelLongPress = () => {
 const handleCardViewSelect = (mode: 'normal' | 'compact' | 'list') => {
   emit('card-view-change', mode)
   isCardViewSheetOpen.value = false
+  emit('close')  // also close sidebar
+}
+
+// Handle lead scope selection
+const handleLeadScopeSelect = (mode: 'all' | 'me') => {
+  emit('lead-scope-change', mode)
+  isLeadScopeSheetOpen.value = false
   emit('close')  // also close sidebar
 }
 

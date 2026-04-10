@@ -150,11 +150,13 @@ The app is used primarily on mobile but all features now also work on desktop. F
 - Board padding: `p-2 md:p-6`. Column gap: `gap-2 md:gap-6`.
 - Mobile Kanban uses tab-based column switching — don't add horizontal scroll.
 
-**Card view modes** (Phase 3):
+**Card view modes** (Phase 3 + Phase 6):
 - `cardViewMode` state in `LeadsManager.vue` — persisted to `localStorage('cardViewMode')`.
 - **Normal** (~70px/card): Minimal layout (default — no footer, single task button). **Compact** (~60px): Single row — name, alert badge, value, quick-action button. **List** (~45px): Table-row style — name, phone, value, mini actions.
-- Toggle UI: Visible on **all screen sizes** in kanban view. Mobile — full-width segmented control (flex-1 buttons). Desktop — compact button group (fixed px-4 width) with "Card View:" label on left.
-- Only visible in kanban view.
+- **Toggle UI (Phase 6)**: No persistent toggle bar in the layout — it was removed to reclaim vertical space. Trigger: long-press (500ms + vibration) or right-click the **Kanban Board** button in `SideMenu.vue` → opens `CardViewSheet.vue` bottom/center sheet to choose mode.
+- `CardViewSheet.vue` (`src/components/CardViewSheet.vue`): `<Teleport to="body">` + slide-up transition. Props: `isOpen: boolean`, `currentMode: 'normal' | 'compact' | 'list'`. Emits: `close`, `select(mode)`. Z-index `z-[70]` (above sidebar `z-[60]`). Mobile — full-width bottom sheet; desktop — centered modal (`md:rounded-2xl md:min-w-[320px]`). Selected option highlighted with border; checkmark indicator.
+- `SideMenu.vue` receives `:cardViewMode` prop, shows a mode hint icon (🃏/≡/☰) and `ph-dots-three` on the Kanban Board button, and emits `card-view-change`. Long-press: 500ms timer + `navigator.vibrate(50)`. Right-click: `@contextmenu.prevent`.
+- Only relevant in kanban view.
 - `viewMode` prop flows: `LeadsManager → KanbanBoard → LeadCard`.
 
 **LeadCard (Normal mode) layout** (top → bottom):
@@ -188,7 +190,24 @@ The app is used primarily on mobile but all features now also work on desktop. F
 
 **UserManagementModal tabs**: Icon-only on mobile (`hidden sm:inline`), icon+text on desktop. Example tabs: Users | Appearance | Interests | Sources.
 
-**z-index stack**: Modals at `z-50`; sheet/modal above another modal uses `z-[60]`.
+**z-index stack**: Modals at `z-50`; QuickActionsSheet/FollowUpsSidebar backdrop uses `z-[60]`; `CardViewSheet.vue` (card view picker) uses `z-[70]` (must sit above the sidebar).
+
+**Follow-ups pulse indicator** (`LeadsManager.vue`):
+- The follow-ups button shows an `animate-ping` red ring + count badge when any leads have overdue or today follow-ups.
+- State: `hasUrgentFollowUps` (boolean) and `urgentFollowUpsCount` (number) are `computed` in `LeadsManager.vue`.
+- Logic: `getEarliestDate(lead)` checks `lead.followUpDate` and all pending `task.dueDate`s → returns earliest as a JS `Date`. Leads where `earliestDate.getTime() <= today.getTime()` (both zeroed to midnight) are counted.
+- ⚠️ **Do NOT use `useFollowUpTracking` composable's `isFollowUpOverdue` / `isFollowUpToday` for badge counts** — they use a different priority order (checks `activities` first, then `followUpDate`) and ISO string comparison, which will produce incorrect counts. Always use inline `getEarliestDate()` mirroring `FollowUpsSidebar.vue`'s logic.
+- `FollowUpsSidebar.vue` is the **canonical source of truth** for follow-up urgency detection. Any new feature that must match the sidebar's overdue/today counts must replicate its `getEarliestDate()` approach exactly.
+- Button template pattern (relative wrapper → absolute animate-ping ring → relative z-10 icon → absolute badge):
+  ```vue
+  <button class="relative p-2 rounded-full" :class="hasUrgentFollowUps ? 'text-red-500 hover:bg-red-50' : 'text-primary hover:bg-primary/10'">
+    <span v-if="hasUrgentFollowUps && !isOpen" class="absolute inset-0 rounded-full bg-red-500 opacity-75 animate-ping"></span>
+    <i class="ph-bold ph-calendar-check text-lg sm:text-xl relative z-10"></i>
+    <span v-if="hasUrgentFollowUps" class="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center z-20">
+      {{ urgentFollowUpsCount > 99 ? '99+' : urgentFollowUpsCount }}
+    </span>
+  </button>
+  ```
 
 **Service worker**: PWA aggressively caches. After every frontend deploy, hard-refresh needed (Ctrl+Shift+R on desktop; long-press reload on mobile).
 
@@ -204,7 +223,7 @@ The app is used primarily on mobile but all features now also work on desktop. F
 
 **Settings not syncing across devices**: Branding (app name/logo) is stored in `app_settings` Postgres table. `localStorage` is only a local cache — the source of truth is the DB. Verify with `docker exec lms_api wget -qO- http://127.0.0.1:8080/api/settings`.
 
-**429 Too Many Requests**: Global rate limit is **1000 req / 15 min**; auth login is **20 req / 15 min** (both in `backend/src/index.ts`). Polling is 10 s active / 60 s idle (`LeadsManager.vue → startPolling()`). If 429s recur, raise `max` in the rate limiter and increase polling intervals together.
+**429 Too Many Requests**: Global rate limit is **5000 req / 15 min** (supports ~30 concurrent users); auth login is **20 req / 15 min** (both in `backend/src/index.ts`). Polling is 10 s active / 60 s idle (`LeadsManager.vue → startPolling()`). If 429s recur, raise `max` in the rate limiter and increase polling intervals together.
 
 **400 on `PUT /api/leads/:id`**: Two known root causes:
 1. **Schema enum mismatch** — `backend/src/schemas.ts` `leadStatuses` or `temperatures` array doesn't match DB enums. DB uses: `['New', 'Contacted', 'Proposal', 'Won', 'Lost']` and `['Hot', 'Warm', 'Cold', '']` (capitalized). If these arrays ever drift, all lead updates will 400.

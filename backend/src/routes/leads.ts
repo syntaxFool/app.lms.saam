@@ -82,8 +82,18 @@ router.get('/', requireAuth, async (req: Request, res: Response): Promise<void> 
     const page  = Math.max(1, parseInt(req.query.page  as string) || 1)
     const limit = Math.min(500, Math.max(1, parseInt(req.query.limit as string) || 200))
 
-    const whereClause = since ? 'WHERE updated_at > $1' : ''
+    // SECURITY: Role-based filtering
+    // Agent role: ONLY see leads assigned to them
+    // Admin/Superuser/User: See ALL leads
+    let whereClause = since ? 'WHERE updated_at > $1' : ''
     const baseParams: any[] = since ? [since] : []
+
+    if (req.user!.role === 'agent') {
+      whereClause = since 
+        ? 'WHERE updated_at > $1 AND assigned_to = $2'
+        : 'WHERE assigned_to = $1'
+      baseParams.push(req.user!.username)
+    }
 
     // Total count for pagination metadata
     const countRow = await queryOne<{ count: string }>(
@@ -132,10 +142,20 @@ router.get('/', requireAuth, async (req: Request, res: Response): Promise<void> 
 router.get('/check-updates', requireAuth, async (req: Request, res: Response): Promise<void> => {
   try {
     const since = req.query.since ? new Date(parseInt(req.query.since as string)).toISOString() : null
+    
+    // SECURITY: Role-based filtering for agent
+    let whereClause = 'WHERE updated_at > $1'
+    const params: any[] = [since || new Date(0).toISOString()]
+    
+    if (req.user!.role === 'agent') {
+      whereClause += ' AND assigned_to = $2'
+      params.push(req.user!.username)
+    }
+    
     const row = await queryOne<{ has_updates: boolean; last_update: string }>(
-      `SELECT EXISTS(SELECT 1 FROM leads WHERE updated_at > $1) AS has_updates,
-              MAX(updated_at) AS last_update FROM leads`,
-      [since || new Date(0).toISOString()]
+      `SELECT EXISTS(SELECT 1 FROM leads ${whereClause}) AS has_updates,
+              MAX(updated_at) AS last_update FROM leads ${whereClause.replace('updated_at > $1', '1=1')}`,
+      params
     )
 
     res.json({
@@ -166,7 +186,7 @@ router.post('/', requireAuth, requireRole('superuser', 'admin', 'agent'), valida
         d.name || null, d.phone,
         d.email || null, d.location || null, d.interest || null, d.source || null,
         d.status || 'New',
-        d.assignedTo || null,
+        d.assignedTo || req.user!.username, // Auto-assign to creator if not specified
         d.temperature || '',
         d.value || 0,
         d.notes || null,

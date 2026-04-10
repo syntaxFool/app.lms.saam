@@ -386,7 +386,11 @@ export const useAppStore = defineStore('app', () => {
       if (response.success && response.data) {
         users.value = response.data
       }
-    } catch (error) {
+    } catch (error: any) {
+      // Silently handle 403 - user doesn't have permission (expected for agent/user roles)
+      if (error?.response?.status === 403) {
+        return
+      }
       console.error('Failed to fetch users:', error)
     }
   }

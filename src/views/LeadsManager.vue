@@ -1,5 +1,30 @@
 <template>
-  <div class="h-[100dvh] w-full flex flex-col bg-slate-50 overflow-hidden">
+  <div 
+    @touchstart="handlePullStart"
+    @touchmove="handlePullMove"
+    @touchend="handlePullEnd"
+    class="h-[100dvh] w-full flex flex-col bg-slate-50 overflow-hidden"
+  >
+    <!-- Pull-to-refresh indicator -->
+    <Transition name="fade">
+      <div 
+        v-if="pullState.pulling && pullState.distance > 0" 
+        class="absolute top-0 left-0 right-0 flex justify-center items-center bg-gradient-to-b from-blue-50 to-transparent z-30 pointer-events-none"
+        :style="{ height: `${Math.min(pullState.distance, 120)}px`, opacity: Math.min(pullState.distance / 80, 1) }"
+      >
+        <div class="flex flex-col items-center gap-1 mt-2">
+          <i 
+            class="ph-bold ph-arrows-clockwise text-blue-600 transition-transform text-2xl"
+            :class="{ 'animate-spin': pullState.distance > pullState.threshold }"
+            :style="{ transform: `rotate(${pullState.distance * 2}deg)` }"
+          ></i>
+          <span class="text-xs font-semibold text-blue-600">
+            {{ pullState.distance > pullState.threshold ? 'Release to refresh' : 'Pull to refresh' }}
+          </span>
+        </div>
+      </div>
+    </Transition>
+    
     <!-- HEADER -->
     <header class="bg-white border-b border-slate-200 px-3 sm:px-4 py-2 sm:py-3 flex justify-between items-center shadow-sm z-20 shrink-0">
       <!-- Left Side: Menu + Brand -->
@@ -95,7 +120,7 @@
       <!-- KANBAN VIEW -->
       <div v-if="currentView === 'kanban'" class="h-full w-full">
         <KanbanBoard
-          :leads="filteredLeads"
+          :leads="scopedLeads"
           :get-user-name="getUserName"
           :active-mobile-tab="activeMobileTab"
           :view-mode="cardViewMode"
@@ -109,7 +134,7 @@
       <!-- TABLE VIEW -->
       <div v-else-if="currentView === 'table'" class="h-full w-full overflow-hidden">
         <LeadsTable
-          :leads="filteredLeads"
+          :leads="scopedLeads"
           @open="editLead"
         />
       </div>
@@ -117,7 +142,7 @@
       <!-- REPORTS VIEW -->
       <div v-else-if="currentView === 'reports'" class="h-full w-full overflow-hidden">
         <ReportsView
-          :leads="filteredLeads"
+          :leads="scopedLeads"
         />
       </div>
     </main>
@@ -198,9 +223,11 @@
     <SideMenu
       :is-open="isMenuOpen"
       :card-view-mode="cardViewMode"
+      :kanban-filter-mode="kanbanFilterMode"
       @close="isMenuOpen = false"
       @view-change="handleMenuViewChange"
       @card-view-change="setCardViewMode"
+      @lead-scope-change="setLeadScope"
       @open-settings="isUserManagementOpen = true"
     />
 
@@ -285,6 +312,20 @@ const cardViewMode = ref<'normal' | 'compact' | 'list'>(
   (localStorage.getItem('cardViewMode') as 'normal' | 'compact' | 'list') || 'normal'
 )
 
+// Lead scope filter mode (All/Me toggle)
+const kanbanFilterMode = ref<'all' | 'me'>(
+  (localStorage.getItem('kanban_filter_mode') as 'all' | 'me') || 'all'
+)
+
+// Pull-to-refresh state
+const pullState = ref({
+  pulling: false,
+  startY: 0,
+  currentY: 0,
+  distance: 0,
+  threshold: 80
+})
+
 const statusConfig = [
   { id: 'New', color: 'bg-blue-500' },
   { id: 'Contacted', color: 'bg-yellow-500' },
@@ -295,6 +336,23 @@ const statusConfig = [
 
 // Apply filters from store
 const filteredLeads = computed(() => leadsStore.filteredLeads)
+
+// Scoped leads: respect both role permissions and user-selected All/Me toggle
+const scopedLeads = computed(() => {
+  // Agent role: backend already filters, always see only their leads
+  if (!authStore.canSeeAllLeads) {
+    return filteredLeads.value
+  }
+  
+  // Admin/Superuser: respect the All/Me toggle
+  if (kanbanFilterMode.value === 'me') {
+    return filteredLeads.value.filter(
+      lead => lead.assignedTo === authStore.user?.username
+    )
+  }
+  
+  return filteredLeads.value // All leads
+})
 
 const getUserName = (id?: string) => {
   if (!id) return ''
@@ -315,19 +373,36 @@ const pendingPhoneNumber = ref<string>('')
 
 // Initialize on first load  
 onMounted(async () => {
-  // Load leads, users and app settings on initial mount
-  await leadsStore.fetchLeads()
-  appStore.fetchUsers()
-  appStore.fetchAppSettings()
+  // Ensure auth is validated first
+  await authStore.checkAuth()
+  
+  // Only proceed if authenticated
+  if (authStore.isAuthenticated) {
+    // Load leads, users and app settings
+    const result = await leadsStore.fetchLeads()
+    
+    // Log error if fetch failed (error banner could be added here)
+    if (!result.success) {
+      console.error('Failed to load leads:', result.error)
+    }
+    
+    // Only fetch users if user has permission (admin/superuser)
+    // Agent and user roles don't have access to /api/users
+    if (authStore.canManageUsers()) {
+      appStore.fetchUsers()
+    }
+    
+    appStore.fetchAppSettings()
+
+    // Adaptive polling setup
+    setupAdaptivePolling()
+  }
 
   // Handle window resize
   const handleResize = () => {
     isMdScreen.value = window.innerWidth >= 768
   }
   window.addEventListener('resize', handleResize)
-
-  // Adaptive polling setup
-  setupAdaptivePolling()
 })
 
 // Adaptive Polling
@@ -431,6 +506,11 @@ const setCardViewMode = (mode: 'normal' | 'compact' | 'list') => {
   localStorage.setItem('cardViewMode', mode)
 }
 
+const setLeadScope = (mode: 'all' | 'me') => {
+  kanbanFilterMode.value = mode
+  localStorage.setItem('kanban_filter_mode', mode)
+}
+
 const handleMenuViewChange = (view: string) => {
   currentView.value = view
   if (view === 'kanban') {
@@ -455,6 +535,46 @@ const handleMove = async (leadId: string, newStatus: LeadStatus) => {
   }
 }
 
+// Pull-to-refresh handlers
+function handlePullStart(e: TouchEvent) {
+  // Only activate if scrolled to top and not already syncing
+  const mainElement = e.currentTarget as HTMLElement
+  if (mainElement.scrollTop === 0 && syncFeedbackStatus.value !== 'syncing') {
+    pullState.value.startY = e.touches[0].clientY
+    pullState.value.pulling = true
+  }
+}
+
+function handlePullMove(e: TouchEvent) {
+  if (!pullState.value.pulling) return
+  
+  pullState.value.currentY = e.touches[0].clientY
+  pullState.value.distance = Math.max(0, pullState.value.currentY - pullState.value.startY)
+  
+  // Prevent default scroll if pulling down (distance > 0 and < 120px)
+  if (pullState.value.distance > 0 && pullState.value.distance < 120) {
+    e.preventDefault()
+  }
+}
+
+async function handlePullEnd() {
+  if (!pullState.value.pulling) return
+  
+  const distance = pullState.value.distance
+  
+  // If pulled beyond threshold, trigger sync
+  if (distance > pullState.value.threshold) {
+    await syncData()
+    if ('vibrate' in navigator) navigator.vibrate(30)
+  }
+  
+  // Reset state
+  pullState.value.pulling = false
+  pullState.value.startY = 0
+  pullState.value.currentY = 0
+  pullState.value.distance = 0
+}
+
 const syncData = async () => {
   if (syncFeedbackStatus.value === 'syncing') return
   syncFeedbackStatus.value = 'syncing'
@@ -473,6 +593,17 @@ const syncData = async () => {
 </script>
 
 <style scoped>
+/* Fade transition for pull-to-refresh indicator */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }

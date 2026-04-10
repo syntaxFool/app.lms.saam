@@ -23,6 +23,7 @@ export const useLeadsStore = defineStore('leads', () => {
   // ============ STATE ============
   const leads = ref<Lead[]>([])
   const loading = ref(false)
+  const error = ref<string | null>(null)
   const lastSyncTime = ref<number>(0)
   const lastServerUpdate = ref<number>(0)
   const serverTotalCount = ref<number>(0)
@@ -390,6 +391,7 @@ export const useLeadsStore = defineStore('leads', () => {
   // ============ FETCH & SYNC ============
   async function fetchLeads(page = 1, limit = 200): Promise<{ success: boolean; error?: string }> {
     loading.value = true
+    error.value = null
     try {
       const response = await apiClient.get('/leads', {
         params: {
@@ -403,11 +405,14 @@ export const useLeadsStore = defineStore('leads', () => {
         lastSyncTime.value = Date.now()
         lastServerUpdate.value = response.data.lastUpdate || 0
         serverTotalCount.value = response.data.total ?? leads.value.length
+        return { success: true }
       }
-      return { success: response.success, error: response.error }
-    } catch (error) {
-      console.error('Fetch leads error:', error)
-      return { success: false, error: 'Failed to fetch leads' }
+      error.value = response.error || 'Failed to load leads'
+      return { success: false, error: error.value }
+    } catch (err) {
+      console.error('Fetch leads error:', err)
+      error.value = 'Network error: Could not connect to server'
+      return { success: false, error: error.value }
     } finally {
       loading.value = false
     }
