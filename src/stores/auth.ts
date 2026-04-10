@@ -293,6 +293,22 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  async function checkSessionStatus(): Promise<{ active: boolean; inactiveMinutes: number }> {
+    try {
+      const response = await authService.checkSessionStatus()
+      if (response.success && response.data) {
+        return {
+          active: response.data.active,
+          inactiveMinutes: response.data.inactiveMinutes
+        }
+      }
+      return { active: false, inactiveMinutes: 40 }
+    } catch (error) {
+      console.error('Session status check failed:', error)
+      throw error
+    }
+  }
+
   // Export state
   const state = computed<AuthState>(() => ({
     user: user.value,

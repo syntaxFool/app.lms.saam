@@ -71,6 +71,15 @@ export const authService = {
     }
   },
 
+  async checkSessionStatus(): Promise<ApiResponse<{ active: boolean; inactiveMinutes: number; expiresAt: string }>> {
+    try {
+      return await apiClient.get('/auth/session-status') as ApiResponse<{ active: boolean; inactiveMinutes: number; expiresAt: string }>
+    } catch (error) {
+      console.error('Auth service session status error:', error)
+      return { success: false, error: 'Session status check failed' }
+    }
+  },
+
   async getUsers(): Promise<ApiResponse<User[]>> {
     try {
       return await apiClient.get('/users') as ApiResponse<User[]>

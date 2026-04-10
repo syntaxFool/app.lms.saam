@@ -116,9 +116,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, nextTick } from 'vue'
+import { ref, watch, nextTick } from 'vue'
 import { useLeadsStore } from '@/stores/leads'
 import { useCountryCodes } from '@/composables/useCountryCodes'
+import { apiClient } from '@/services/api'
 import type { Lead } from '@/types'
 import CountryCodeSelect from './CountryCodeSelect.vue'
 
@@ -148,22 +149,55 @@ const phoneInput = ref<HTMLInputElement | null>(null)
 const phonePrefix = ref('+91')
 const phoneNumber = ref('')
 const phoneError = ref('')
+const duplicateLeads = ref<Lead[]>([])
+const checkingDuplicate = ref(false)
 
-// Check for duplicates - need to check with full phone format
-const duplicateLeads = computed((): Lead[] => {
+// Watch phone number and check backend for duplicates
+let debounceTimer: number | null = null
+watch([phoneNumber, phonePrefix], async ([newPhone, newPrefix]) => {
+  // Clear previous timer
+  if (debounceTimer) clearTimeout(debounceTimer)
+  
+  if (!newPhone || newPhone.length < 5) {
+    duplicateLeads.value = []
+    return
+  }
+  
+  if (!validatePhoneLength(newPrefix, newPhone)) {
+    return
+  }
+  
+  // Debounce 300ms
+  debounceTimer = window.setTimeout(async () => {
+    checkingDuplicate.value = true
+    try {
+      const fullPhone = formatPhoneNumber(newPrefix, newPhone)
+      const response = await apiClient.get(`/leads/check-duplicate/${encodeURIComponent(fullPhone)}`)
+      
+      if (response.success && response.data) {
+        duplicateLeads.value = response.data.leads || []
+      }
+    } catch (error) {
+      console.error('Duplicate check failed:', error)
+      // Fallback to local check if backend fails
+      duplicateLeads.value = checkLocalDuplicates()
+    } finally {
+      checkingDuplicate.value = false
+    }
+  }, 300)
+})
+
+// Fallback: local check (existing logic) in case backend fails
+function checkLocalDuplicates(): Lead[] {
   if (!phoneNumber.value) return []
-  
   const fullPhone = formatPhoneNumber(phonePrefix.value, phoneNumber.value)
-  
   return leadsStore.leads.filter(lead => {
     if (!lead.phone) return false
-    
-    // Check if lead's phone matches either format
-    return lead.phone === phoneNumber.value || // Legacy format
-           lead.phone === fullPhone || // Full format with country code
-           lead.phone.replace(/\s+/g, '') === `${phonePrefix.value}${phoneNumber.value}` // Stripped spaces
+    return lead.phone === phoneNumber.value ||
+           lead.phone === fullPhone ||
+           lead.phone.replace(/\s+/g, '') === `${phonePrefix.value}${phoneNumber.value}`
   })
-})
+}
 
 // Watch for modal opening to focus input
 watch(() => props.isOpen, (isOpen) => {
@@ -171,6 +205,8 @@ watch(() => props.isOpen, (isOpen) => {
     phoneNumber.value = ''
     phonePrefix.value = '+91'
     phoneError.value = ''
+    duplicateLeads.value = []
+    checkingDuplicate.value = false
     nextTick(() => {
       phoneInput.value?.focus()
     })
@@ -197,7 +233,7 @@ const handleSubmit = () => {
     return
   }
   
-  if (duplicateLeads.value.length === 0) {
+  if (duplicateLeads.value.length === 0 && !checkingDuplicate.value) {
     const fullPhone = formatPhoneNumber(phonePrefix.value, phoneNumber.value)
     emit('submit', fullPhone)
     close()

@@ -37,3 +37,5 @@ export type { AsyncState } from './useAsync'
 export { useRoleManagement } from './useRoleManagement'
 
 export { useMoonLoading } from './useMoonLoading'
+
+export { useInactivity } from './useInactivity'

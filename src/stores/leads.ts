@@ -435,7 +435,7 @@ export const useLeadsStore = defineStore('leads', () => {
   }
 
   // ============ CREATE ============
-  async function addNewLead(leadData: Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'lastModified' | 'lastModifiedBy'>, user?: Pick<import('@/types').AuthUser, 'name' | 'role'>): Promise<{ success: boolean; data?: Lead; error?: string }> {
+  async function addNewLead(leadData: Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'lastModified' | 'lastModifiedBy'>, user?: Pick<import('@/types').AuthUser, 'name' | 'role'>): Promise<{ success: boolean; data?: Lead; error?: string; existingLead?: any }> {
     loading.value = true
     try {
       const authStore = useAuthStore()
@@ -451,20 +451,30 @@ export const useLeadsStore = defineStore('leads', () => {
         tasks: []
       }
 
-      leads.value.push(newLead)
-      addLog(`Created lead ${newLead.name}`, user?.name)
-
       // Push to server (backend auto-creates 'lead_created' activity and returns full lead)
       const response = await apiClient.post('/leads', newLead)
       
       // Use backend-created lead data (includes activities)
       if (response.data?.data) {
         Object.assign(newLead, response.data.data)
+        leads.value.push(newLead)
+        addLog(`Created lead ${newLead.name}`, user?.name)
+        return { success: true, data: newLead }
       }
       
-      return { success: true, data: newLead }
-    } catch (error) {
+      return { success: false, error: 'Failed to create lead' }
+    } catch (error: any) {
       console.error('Create lead error:', error)
+      
+      // Handle 409 Conflict (duplicate phone number)
+      if (error.response?.status === 409) {
+        return {
+          success: false,
+          error: 'Duplicate phone number',
+          existingLead: error.response.data?.data?.existingLead
+        }
+      }
+      
       return { success: false, error: 'Failed to create lead' }
     } finally {
       loading.value = false

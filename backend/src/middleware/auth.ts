@@ -1,10 +1,12 @@
 import { Request, Response, NextFunction } from 'express'
 import jwt from 'jsonwebtoken'
+import { query, queryOne } from '../db'
 
 export interface JwtPayload {
   userId: string
   username: string
   role: string
+  sessionId: string  // NEW: Session identifier for single-session enforcement
   iat?: number
   exp?: number
 }
@@ -17,7 +19,7 @@ declare global {
   }
 }
 
-export function requireAuth(req: Request, res: Response, next: NextFunction): void {
+export async function requireAuth(req: Request, res: Response, next: NextFunction): Promise<void> {
   const header = req.headers.authorization
   if (!header?.startsWith('Bearer ')) {
     res.status(401).json({ success: false, error: 'Missing or invalid authorization header' })
@@ -29,6 +31,28 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): vo
     const secret = process.env.JWT_SECRET
     if (!secret) throw new Error('JWT_SECRET not configured')
     const payload = jwt.verify(token, secret) as JwtPayload
+    
+    // NEW: Validate session exists and is active (40min inactivity check)
+    if (payload.sessionId) {
+      const session = await queryOne<{ last_activity: string; expires_at: string }>(
+        `SELECT last_activity, expires_at FROM sessions 
+         WHERE session_id = $1 
+         AND user_id = $2 
+         AND expires_at > NOW()
+         AND last_activity > NOW() - INTERVAL '40 minutes'`,
+        [payload.sessionId, payload.userId]
+      )
+      
+      if (!session) {
+        res.status(401).json({ success: false, error: 'Session expired or invalid' })
+        return
+      }
+      
+      // Update last activity (async - don't wait)
+      query('UPDATE sessions SET last_activity = NOW() WHERE session_id = $1', [payload.sessionId])
+        .catch(err => console.error('Failed to update session activity:', err))
+    }
+    
     req.user = payload
     next()
   } catch {

@@ -175,6 +175,37 @@ router.get('/check-updates', requireAuth, async (req: Request, res: Response): P
 router.post('/', requireAuth, requireRole('superuser', 'admin', 'agent'), validate(createLeadSchema), async (req: Request, res: Response): Promise<void> => {
   const d = req.body
   try {
+    // NEW: Check for duplicate phone number before creating
+    if (d.phone) {
+      const existing = await queryOne<DbLead>(
+        `SELECT id, name, phone, status, assigned_to 
+         FROM leads 
+         WHERE normalized_phone = normalize_phone($1)
+         AND normalized_phone IS NOT NULL
+         AND normalized_phone NOT LIKE '%_dup'
+         LIMIT 1`,
+        [d.phone]
+      )
+      
+      if (existing) {
+        // Duplicate found - return 409 Conflict with existing lead info
+        res.status(409).json({
+          success: false,
+          error: 'Duplicate phone number',
+          data: {
+            existingLead: {
+              id: existing.id,
+              name: existing.name,
+              phone: existing.phone,
+              status: existing.status,
+              assignedTo: existing.assigned_to
+            }
+          }
+        })
+        return
+      }
+    }
+
     const row = await queryOne<DbLead>(
       `INSERT INTO leads
          (id, name, phone, email, location, interest, source, status, assigned_to,
@@ -206,7 +237,15 @@ router.post('/', requireAuth, requireRole('superuser', 'admin', 'agent'), valida
 
     const activities = await query('SELECT * FROM activities WHERE lead_id = $1', [row.id])
     res.status(201).json({ success: true, data: mapLead(row, activities, []) })
-  } catch (err) {
+  } catch (err: any) {
+    // Handle unique constraint violation (fallback safety)
+    if (err.code === '23505') {
+      res.status(409).json({
+        success: false,
+        error: 'Duplicate phone number detected'
+      })
+      return
+    }
     console.error('Create lead error:', err)
     res.status(500).json({ success: false, error: 'Failed to create lead' })
   }
@@ -227,6 +266,49 @@ router.put('/bulk', requireAuth, requireRole('superuser', 'admin', 'agent'), val
   } catch (err) {
     console.error('Bulk update error:', err)
     res.status(500).json({ success: false, error: 'Bulk update failed' })
+  }
+})
+
+// NEW: GET /api/leads/check-duplicate/:phone - Check if phone already exists
+router.get('/check-duplicate/:phone', requireAuth, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { phone } = req.params
+    
+    // For agents, only check leads they can see (assigned to them)
+    // For admin/superuser, check all leads
+    let whereClause = 'WHERE normalized_phone = normalize_phone($1) AND normalized_phone NOT LIKE \'%_dup\''
+    const params: any[] = [phone]
+    
+    if (req.user!.role === 'agent') {
+      whereClause += ' AND assigned_to = $2'
+      params.push(req.user!.username)
+    }
+    
+    const existing = await query<DbLead>(
+      `SELECT id, name, phone, status, assigned_to, temperature, value, created_at
+       FROM leads ${whereClause}`,
+      params
+    )
+    
+    res.json({
+      success: true,
+      data: {
+        exists: existing.length > 0,
+        leads: existing.map(l => ({
+          id: l.id,
+          name: l.name,
+          phone: l.phone,
+          status: l.status,
+          assignedTo: l.assigned_to,
+          temperature: l.temperature,
+          value: l.value,
+          createdAt: l.created_at
+        }))
+      }
+    })
+  } catch (err) {
+    console.error('Check duplicate error:', err)
+    res.status(500).json({ success: false, error: 'Server error' })
   }
 })
 
