@@ -1,4 +1,4 @@
-# Mobile UX Improvement Plan - LeadFlow India LMS
+# Mobile UX Improvement Plan - LeadFlow LMS
 
 **Created:** April 7, 2026  
 **Target Viewport:** 375px (iPhone SE, Galaxy S8)  

@@ -1,4 +1,4 @@
-# Card Button Reduction Plan - LeadFlow India LMS
+# Card Button Reduction Plan - LeadFlow LMS
 
 **Created:** April 8, 2026  
 **Context:** Quick Actions Bottom Sheet (long-press) now provides access to all 7 actions  

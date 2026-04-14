@@ -19,7 +19,7 @@ export const useAppStore = defineStore('app', () => {
     sources: [],
     taskTitles: [],
     scriptUrl: '',
-    appTitle: 'LeadFlow India',
+    appTitle: 'LeadFlow LMS',
     interests: [],
     agents: []
   })
@@ -47,7 +47,7 @@ export const useAppStore = defineStore('app', () => {
   const auditLog = ref<AuditLogEntry[]>([])
   const appVersion = ref('1.0.0')
   const theme = ref<'light' | 'dark'>(localStorage.getItem('app_theme') as 'light' | 'dark' || 'light')
-  const appName = ref(localStorage.getItem('app_name') || 'LeadFlow India')
+  const appName = ref(localStorage.getItem('app_name') || 'LeadFlow LMS')
   const appLogo = ref(localStorage.getItem('app_logo') || '')
   const interestsList = ref<string[]>(JSON.parse(localStorage.getItem('interests_list') || '[]'))
   const sourcesList = ref<string[]>(JSON.parse(localStorage.getItem('sources_list') || '[]'))
@@ -220,14 +220,14 @@ export const useAppStore = defineStore('app', () => {
   }
 
   function setAppBranding(name: string, logo: string) {
-    appName.value = name.trim() || 'LeadFlow India'
+    appName.value = name.trim() || 'LeadFlow LMS'
     appLogo.value = logo
     localStorage.setItem('app_name', appName.value)
     localStorage.setItem('app_logo', logo)
   }
 
   async function saveAppBranding(name: string, logo: string): Promise<void> {
-    const resolved = name.trim() || 'LeadFlow India'
+    const resolved = name.trim() || 'LeadFlow LMS'
     try {
       await apiClient.put('/settings', { app_name: resolved, app_logo: logo })
     } catch (err) {

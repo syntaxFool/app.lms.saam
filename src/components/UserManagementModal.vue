@@ -295,7 +295,7 @@
                         <circle cx="10" cy="11" r="1" fill="#fff"/><circle cx="22" cy="11" r="1" fill="#fff"/>
                       </svg>
                     </div>
-                    <span class="text-base font-bold text-slate-900">{{ brandName || 'LeadFlow India' }}</span>
+                    <span class="text-base font-bold text-slate-900">{{ brandName || 'LeadFlow LMS' }}</span>
                   </div>
                 </div>
 
@@ -306,7 +306,7 @@
                     v-model="brandName"
                     type="text"
                     maxlength="40"
-                    placeholder="LeadFlow India"
+                    placeholder="LeadFlow LMS"
                     class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-primary outline-none transition"
                   />
                   <p class="text-xs text-slate-400 mt-1">Shown in the header bar.</p>

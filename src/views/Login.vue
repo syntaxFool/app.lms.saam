@@ -11,7 +11,7 @@
             <circle cx="22" cy="11" r="1" fill="#fff"/>
           </svg>
         </div>
-        <h1 class="text-2xl font-bold text-slate-900 mb-2">LeadFlow India</h1>
+        <h1 class="text-2xl font-bold text-slate-900 mb-2">LeadFlow LMS</h1>
         <p class="text-slate-600">Sign in to access your dashboard</p>
       </div>
 

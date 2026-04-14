@@ -1,4 +1,4 @@
-# Card Footer Removal Plan - LeadFlow India LMS
+# Card Footer Removal Plan - LeadFlow LMS
 
 **Created:** April 8, 2026  
 **Context:** Quick Actions Bottom Sheet provides Move Next/Prev Status actions  
