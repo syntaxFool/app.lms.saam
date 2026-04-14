@@ -1,0 +1,65 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "timezone": "Asia/Kolkata",
+  "schedule": ["before 6am on Monday"],
+  "prHourlyLimit": 5,
+  "prConcurrentLimit": 10,
+  "labels": ["dependencies"],
+  "assignees": ["syntaxFool"],
+  "packageRules": [
+    {
+      "description": "Auto-merge non-breaking patch updates",
+      "matchUpdateTypes": ["patch"],
+      "matchCurrentVersion": "!/^0/",
+      "automerge": true,
+      "automergeType": "pr",
+      "platformAutomerge": true
+    },
+    {
+      "description": "Group all non-major updates into one PR",
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "non-major dependencies",
+      "groupSlug": "non-major"
+    },
+    {
+      "description": "Security updates — immediate, never wait for schedule",
+      "matchCategories": ["security"],
+      "schedule": ["at any time"],
+      "automerge": true,
+      "prPriority": 10,
+      "labels": ["dependencies", "security"]
+    },
+    {
+      "description": "Major updates — PR only, no automerge",
+      "matchUpdateTypes": ["major"],
+      "automerge": false,
+      "labels": ["dependencies", "major-update"]
+    },
+    {
+      "description": "Lock file maintenance — weekly",
+      "matchUpdateTypes": ["lockFileMaintenance"],
+      "automerge": true,
+      "schedule": ["before 6am on the first day of the month"]
+    },
+    {
+      "description": "Keep Vite + Vue ecosystem grouped",
+      "matchPackageNames": ["vite", "@vitejs/*", "vue", "@vue/*", "vue-router", "pinia"],
+      "groupName": "Vue ecosystem",
+      "automerge": false
+    },
+    {
+      "description": "Keep TypeScript tooling grouped",
+      "matchPackageNames": ["typescript", "@typescript-eslint/*", "ts-node", "tslib"],
+      "groupName": "TypeScript tooling",
+      "automerge": false
+    }
+  ],
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "schedule": ["at any time"],
+    "automerge": true,
+    "labels": ["security", "vulnerability"]
+  },
+  "ignorePaths": ["**/node_modules/**", "**/dist/**"]
+}
