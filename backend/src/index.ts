@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/node'
 import express, { Request, Response } from 'express'
 import cors from 'cors'
 import helmet from 'helmet'
@@ -7,6 +8,15 @@ import authRoutes     from './routes/auth'
 import leadsRoutes    from './routes/leads'
 import usersRoutes    from './routes/users'
 import settingsRoutes from './routes/settings'
+
+// ─── Sentry (must init before everything else) ───
+if (process.env.SENTRY_DSN) {
+  Sentry.init({
+    dsn: process.env.SENTRY_DSN,
+    environment: process.env.NODE_ENV || 'production',
+    tracesSampleRate: 0.1,
+  })
+}
 
 const app = express()
 const PORT = parseInt(process.env.PORT || '8080')
@@ -50,6 +60,12 @@ app.use('/api/auth',     authRoutes)
 app.use('/api/leads',    leadsRoutes)
 app.use('/api/users',    usersRoutes)
 app.use('/api/settings', settingsRoutes)
+
+// ─── Sentry error handler (must be after routes) ───
+if (process.env.SENTRY_DSN) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  app.use(Sentry.expressErrorHandler() as unknown as express.ErrorRequestHandler)
+}
 
 // ─── Health check ───
 app.get('/api/health', (_req: Request, res: Response) => {
