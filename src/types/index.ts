@@ -30,6 +30,8 @@ export interface Lead {
   lostReasonType?: LostReasonType
   notes?: string
   followUpDate?: string
+  age?: number
+  priorExperience?: string
   createdAt: string
   updatedAt: string
   lastModified: string

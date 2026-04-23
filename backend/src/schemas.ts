@@ -51,6 +51,8 @@ export const createLeadSchema = z.object({
   value: z.number().nonnegative().optional(),
   notes: z.string().max(5000).optional(),
   followUpDate: z.string().optional(),
+  age: z.number().int().nonnegative().max(120).optional(),
+  priorExperience: z.string().max(1000).optional(),
 })
 
 export const updateLeadSchema = createLeadSchema.partial().extend({

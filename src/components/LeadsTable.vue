@@ -31,6 +31,33 @@
             {{ activeFilterCount }}
           </span>
         </button>
+
+        <!-- Export CSV -->
+        <button
+          @click="exportCsv"
+          title="Export filtered leads to CSV"
+          class="p-2.5 rounded-lg border-2 border-slate-300 hover:bg-slate-100 active:bg-slate-200 transition-colors shrink-0"
+        >
+          <i class="ph-bold ph-download-simple text-xl text-slate-700"></i>
+        </button>
+
+        <!-- Import CSV -->
+        <button
+          @click="showCsvImport = true"
+          title="Import leads from CSV"
+          class="p-2.5 rounded-lg border-2 border-slate-300 hover:bg-slate-100 active:bg-slate-200 transition-colors shrink-0"
+        >
+          <i class="ph-bold ph-upload-simple text-xl text-slate-700"></i>
+        </button>
+
+        <!-- Download Template -->
+        <button
+          @click="downloadTemplate"
+          title="Download CSV import template"
+          class="p-2.5 rounded-lg border-2 border-slate-300 hover:bg-slate-100 active:bg-slate-200 transition-colors shrink-0"
+        >
+          <i class="ph-bold ph-file-csv text-xl text-slate-700"></i>
+        </button>
       </div>
       
       <!-- Active Filter Chips -->
@@ -69,6 +96,13 @@
       @close="showFilterSheet = false"
       @apply="applyFilters"
       @clear="clearAllFilters"
+    />
+
+    <!-- CSV Import Modal -->
+    <CsvImportModal
+      :is-open="showCsvImport"
+      @close="showCsvImport = false"
+      @imported="handleImported"
     />
 
     <!-- Bulk Actions Bar -->
@@ -137,6 +171,18 @@
                 <i v-if="sortColumn === 'value'" :class="`ph-bold ph-arrow-${sortDirection === 'asc' ? 'up' : 'down'} text-xs`"></i>
               </div>
             </th>
+            <th class="px-4 py-3 font-bold text-slate-700 text-left hidden lg:table-cell cursor-pointer hover:bg-slate-200 transition" @click="sortBy('createdAt')">
+              <div class="flex items-center gap-2">
+                Created
+                <i v-if="sortColumn === 'createdAt'" :class="`ph-bold ph-arrow-${sortDirection === 'asc' ? 'up' : 'down'} text-xs`"></i>
+              </div>
+            </th>
+            <th class="px-4 py-3 font-bold text-slate-700 text-left hidden lg:table-cell cursor-pointer hover:bg-slate-200 transition" @click="sortBy('updatedAt')">
+              <div class="flex items-center gap-2">
+                Updated
+                <i v-if="sortColumn === 'updatedAt'" :class="`ph-bold ph-arrow-${sortDirection === 'asc' ? 'up' : 'down'} text-xs`"></i>
+              </div>
+            </th>
             <th class="px-4 py-3 font-bold text-slate-700 text-left hidden sm:table-cell">
               Assigned
             </th>
@@ -192,6 +238,16 @@
             <td class="px-4 py-3 hidden lg:table-cell text-slate-700 font-semibold text-sm">
               {{ formatCurrency(lead.value) }}
             </td>
+            <td class="px-4 py-3 hidden lg:table-cell text-slate-600 text-xs">
+              <span :title="getRelativeTime(lead.createdAt)" class="cursor-help">
+                {{ formatDate(lead.createdAt) }}
+              </span>
+            </td>
+            <td class="px-4 py-3 hidden lg:table-cell text-slate-600 text-xs">
+              <span :title="getRelativeTime(lead.updatedAt)" class="cursor-help">
+                {{ formatDate(lead.updatedAt) }}
+              </span>
+            </td>
             <td class="px-4 py-3 hidden sm:table-cell text-slate-600 text-xs">
               <span v-if="lead.assignedTo" class="inline-block px-2 py-1 bg-indigo-100 text-indigo-700 rounded font-medium">
                 {{ lead.assignedTo }}
@@ -199,13 +255,22 @@
               <span v-else class="text-slate-400">—</span>
             </td>
             <td class="px-4 py-3 text-center">
-              <button
-                @click="$emit('open', lead.id)"
-                class="text-blue-600 hover:text-blue-700 font-bold text-lg transition"
-                title="Edit Lead"
-              >
-                <i class="ph-bold ph-pencil"></i>
-              </button>
+              <div class="flex items-center justify-center gap-2">
+                <button
+                  @click="$emit('timeline', lead.id)"
+                  class="text-slate-600 hover:text-slate-700 font-bold text-lg transition"
+                  title="View Activity Timeline"
+                >
+                  <i class="ph-bold ph-clock"></i>
+                </button>
+                <button
+                  @click="$emit('open', lead.id)"
+                  class="text-blue-600 hover:text-blue-700 font-bold text-lg transition"
+                  title="Edit Lead"
+                >
+                  <i class="ph-bold ph-pencil"></i>
+                </button>
+              </div>
             </td>
           </tr>
         </tbody>
@@ -302,6 +367,7 @@ import { ref, computed } from 'vue'
 import { useLeadsStore } from '@/stores/leads'
 import { useAppStore } from '@/stores/app'
 import FilterSheet from './FilterSheet.vue'
+import CsvImportModal from './CsvImportModal.vue'
 import type { Lead } from '@/types'
 
 interface Props {
@@ -312,6 +378,7 @@ const props = defineProps<Props>()
 
 const emit = defineEmits<{
   open: [leadId: string]
+  timeline: [leadId: string]
 }>()
 
 const leadsStore = useLeadsStore()
@@ -332,7 +399,7 @@ const followUpDateFrom = ref('')
 const followUpDateTo = ref('')
 const minValue = ref(0)
 const showFilterSheet = ref(false)
-const sortColumn = ref<'name' | 'status' | 'value' | null>(null)
+const sortColumn = ref<'name' | 'status' | 'value' | 'createdAt' | 'updatedAt' | null>(null)
 const sortDirection = ref<'asc' | 'desc'>('asc')
 
 // Bulk actions
@@ -579,12 +646,92 @@ function formatCurrency(value?: number): string {
   }).format(value)
 }
 
-function sortBy(column: 'name' | 'status' | 'value') {
+function sortBy(column: 'name' | 'status' | 'value' | 'createdAt' | 'updatedAt') {
   if (sortColumn.value === column) {
     sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc'
   } else {
     sortColumn.value = column
     sortDirection.value = 'asc'
   }
+}
+
+function formatDate(isoString?: string): string {
+  if (!isoString) return '—'
+  try {
+    const date = new Date(isoString)
+    return new Intl.DateTimeFormat('en-IN', {
+      year: 'numeric',
+      month: 'short',
+      day: '2-digit'
+    }).format(date)
+  } catch {
+    return '—'
+  }
+}
+
+function getRelativeTime(isoString?: string): string {
+  if (!isoString) return ''
+  try {
+    const date = new Date(isoString)
+    const now = new Date()
+    const diffMs = now.getTime() - date.getTime()
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+    
+    if (diffDays === 0) return 'Today'
+    if (diffDays === 1) return 'Yesterday'
+    if (diffDays < 7) return `${diffDays} days ago`
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`
+    if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`
+    return `${Math.floor(diffDays / 365)} years ago`
+  } catch {
+    return ''
+  }
+}
+
+// CSV Export / Import
+const showCsvImport = ref(false)
+
+const CSV_HEADERS = ['name', 'phone', 'email', 'status', 'temperature', 'interest', 'source', 'location', 'assignedTo', 'value', 'age', 'priorExperience', 'notes', 'followUpDate', 'createdAt', 'updatedAt']
+
+function escapeCsvValue(val: string | number | undefined | null): string {
+  const s = String(val ?? '')
+  if (s.includes(',') || s.includes('"') || s.includes('\n')) {
+    return `"${s.replace(/"/g, '""')}"`
+  }
+  return s
+}
+
+function exportCsv() {
+  const leads = filteredLeads.value
+  const header = CSV_HEADERS.join(',')
+  const rows = leads.map(l =>
+    CSV_HEADERS.map(h => escapeCsvValue((l as any)[h])).join(',')
+  )
+  const csv = [header, ...rows].join('\n')
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `leads_export_${new Date().toISOString().slice(0, 10)}.csv`
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
+function downloadTemplate() {
+  const header = CSV_HEADERS.join(',')
+  const example = ['John Doe', '+91 9876543210', 'john@example.com', 'New', 'Warm', 'Software', 'Referral', 'Bangalore', '', '50000', '28', 'Fresher', 'Interested in full stack', '2026-05-01', '2026-04-13T10:30:00Z', '2026-04-23T14:45:00Z'].join(',')
+  const csv = [header, example].join('\n')
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = 'leads_import_template.csv'
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
+function handleImported(count: number) {
+  showCsvImport.value = false
+  leadsStore.fetchLeads()
 }
 </script>

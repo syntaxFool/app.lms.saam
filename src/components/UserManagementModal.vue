@@ -70,6 +70,13 @@
                 <i class="ph-bold ph-funnel text-base"></i>
                 <span class="hidden sm:inline">Sources</span>
               </button>
+              <button
+                @click="activeTab = 'experience'"
+                :class="['flex-1 flex items-center justify-center gap-1 py-2 text-xs sm:text-sm font-semibold rounded-lg transition', activeTab === 'experience' ? 'bg-white text-primary shadow-sm' : 'text-slate-500 hover:text-slate-700']"
+              >
+                <i class="ph-bold ph-briefcase text-base"></i>
+                <span class="hidden sm:inline">Experience</span>
+              </button>
             </div>
 
             <!-- USERS TAB -->
@@ -547,6 +554,89 @@
               </div>
             </template> <!-- end sources tab -->
 
+            <!-- EXPERIENCE TAB -->
+            <template v-else-if="activeTab === 'experience'">
+              <div class="space-y-6">
+
+                <div>
+                  <h3 class="text-lg font-bold text-slate-800 mb-1">Prior Experience Options</h3>
+                  <p class="text-sm text-slate-500">Configure the prior experience options shown in lead forms.</p>
+                </div>
+
+                <div>
+                  <label class="block text-sm font-bold text-slate-700 mb-2">Add New Option</label>
+                  <div class="flex gap-2">
+                    <input
+                      v-model="newExperience"
+                      @keydown.enter="addExperience"
+                      type="text"
+                      placeholder="e.g., 1-2 years, Fresher, 5+ years..."
+                      class="flex-1 bg-white border border-slate-200 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-primary outline-none transition"
+                    />
+                    <button
+                      @click="addExperience"
+                      :disabled="!newExperience.trim()"
+                      class="bg-primary text-white px-5 py-2.5 rounded-lg hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed transition flex items-center gap-2 font-semibold"
+                    >
+                      <i class="ph-bold ph-plus text-lg"></i>
+                      Add
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <div class="flex items-center justify-between mb-3">
+                    <label class="text-sm font-bold text-slate-700">Current Options</label>
+                    <span class="text-xs font-semibold text-slate-400 bg-slate-100 px-2 py-1 rounded">{{ priorExperienceList.length }} total</span>
+                  </div>
+                  <div class="bg-slate-50 rounded-xl border border-slate-200 p-3 max-h-96 overflow-y-auto">
+                    <div v-if="priorExperienceList.length === 0" class="text-center py-12 text-slate-400">
+                      <i class="ph-bold ph-briefcase text-4xl mb-2 block"></i>
+                      <p class="text-sm font-medium">No options configured yet</p>
+                      <p class="text-xs mt-1">Add your first experience option above</p>
+                    </div>
+                    <div v-else class="space-y-2">
+                      <div
+                        v-for="(item, idx) in priorExperienceList"
+                        :key="idx"
+                        class="flex items-center justify-between bg-white rounded-lg px-4 py-3 group hover:shadow-sm transition"
+                      >
+                        <div class="flex items-center gap-3">
+                          <span class="text-xs font-bold text-slate-400 w-6">{{ idx + 1 }}</span>
+                          <span class="text-sm font-medium text-slate-800">{{ item }}</span>
+                        </div>
+                        <button
+                          @click="removeExperience(idx)"
+                          class="text-slate-300 hover:text-red-500 transition opacity-0 group-hover:opacity-100 p-1"
+                          title="Remove this option"
+                        >
+                          <i class="ph-bold ph-trash text-lg"></i>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-3 justify-end pt-4 border-t border-slate-200">
+                  <Transition name="form-slide">
+                    <span v-if="experienceSaved" class="text-sm text-green-600 font-semibold flex items-center gap-1.5">
+                      <i class="ph-bold ph-check-circle text-lg"></i> Saved!
+                    </span>
+                  </Transition>
+                  <button
+                    @click="saveExperience"
+                    :disabled="experienceSaving"
+                    class="flex items-center gap-2 bg-primary text-white text-sm font-semibold px-6 py-2.5 rounded-lg hover:bg-indigo-700 disabled:opacity-60 transition shadow-sm"
+                  >
+                    <i v-if="experienceSaving" class="ph-bold ph-spinner-gap animate-spin text-lg"></i>
+                    <i v-else class="ph-bold ph-floppy-disk text-lg"></i>
+                    {{ experienceSaving ? 'Saving…' : 'Save Changes' }}
+                  </button>
+                </div>
+
+              </div>
+            </template> <!-- end experience tab -->
+
           </div>
         </div>
       </div>
@@ -619,6 +709,12 @@ const sourcesList = ref<string[]>([...(appStore.sourcesList || [])])
 const newSource = ref('')
 const sourcesSaved = ref(false)
 const sourcesSaving = ref(false)
+
+// Prior Experience management
+const priorExperienceList = ref<string[]>([...(appStore.priorExperienceList || [])])
+const newExperience = ref('')
+const experienceSaved = ref(false)
+const experienceSaving = ref(false)
 
 const showForm = ref(false)
 const formMode = ref<'create' | 'edit'>('create')
@@ -790,6 +886,31 @@ async function saveSources() {
     console.error('Failed to save sources:', err)
   } finally {
     sourcesSaving.value = false
+  }
+}
+
+function addExperience() {
+  const item = newExperience.value.trim()
+  if (item && !priorExperienceList.value.includes(item)) {
+    priorExperienceList.value.push(item)
+    newExperience.value = ''
+  }
+}
+
+function removeExperience(idx: number) {
+  priorExperienceList.value.splice(idx, 1)
+}
+
+async function saveExperience() {
+  experienceSaving.value = true
+  try {
+    await appStore.savePriorExperienceList(priorExperienceList.value)
+    experienceSaved.value = true
+    setTimeout(() => { experienceSaved.value = false }, 2000)
+  } catch (err) {
+    console.error('Failed to save experience list:', err)
+  } finally {
+    experienceSaving.value = false
   }
 }
 

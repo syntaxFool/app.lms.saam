@@ -39,7 +39,9 @@ export function useConflictDetection() {
       'source',
       'assignedTo',
       'notes',
-      'lostReason'
+      'lostReason',
+      'age',
+      'priorExperience'
     ]
 
     const conflicts: ConflictField[] = []

@@ -51,6 +51,7 @@ export const useAppStore = defineStore('app', () => {
   const appLogo = ref(localStorage.getItem('app_logo') || '')
   const interestsList = ref<string[]>(JSON.parse(localStorage.getItem('interests_list') || '[]'))
   const sourcesList = ref<string[]>(JSON.parse(localStorage.getItem('sources_list') || '[]'))
+  const priorExperienceList = ref<string[]>(JSON.parse(localStorage.getItem('prior_experience_list') || '[]'))
   const users = ref<User[]>([])
 
   // Getters
@@ -259,6 +260,17 @@ export const useAppStore = defineStore('app', () => {
     }
   }
 
+  async function savePriorExperienceList(items: string[]): Promise<void> {
+    try {
+      await apiClient.put('/settings', { prior_experience_list: items })
+      priorExperienceList.value = items
+      localStorage.setItem('prior_experience_list', JSON.stringify(items))
+    } catch (err) {
+      console.error('Failed to save prior_experience_list to server:', err)
+      throw err
+    }
+  }
+
   async function fetchAppSettings(): Promise<void> {
     try {
       const response = await apiClient.get('/settings') as { success: boolean; data: Record<string, string> }
@@ -289,6 +301,18 @@ export const useAppStore = defineStore('app', () => {
             }
           } catch (e) {
             console.error('Failed to parse sources_list:', e)
+          }
+        }
+        const priorExp = response.data['prior_experience_list']
+        if (priorExp) {
+          try {
+            const parsed = JSON.parse(priorExp)
+            if (Array.isArray(parsed)) {
+              priorExperienceList.value = parsed
+              localStorage.setItem('prior_experience_list', priorExp)
+            }
+          } catch (e) {
+            console.error('Failed to parse prior_experience_list:', e)
           }
         }
       }
@@ -408,6 +432,7 @@ export const useAppStore = defineStore('app', () => {
     appLogo,
     interestsList,
     sourcesList,
+    priorExperienceList,
     
     // Getters
     isLoading,
@@ -455,6 +480,7 @@ export const useAppStore = defineStore('app', () => {
     saveAppBranding,
     saveInterestsList,
     saveSourcesList,
+    savePriorExperienceList,
     fetchAppSettings,
 
     // UI State

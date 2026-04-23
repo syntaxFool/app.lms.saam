@@ -20,6 +20,8 @@ interface DbLead {
   lost_reason_type: string | null
   notes: string | null
   follow_up_date: string | null
+  age: number | null
+  prior_experience: string | null
   created_at: string
   updated_at: string
   last_modified_by: string | null
@@ -44,6 +46,8 @@ function mapLead(row: DbLead, activities: any[] = [], tasks: any[] = []) {
     lostReasonType: row.lost_reason_type || '',
     notes:          row.notes || '',
     followUpDate:   row.follow_up_date || '',
+    age:            row.age ?? undefined,
+    priorExperience: row.prior_experience || '',
     createdAt:      row.created_at,
     updatedAt:      row.updated_at,
     lastModified:   row.updated_at,
@@ -209,8 +213,8 @@ router.post('/', requireAuth, requireRole('superuser', 'admin', 'agent'), valida
     const row = await queryOne<DbLead>(
       `INSERT INTO leads
          (id, name, phone, email, location, interest, source, status, assigned_to,
-          temperature, value, notes, follow_up_date, last_modified_by)
-       VALUES (COALESCE($1::uuid, gen_random_uuid()),$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+          temperature, value, notes, follow_up_date, age, prior_experience, last_modified_by)
+       VALUES (COALESCE($1::uuid, gen_random_uuid()),$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
        RETURNING *`,
       [
         d.id || null,
@@ -222,6 +226,8 @@ router.post('/', requireAuth, requireRole('superuser', 'admin', 'agent'), valida
         d.value || 0,
         d.notes || null,
         d.followUpDate || null,
+        d.age ?? null,
+        d.priorExperience || null,
         req.user!.username,
       ]
     )
@@ -346,9 +352,11 @@ router.put('/:id', requireAuth, requireRole('superuser', 'admin', 'agent'), vali
          lost_reason_type = COALESCE($12::lost_reason_type, lost_reason_type),
          notes            = COALESCE($13, notes),
          follow_up_date   = COALESCE($14::date, follow_up_date),
-         last_modified_by = $15,
+         age              = COALESCE($15, age),
+         prior_experience = COALESCE($16, prior_experience),
+         last_modified_by = $17,
          updated_at       = NOW()
-       WHERE id = $16
+       WHERE id = $18
        RETURNING *`,
       [
         d.name || null, d.phone || null, d.email || null,
@@ -357,6 +365,7 @@ router.put('/:id', requireAuth, requireRole('superuser', 'admin', 'agent'), vali
         d.value != null ? d.value : null,
         d.lostReason || null, d.lostReasonType || null,
         d.notes || null, d.followUpDate || null,
+        d.age ?? null, d.priorExperience || null,
         req.user!.username,
         id,
       ]

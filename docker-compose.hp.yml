@@ -1,0 +1,80 @@
+name: lms-hp
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: lms_hp_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB:       ${DB_NAME}
+      POSTGRES_USER:     ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres_hp_data:/var/lib/postgresql/data
+      - ./backend/db/migrations:/docker-entrypoint-initdb.d
+    networks:
+      - lms_hp_net
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: lms_hp_api
+    restart: unless-stopped
+    environment:
+      DB_HOST:          postgres
+      DB_PORT:          5432
+      DB_NAME:          ${DB_NAME}
+      DB_USER:          ${DB_USER}
+      DB_PASSWORD:      ${DB_PASSWORD}
+      JWT_SECRET:       ${JWT_SECRET}
+      ALLOWED_ORIGINS:  https://hplms.aika-shuz.fyi
+      PORT:             8080
+    depends_on:
+      - postgres
+    networks:
+      - lms_hp_net
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: lms_hp_web
+    restart: unless-stopped
+    networks:
+      - lms_hp_net
+
+  nginx:
+    image: nginx:alpine
+    container_name: lms_hp_nginx
+    restart: unless-stopped
+    volumes:
+      - ./nginx/nginx-hp.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - lms_hp_net
+      - coolify
+    labels:
+      - "traefik.enable=true"
+      # ── HTTPS router ──
+      - "traefik.http.routers.lms-hp.rule=Host(`hplms.aika-shuz.fyi`)"
+      - "traefik.http.routers.lms-hp.entrypoints=https"
+      - "traefik.http.routers.lms-hp.tls=true"
+      - "traefik.http.routers.lms-hp.tls.certresolver=letsencrypt"
+      - "traefik.http.services.lms-hp.loadbalancer.server.port=80"
+      - "traefik.docker.network=coolify"
+      # ── HTTP → HTTPS redirect ──
+      - "traefik.http.routers.lms-hp-http.rule=Host(`hplms.aika-shuz.fyi`)"
+      - "traefik.http.routers.lms-hp-http.entrypoints=http"
+      - "traefik.http.routers.lms-hp-http.middlewares=redirect-to-https"
+
+volumes:
+  postgres_hp_data:
+
+networks:
+  lms_hp_net:
+    driver: bridge
+  coolify:
+    external: true

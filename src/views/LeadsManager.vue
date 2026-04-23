@@ -136,6 +136,7 @@
         <LeadsTable
           :leads="scopedLeads"
           @open="editLead"
+          @timeline="(id) => editLead(id, 'activity')"
         />
       </div>
 

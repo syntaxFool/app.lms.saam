@@ -285,6 +285,50 @@
                 </select>
               </div>
 
+              <!-- Age & Prior Experience -->
+              <div class="grid grid-cols-2 gap-4 mb-6">
+                <div>
+                  <label class="block text-sm font-semibold text-slate-700 mb-1.5">Age</label>
+                  <input
+                    v-model.number="formData.age"
+                    type="number"
+                    min="1"
+                    max="120"
+                    :disabled="modalMode === 'view'"
+                    class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary outline-none transition disabled:bg-slate-50 disabled:cursor-not-allowed"
+                    placeholder="e.g. 28"
+                  />
+                </div>
+                <div>
+                  <label class="block text-sm font-semibold text-slate-700 mb-1.5">Prior Experience</label>
+                  <div class="relative">
+                    <input
+                      v-model="formData.priorExperience"
+                      type="text"
+                      :disabled="modalMode === 'view'"
+                      class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary outline-none transition disabled:bg-slate-50 disabled:cursor-not-allowed"
+                      placeholder="e.g. 2 years sales"
+                      @focus="showExperienceSuggestions = true"
+                      @blur="hideExperienceSuggestions"
+                    />
+                    <div
+                      v-if="showExperienceSuggestions && filteredExperiences.length > 0"
+                      class="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-48 overflow-y-auto"
+                    >
+                      <button
+                        v-for="item in filteredExperiences"
+                        :key="item"
+                        type="button"
+                        @mousedown.prevent="selectExperience(item)"
+                        class="w-full text-left px-4 py-2 hover:bg-primary/10 transition text-sm"
+                      >
+                        {{ item }}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <!-- Notes -->
               <div class="mb-6">
                 <label class="block text-sm font-semibold text-slate-700 mb-1.5">Notes</label>
@@ -649,10 +693,12 @@ const taskSuggestions = [
 const showInterestSuggestions = ref(false)
 const showLocationSuggestions = ref(false)
 const showSourceSuggestions = ref(false)
+const showExperienceSuggestions = ref(false)
 
 // Autocomplete data
 const interests = computed(() => appStore.interestsList || [])
 const sources = computed(() => appStore.sourcesList || [])
+const experienceOptions = computed(() => appStore.priorExperienceList || [])
 
 const locations = [
   'Bangalore',
@@ -686,7 +732,9 @@ const formData = ref({
   assignedTo: '',
   notes: '',
   lostReason: '',
-  lostReasonType: undefined as LostReasonType | undefined
+  lostReasonType: undefined as LostReasonType | undefined,
+  age: undefined as number | undefined,
+  priorExperience: ''
 })
 
 const existingLead = computed(() => props.leadId ? leadsStore.getLeadById(props.leadId) : null)
@@ -721,6 +769,12 @@ const filteredSources = computed(() => {
   if (!formData.value.source) return sources.value
   const search = formData.value.source.toLowerCase()
   return sources.value.filter(s => s.toLowerCase().includes(search))
+})
+
+const filteredExperiences = computed(() => {
+  if (!formData.value.priorExperience) return experienceOptions.value
+  const search = formData.value.priorExperience.toLowerCase()
+  return experienceOptions.value.filter(e => e.toLowerCase().includes(search))
 })
 
 // Phone handling function
@@ -761,7 +815,9 @@ watch(() => props.isOpen, (newVal) => {
         assignedTo: existingLead.value.assignedTo || '',
         notes: existingLead.value.notes || '',
         lostReason: existingLead.value.lostReason || '',
-        lostReasonType: existingLead.value.lostReasonType
+        lostReasonType: existingLead.value.lostReasonType,
+        age: existingLead.value.age ?? undefined,
+        priorExperience: existingLead.value.priorExperience || ''
       }
       // Parse existing phone number
       if (existingLead.value.phone) {
@@ -806,7 +862,9 @@ const resetForm = () => {
     assignedTo: '',
     notes: '',
     lostReason: '',
-    lostReasonType: undefined
+    lostReasonType: undefined,
+    age: undefined,
+    priorExperience: ''
   }
   phonePrefix.value = '+91'
   phoneNumber.value = ''
@@ -844,7 +902,9 @@ const submitForm = async () => {
         assignedTo: formData.value.assignedTo,
         notes: formData.value.notes,
         lostReason: formData.value.lostReason || undefined,
-        lostReasonType: formData.value.lostReasonType
+        lostReasonType: formData.value.lostReasonType,
+        age: formData.value.age,
+        priorExperience: formData.value.priorExperience || undefined
       })
       if (result.success && result.data) {
         emit('saved', result.data)
@@ -863,7 +923,9 @@ const submitForm = async () => {
         assignedTo: formData.value.assignedTo,
         notes: formData.value.notes,
         lostReason: formData.value.lostReason || undefined,
-        lostReasonType: formData.value.lostReasonType
+        lostReasonType: formData.value.lostReasonType,
+        age: formData.value.age,
+        priorExperience: formData.value.priorExperience || undefined
       })
       if (result.success && result.data) {
         emit('saved', result.data)
@@ -1148,6 +1210,11 @@ const selectSource = (source: string) => {
   showSourceSuggestions.value = false
 }
 
+const selectExperience = (item: string) => {
+  formData.value.priorExperience = item
+  showExperienceSuggestions.value = false
+}
+
 const hideInterestSuggestions = () => {
   setTimeout(() => {
     showInterestSuggestions.value = false
@@ -1163,6 +1230,12 @@ const hideLocationSuggestions = () => {
 const hideSourceSuggestions = () => {
   setTimeout(() => {
     showSourceSuggestions.value = false
+  }, 200)
+}
+
+const hideExperienceSuggestions = () => {
+  setTimeout(() => {
+    showExperienceSuggestions.value = false
   }, 200)
 }
 </script>

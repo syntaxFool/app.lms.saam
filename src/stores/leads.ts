@@ -305,7 +305,7 @@ export const useLeadsStore = defineStore('leads', () => {
   function detectFieldConflicts(snapshot: Lead, current: Lead, userChanges: Partial<Lead>): ConflictField[] {
     const fieldsToCheck = [
       'name', 'email', 'phone', 'status', 'temperature', 'interest', 'value',
-      'location', 'source', 'assignedTo', 'notes', 'lostReason'
+      'location', 'source', 'assignedTo', 'notes', 'lostReason', 'age', 'priorExperience'
     ]
 
     const conflicts: ConflictField[] = []
