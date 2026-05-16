@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express'
 import { query, queryOne } from '../db'
 import { requireAuth, requireRole } from '../middleware/auth'
+import { allowApiKey } from '../middleware/apiKey'
 import { validate } from '../middleware/validate'
 import { createLeadSchema, updateLeadSchema, bulkLeadUpdateSchema, bulkLeadDeleteSchema } from '../schemas'
 
@@ -176,7 +177,7 @@ router.get('/check-updates', requireAuth, async (req: Request, res: Response): P
 })
 
 // ─── POST /api/leads ───
-router.post('/', requireAuth, requireRole('superuser', 'admin', 'agent'), validate(createLeadSchema), async (req: Request, res: Response): Promise<void> => {
+router.post('/', allowApiKey, requireAuth, requireRole('superuser', 'admin', 'agent'), validate(createLeadSchema), async (req: Request, res: Response): Promise<void> => {
   const d = req.body
   try {
     // NEW: Check for duplicate phone number before creating
@@ -276,7 +277,7 @@ router.put('/bulk', requireAuth, requireRole('superuser', 'admin', 'agent'), val
 })
 
 // NEW: GET /api/leads/check-duplicate/:phone - Check if phone already exists
-router.get('/check-duplicate/:phone', requireAuth, async (req: Request, res: Response): Promise<void> => {
+router.get('/check-duplicate/:phone', allowApiKey, requireAuth, async (req: Request, res: Response): Promise<void> => {
   try {
     const { phone } = req.params
     
@@ -398,7 +399,7 @@ router.delete('/:id', requireAuth, requireRole('superuser', 'admin'), async (req
 })
 
 // ─── POST /api/leads/:id/activities ───
-router.post('/:id/activities', requireAuth, async (req: Request, res: Response): Promise<void> => {
+router.post('/:id/activities', allowApiKey, requireAuth, async (req: Request, res: Response): Promise<void> => {
   const { type, note, changes, relatedTaskId } = req.body
   try {
     const row = await queryOne(

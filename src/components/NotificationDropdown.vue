@@ -112,10 +112,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useLeadsStore } from '@/stores/leads'
+import { api } from '@/services/api'
 
-type NotificationType = 'overdue-follow-up' | 'overdue-task' | 'upcoming-follow-up' | 'new-lead' | 'lead-won' | 'lead-lost'
+type NotificationType = 'overdue-follow-up' | 'overdue-task' | 'upcoming-follow-up' | 'new-lead' | 'lead-won' | 'lead-lost' | 'whatsapp-new-lead' | 'whatsapp-message'
 
 interface Notification {
   id: string
@@ -132,6 +133,36 @@ const emit = defineEmits<{
 }>()
 
 const leadsStore = useLeadsStore()
+
+// ── Server notification state (persisted, from Moon & system) ──
+interface ServerNotif {
+  id: string
+  title: string
+  message: string
+  type: string
+  leadId: string | null
+  read: boolean
+  createdBy: string
+  createdAt: string
+}
+
+const serverNotifications = ref<ServerNotif[]>([])
+const serverUnreadCount = ref(0)
+let pollInterval: number | null = null
+
+async function pollServerNotifications() {
+  try {
+    const response = await api.get('/notifications', {
+      params: { unread: true, limit: 20 }
+    }) as any
+    if (response.success && response.data) {
+      serverNotifications.value = response.data.notifications || []
+      serverUnreadCount.value = response.data.unreadCount || 0
+    }
+  } catch {
+    // Silently fail — polling is not critical
+  }
+}
 
 const isOpen = ref(false)
 const activeFilter = ref('All')
@@ -213,8 +244,27 @@ const notifications = computed<Notification[]>(() => {
   return notifs.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
 })
 
+// ── Convert server notifications to local Notification format ──
+const serverAsLocal = computed<Notification[]>(() => {
+  return serverNotifications.value.map(sn => ({
+    id: `srv_${sn.id}`,
+    type: (sn.type === 'whatsapp-new-lead' ? 'whatsapp-new-lead' : 'whatsapp-message') as NotificationType,
+    title: sn.title,
+    message: sn.message,
+    leadId: sn.leadId || undefined,
+    createdAt: new Date(sn.createdAt),
+    read: sn.read,
+  }))
+})
+
+// ── Merge local + server notifications ──
+const allNotifications = computed<Notification[]>(() => {
+  return [...serverAsLocal.value, ...notifications.value]
+    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+})
+
 const filteredNotifications = computed(() => {
-  if (activeFilter.value === 'All') return notifications.value
+  if (activeFilter.value === 'All') return allNotifications.value
   if (activeFilter.value === 'Follow-ups') {
     return notifications.value.filter(n => n.type === 'overdue-follow-up' || n.type === 'upcoming-follow-up')
   }
@@ -222,13 +272,14 @@ const filteredNotifications = computed(() => {
     return notifications.value.filter(n => n.type === 'overdue-task')
   }
   if (activeFilter.value === 'Leads') {
-    return notifications.value.filter(n => n.type === 'new-lead' || n.type === 'lead-won' || n.type === 'lead-lost')
+    return allNotifications.value.filter(n => n.type === 'new-lead' || n.type === 'lead-won' || n.type === 'lead-lost' || n.type === 'whatsapp-new-lead' || n.type === 'whatsapp-message')
   }
   return notifications.value
 })
 
 const unreadCount = computed(() => {
-  return notifications.value.filter(n => !n.read).length
+  // Count from local lead-based notifications + server unread count from API
+  return serverUnreadCount.value + notifications.value.filter(n => !n.read).length
 })
 
 function getNotificationIcon(type: NotificationType): string {
@@ -238,7 +289,9 @@ function getNotificationIcon(type: NotificationType): string {
     'upcoming-follow-up': 'ph-bold ph-calendar-check',
     'new-lead': 'ph-bold ph-user-plus',
     'lead-won': 'ph-bold ph-trophy',
-    'lead-lost': 'ph-bold ph-x-circle'
+    'lead-lost': 'ph-bold ph-x-circle',
+    'whatsapp-new-lead': 'ph-bold ph-whatsapp-logo',
+    'whatsapp-message': 'ph-bold ph-chat-dots'
   }
   return icons[type] || 'ph-bold ph-bell'
 }
@@ -250,7 +303,9 @@ function getNotificationIconClass(type: NotificationType): string {
     'upcoming-follow-up': 'bg-blue-100 text-blue-600',
     'new-lead': 'bg-green-100 text-green-600',
     'lead-won': 'bg-emerald-100 text-emerald-600',
-    'lead-lost': 'bg-slate-100 text-slate-600'
+    'lead-lost': 'bg-slate-100 text-slate-600',
+    'whatsapp-new-lead': 'bg-emerald-100 text-emerald-600',
+    'whatsapp-message': 'bg-emerald-100 text-emerald-600'
   }
   return classes[type] || 'bg-slate-100 text-slate-600'
 }
@@ -281,14 +336,44 @@ function handleNotificationClick(notification: Notification) {
   markAsRead(notification.id)
 }
 
-function markAsRead(id: string) {
-  const notification = notifications.value.find(n => n.id === id)
-  if (notification) {
-    notification.read = true
+async function markAsRead(id: string) {
+  if (id.startsWith('srv_')) {
+    const serverId = id.slice(4)
+    const sn = serverNotifications.value.find(n => n.id === serverId)
+    if (sn && !sn.read) {
+      try {
+        await api.put(`/notifications/${serverId}`, { read: true })
+        sn.read = true
+        serverUnreadCount.value = Math.max(0, serverUnreadCount.value - 1)
+      } catch {
+        console.error('Failed to mark server notification as read')
+      }
+    }
+  } else {
+    const notification = allNotifications.value.find(n => n.id === id)
+    if (notification) {
+      notification.read = true
+    }
   }
 }
 
-function markAllAsRead() {
-  notifications.value.forEach(n => n.read = true)
+async function markAllAsRead() {
+  allNotifications.value.forEach(n => n.read = true)
+  try {
+    await api.put('/notifications/read-all', {})
+    serverNotifications.value.forEach(n => n.read = true)
+    serverUnreadCount.value = 0
+  } catch {
+    console.error('Failed to mark all server notifications as read')
+  }
 }
+
+onMounted(() => {
+  pollServerNotifications()
+  pollInterval = window.setInterval(pollServerNotifications, 30000)
+})
+
+onUnmounted(() => {
+  if (pollInterval) clearInterval(pollInterval)
+})
 </script>

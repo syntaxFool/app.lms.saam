@@ -98,3 +98,16 @@ export const createTaskSchema = z.object({
 export const updateTaskSchema = createTaskSchema.partial().extend({
   completedAt: z.string().optional(),
 })
+
+// ── Notifications ────────────────────────────────────────────────────────────
+export const createNotificationSchema = z.object({
+  title:    z.string().min(1).max(200),
+  message:  z.string().min(1).max(2000),
+  type:     z.string().max(50).optional(),
+  leadId:   z.string().optional(),
+  createdBy: z.string().max(100).optional(),
+})
+
+export const updateNotificationSchema = z.object({
+  read: z.boolean(),
+})

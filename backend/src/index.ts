@@ -8,6 +8,7 @@ import authRoutes     from './routes/auth'
 import leadsRoutes    from './routes/leads'
 import usersRoutes    from './routes/users'
 import settingsRoutes from './routes/settings'
+import notificationsRoutes from './routes/notifications'
 
 // ─── Sentry (must init before everything else) ───
 if (process.env.SENTRY_DSN) {
@@ -60,6 +61,7 @@ app.use('/api/auth',     authRoutes)
 app.use('/api/leads',    leadsRoutes)
 app.use('/api/users',    usersRoutes)
 app.use('/api/settings', settingsRoutes)
+app.use('/api/notifications', notificationsRoutes)
 
 // ─── Sentry error handler (must be after routes) ───
 if (process.env.SENTRY_DSN) {
