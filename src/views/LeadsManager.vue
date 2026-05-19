@@ -146,6 +146,22 @@
           :leads="scopedLeads"
         />
       </div>
+
+      <!-- ACTIVITY VIEW -->
+      <div v-else-if="currentView === 'activity'" class="h-full w-full overflow-hidden">
+        <ActivityLog
+          :leads="scopedLeads"
+          @open-lead="editLead"
+        />
+      </div>
+
+      <!-- TASK VIEW -->
+      <div v-else-if="currentView === 'task'" class="h-full w-full overflow-hidden">
+        <TaskManager
+          :leads="scopedLeads"
+          @open-lead="editLead"
+        />
+      </div>
     </main>
 
     <!-- Follow-ups Sidebar -->
@@ -255,6 +271,8 @@ import SideMenu from '@/components/SideMenu.vue'
 import LeadsTable from '@/components/LeadsTable.vue'
 import ReportsView from '@/components/ReportsView.vue'
 import KanbanBoard from '@/components/KanbanBoard.vue'
+import ActivityLog from '@/views/ActivityLog.vue'
+import TaskManager from '@/views/TaskManager.vue'
 import PhoneEntryModal from '@/components/PhoneEntryModal.vue'
 import FollowUpsSidebar from '@/components/FollowUpsSidebar.vue'
 import NotificationDropdown from '@/components/NotificationDropdown.vue'
