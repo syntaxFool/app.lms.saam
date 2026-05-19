@@ -12,6 +12,7 @@
  */
 
 import type { WASocket } from '@whiskeysockets/baileys'
+import { USyncQuery, USyncUser } from '@whiskeysockets/baileys'
 
 // ─── Sync normalization (handles device suffixes) ──────────────────────────
 
@@ -80,24 +81,34 @@ export interface ContactResolution {
 }
 
 /**
+ * Extract the raw JID local part (before @ and : suffixes).
+ * Used as a consistent fallback identifier for LID users.
+ */
+function jidLocalPart(jid: string): string {
+  return jid.split('@')[0]?.split(':')[0] || ''
+}
+
+/**
  * Resolve a WhatsApp JID to a verified phone number using WhatsApp's
- * contact lookup endpoint (sock.onWhatsApp).
+ * contact lookup APIs.
  *
- * For phone-based JIDs (with optional device suffix):
- *   1. Normalizes the JID to a candidate phone
- *   2. Calls WhatsApp's onWhatsApp to verify the number exists
- *   3. Confirms the returned JID matches the sender
- *
- * For LID-based JIDs (privacy users), falls back to returning the
- * normalized candidate with lid=true so the caller can handle it.
+ * Strategy (tried in order):
+ *   1. Normalize JID → call onWhatsApp(phone) — confirms number exists
+ *   2. If onWhatsApp returns a LID → the number exists! Return the normalized phone.
+ *   3. If onWhatsApp fails (LID where we don't have the phone) →
+ *      query USync by LID JID directly — the response may contain the
+ *      phone-based JID (not just the LID), which we can normalize.
+ *   4. Last resort: use the raw JID local part as a stable identifier.
  */
 export async function resolveContactPhone(
   jid: string,
   sock: WASocket
 ): Promise<ContactResolution> {
   const candidate = normalizeJidToLmsPhone(jid)
+  const rawId = jidLocalPart(jid)
 
   try {
+    // ── Step 1: Try onWhatsApp with the normalized phone ──
     const results = await sock.onWhatsApp(candidate)
 
     if (results && results.length > 0) {
@@ -105,12 +116,14 @@ export async function resolveContactPhone(
 
       if (entry.exists) {
         const confirmedBase = (entry.jid?.split('@')[0]?.split(':')[0] || '').replace(/\D/g, '')
-        const originalBase = jid.split('@')[0]?.split(':')[0]?.replace(/\D/g, '') || ''
+        const originalBase = rawId.replace(/\D/g, '')
 
         if (entry.lid) {
-          // User has privacy-enabled (LID). Can't get real phone number.
-          console.warn(`[Moon] ⚠️ LID user detected: ${jid}. Using fallback identifier.`)
-          return { phone: candidate, verified: false, lid: true }
+          // onWhatsApp returned a LID — but the phone number EXISTS on WhatsApp.
+          // The candidate phone IS a real WhatsApp number. Return it.
+          // The `lid` flag means the user has privacy, but the phone itself is valid.
+          console.log(`[Moon] 📞 Phone ${candidate} exists (LID user). Using number as-is.`)
+          return { phone: candidate, verified: true, lid: true }
         }
 
         if (confirmedBase && confirmedBase === originalBase) {
@@ -119,8 +132,7 @@ export async function resolveContactPhone(
           return { phone: verified, verified: true, lid: false }
         }
 
-        // Mismatch — the number resolved to a different user.
-        // Use the confirmed JID's phone as a better guess.
+        // Mismatch — use the confirmed JID's phone
         if (entry.jid) {
           const fallback = normalizeJidToLmsPhone(entry.jid)
           return { phone: fallback, verified: true, lid: false }
@@ -128,11 +140,65 @@ export async function resolveContactPhone(
       }
     }
 
-    // No results — candidate number doesn't exist on WhatsApp
-    return { phone: candidate, verified: false, lid: true }
+    // ── Step 2: onWhatsApp returned nothing — try USync query by JID ──
+    // When querying by LID JID with contact+LID protocols, WhatsApp may
+    // return the phone-based JID in the user node's `jid` attribute.
+    console.log(`[Moon] 🔍 onWhatsApp returned nothing for ${candidate}. Trying USync by JID...`)
+    const jidPhone = await resolvePhoneByJid(jid, sock)
+    if (jidPhone) {
+      return { phone: jidPhone, verified: true, lid: false }
+    }
+
+    // ── Step 3: All lookups failed — use raw JID identifier ──
+    console.warn(`[Moon] ⚠️ Could not resolve phone for ${jid}. Using raw identifier: ${rawId}`)
+    return { phone: rawId, verified: false, lid: true }
 
   } catch (err) {
     console.error(`[Moon] WhatsApp lookup failed for ${candidate}:`, err)
     return { phone: candidate, verified: false, lid: false }
+  }
+}
+
+/**
+ * Try to resolve a phone number by querying WhatsApp's USync endpoint
+ * directly with the user's JID (which may be a LID).
+ *
+ * The USync response includes the user's JID (which might be the phone-based
+ * JID even when querying by LID). We normalize that to get the phone.
+ */
+async function resolvePhoneByJid(
+  jid: string,
+  sock: WASocket
+): Promise<string | null> {
+  try {
+    const query = new USyncQuery()
+      .withContactProtocol()
+      .withLIDProtocol()
+
+    query.withUser(new USyncUser().withId(jid))
+
+    const result = await (sock as any).executeUSyncQuery(query)
+    if (!result?.list?.length) return null
+
+    const entry = result.list[0]
+    // entry.id is the JID from the response (might be phone-based JID)
+    // entry.contact is true/false (whether contact exists)
+    // entry.lid is the LID value
+
+    if (entry && entry.id) {
+      // Check if the returned JID gives us a valid phone
+      const phoneFromJid = normalizeJidToLmsPhone(entry.id)
+      // If the JID has digits that look like a real phone (12 digits starting with 91, etc.)
+      const digits = entry.id.replace(/@.*$/, '').replace(/\D/g, '')
+      if (digits.length >= 10 && digits.length <= 15) {
+        console.log(`[Moon] 📞 USync JID lookup resolved: ${entry.id} → ${phoneFromJid}`)
+        return phoneFromJid
+      }
+    }
+
+    return null
+  } catch (err) {
+    console.error(`[Moon] USync JID lookup failed:`, err)
+    return null
   }
 }

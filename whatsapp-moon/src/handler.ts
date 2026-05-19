@@ -19,6 +19,10 @@ interface WAMessage {
     remoteJid: string
     fromMe: boolean
     id: string
+    /** Phone-number JID for LID users — set when sender has privacy enabled */
+    senderPn?: string
+    /** LID identifier for the sender */
+    senderLid?: string
   }
   message?: {
     conversation?: string
@@ -47,13 +51,24 @@ export async function handleIncomingMessage(msg: WAMessage, sock: WASocket): Pro
   const text = extractMessageText(msg)
   const summary = text ? text.slice(0, 80) : '(media)'
 
+  // ── Use senderPn if available (WhatsApp provides phone JID for LID users) ──
+  // When a sender has privacy enabled, msg.key.remoteJid is a @lid JID,
+  // but msg.key.senderPn contains their actual phone-number JID.
+  const effectiveJid = (jid.endsWith('@lid') && msg.key.senderPn)
+    ? msg.key.senderPn
+    : jid
+
+  if (effectiveJid !== jid) {
+    console.log(`[Moon] 🔑 Using senderPn(${effectiveJid}) instead of lid JID(${jid})`)
+  }
+
   // ── Resolve phone via WhatsApp contact lookup ──
   let phone: string
   try {
-    const resolution = await resolveContactPhone(jid, sock)
+    const resolution = await resolveContactPhone(effectiveJid, sock)
     phone = resolution.phone
   } catch (err) {
-    console.error(`[Moon] Failed to resolve phone for JID: ${jid}`, err)
+    console.error(`[Moon] Failed to resolve phone for JID: ${effectiveJid}`, err)
     return
   }
 
