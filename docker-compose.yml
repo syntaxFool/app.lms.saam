@@ -43,6 +43,23 @@ services:
     networks:
       - lms_net
 
+  moon:
+    build:
+      context: ./whatsapp-moon
+      dockerfile: Dockerfile
+    container_name: lms_moon
+    restart: unless-stopped
+    environment:
+      LMS_API_URL: http://lms_api:8080/api
+      MOON_API_KEY: ${MOON_API_KEY}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    volumes:
+      - moon_auth:/app/auth_info_moon
+    depends_on:
+      - backend
+    networks:
+      - lms_net
+
   nginx:
     image: nginx:alpine
     container_name: lms_nginx
@@ -75,23 +92,6 @@ services:
       - "traefik.http.routers.lms-old-https.entrypoints=https"
       - "traefik.http.routers.lms-old-https.tls=true"
       - "traefik.http.routers.lms-old-https.middlewares=lms-old-redirect"
-
-  moon:
-    build:
-      context: ./whatsapp-moon
-      dockerfile: Dockerfile
-    container_name: lms_moon
-    restart: unless-stopped
-    environment:
-      LMS_API_URL: http://lms_api:8080/api
-      MOON_API_KEY: ${MOON_API_KEY}
-      LOG_LEVEL: ${LOG_LEVEL:-info}
-    volumes:
-      - moon_auth:/app/auth_info_moon
-    depends_on:
-      - backend
-    networks:
-      - lms_net
 
 volumes:
   postgres_data:
