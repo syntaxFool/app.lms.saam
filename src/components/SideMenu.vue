@@ -74,6 +74,29 @@
             </div>
           </div>
 
+          <!-- Timeline Section -->
+          <div>
+            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+              <i class="ph-bold ph-clock-countdown"></i> Timeline
+            </h3>
+            <div class="space-y-1">
+              <button
+                @click="switchView('activity')"
+                class="w-full text-left px-4 py-2.5 rounded-lg flex items-center gap-3 hover:bg-slate-50 transition text-slate-700"
+              >
+                <i class="ph-bold ph-activity text-lg"></i>
+                <span class="font-medium">Activity</span>
+              </button>
+              <button
+                @click="switchView('task')"
+                class="w-full text-left px-4 py-2.5 rounded-lg flex items-center gap-3 hover:bg-slate-50 transition text-slate-700"
+              >
+                <i class="ph-bold ph-check-square text-lg"></i>
+                <span class="font-medium">Task</span>
+              </button>
+            </div>
+          </div>
+
           <!-- Quick Stats -->
           <div>
             <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-2">
