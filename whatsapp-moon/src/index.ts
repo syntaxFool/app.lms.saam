@@ -76,7 +76,7 @@ async function connect(): Promise<void> {
   sock.ev.on('messages.upsert', async ({ messages }) => {
     for (const msg of messages) {
       try {
-        await handleIncomingMessage(msg as any)
+        await handleIncomingMessage(msg as any, sock)
       } catch (err) {
         logger.error({ err }, 'Unhandled error in message handler')
       }

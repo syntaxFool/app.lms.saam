@@ -3,13 +3,15 @@
  *
  * Called for EVERY incoming WhatsApp message (except groups, broadcasts, own messages).
  * Flow:
- *   1. Extract phone from sender JID
- *   2. Check if lead exists in LMS
- *   3. If yes → add activity + notification
- *   4. If no  → create lead (auto-creates lead_created activity) + notification
+ *   1. Extract JID from message
+ *   2. Resolve phone via WhatsApp contact lookup (handles LIDs + device suffixes)
+ *   3. Check if lead exists in LMS
+ *   4. If yes → add activity + notification
+ *   5. If no  → create lead + notification
  */
 
-import { normalizeJidToLmsPhone } from './phone'
+import type { WASocket } from '@whiskeysockets/baileys'
+import { resolveContactPhone } from './phone'
 import { lmsApi } from './api'
 
 interface WAMessage {
@@ -27,7 +29,13 @@ interface WAMessage {
   }
 }
 
-export async function handleIncomingMessage(msg: WAMessage): Promise<void> {
+/**
+ * Handle an incoming WhatsApp message.
+ *
+ * @param msg   The raw WhatsApp message
+ * @param sock  The Baileys WASocket for contact lookups
+ */
+export async function handleIncomingMessage(msg: WAMessage, sock: WASocket): Promise<void> {
   // ── Filter: skip outgoing, group chats, broadcasts, status updates ──
   if (msg.key.fromMe) return
 
@@ -35,16 +43,17 @@ export async function handleIncomingMessage(msg: WAMessage): Promise<void> {
   if (!jid) return
   if (jid.includes('@g.us') || jid.includes('@broadcast') || jid.includes('@status')) return
 
-  // ── Extract message text (handle text, extended text, captions) ──
+  // ── Extract message text ──
   const text = extractMessageText(msg)
   const summary = text ? text.slice(0, 80) : '(media)'
 
-  // ── Normalize phone from JID ──
+  // ── Resolve phone via WhatsApp contact lookup ──
   let phone: string
   try {
-    phone = normalizeJidToLmsPhone(jid)
+    const resolution = await resolveContactPhone(jid, sock)
+    phone = resolution.phone
   } catch (err) {
-    console.error(`[Moon] Failed to normalize JID: ${jid}`, err)
+    console.error(`[Moon] Failed to resolve phone for JID: ${jid}`, err)
     return
   }
 
@@ -76,7 +85,7 @@ export async function handleIncomingMessage(msg: WAMessage): Promise<void> {
 
       console.log(`[Moon] ✅ Activity added to lead ${lead.id}`)
     } else {
-      // ── NEW LEAD: create lead + notification (activity auto-created by backend) ──
+      // ── NEW LEAD: create lead + notification ──
       const newLead = await lmsApi.createLead({
         phone,
         status: 'New',
@@ -102,7 +111,6 @@ export async function handleIncomingMessage(msg: WAMessage): Promise<void> {
     console.error(`[Moon] ❌ Error processing message from ${phone}:`,
       err.response?.status, err.response?.data || err.message)
 
-    // Try to notify about the failure
     try {
       await lmsApi.createNotification({
         title: '⚠️ Moon processing error',

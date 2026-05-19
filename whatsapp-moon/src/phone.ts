@@ -1,20 +1,42 @@
 /**
- * Phone normalization: WhatsApp JID → LMS phone format.
+ * Phone normalization & WhatsApp contact resolution.
  *
- * WhatsApp delivers JIDs like "918452093228@s.whatsapp.net".
+ * WhatsApp delivers JIDs like "918452093228@s.whatsapp.net", but can also
+ * include device suffixes (e.g. "918452093228:1@s.whatsapp.net") for
+ * multi-device, or be a LID (Login ID) for privacy-enabled users.
+ *
+ * normalizeJidToLmsPhone — pure JID→phone conversion (handles device suffixes).
+ * resolveContactPhone   — uses WhatsApp's contact lookup to verify & resolve.
+ *
  * LMS stores phones like "+91 8452093228" (with space after country code).
- *
- * This function bridges the two formats so the Moon service can
- * correctly look up and create leads via the LMS API.
  */
 
+import type { WASocket } from '@whiskeysockets/baileys'
+
+// ─── Sync normalization (handles device suffixes) ──────────────────────────
+
 export function normalizeJidToLmsPhone(jid: string): string {
-  // Strip @s.whatsapp.net and any non-digit characters
-  const digits = jid.replace(/@.*$/, '').replace(/\D/g, '')
+  // Step 1: Get the raw identifier before @domain
+  const beforeAt = jid.split('@')[0]
+  if (!beforeAt) {
+    throw new Error(`Cannot normalize empty JID: ${jid}`)
+  }
+
+  // Step 2: Strip device suffix (:1, :2, etc.) BEFORE stripping non-digits.
+  //   This prevents the device number from merging into the phone digits.
+  const phonePart = beforeAt.split(':')[0]
+  if (!phonePart) {
+    throw new Error(`Cannot normalize empty JID after removing device suffix: ${jid}`)
+  }
+
+  // Step 3: Now safely remove any remaining non-digit characters
+  const digits = phonePart.replace(/\D/g, '')
 
   if (digits.length === 0) {
     throw new Error(`Cannot normalize empty JID: ${jid}`)
   }
+
+  // ─── Known patterns ───
 
   // 10 digits — assume Indian number, prepend +91
   if (digits.length === 10) {
@@ -22,19 +44,16 @@ export function normalizeJidToLmsPhone(jid: string): string {
   }
 
   // 12 digits starting with 91 — Indian with country code
-  // e.g. "911234567890" → "+91 1234567890"
   if (digits.length === 12 && digits.startsWith('91')) {
     return `+91 ${digits.slice(2)}`
   }
 
   // 11 digits starting with 1 — US/Canada
-  // e.g. "14155551234" → "+1 4155551234"
   if (digits.length === 11 && digits.startsWith('1')) {
     return `+1 ${digits.slice(1)}`
   }
 
-  // General international (11-15 digits)
-  // Try common country code lengths: 3, 2, 1
+  // ─── General international (11-15 digits) ───
   if (digits.length >= 11 && digits.length <= 15) {
     for (const ccLen of [3, 2, 1]) {
       const cc = digits.slice(0, ccLen)
@@ -45,6 +64,75 @@ export function normalizeJidToLmsPhone(jid: string): string {
     }
   }
 
-  // Fallback: +CC XXXXXX
+  // ─── Fallback ───
   return `+${digits.slice(0, 2)} ${digits.slice(2)}`
+}
+
+// ─── Contact resolution result ─────────────────────────────────────────────
+
+export interface ContactResolution {
+  /** Phone number to use in LMS */
+  phone: string
+  /** Whether WhatsApp confirmed this phone via onWhatsApp lookup */
+  verified: boolean
+  /** Whether this is a LID user (phone is a JID-based fallback, not real number) */
+  lid: boolean
+}
+
+/**
+ * Resolve a WhatsApp JID to a verified phone number using WhatsApp's
+ * contact lookup endpoint (sock.onWhatsApp).
+ *
+ * For phone-based JIDs (with optional device suffix):
+ *   1. Normalizes the JID to a candidate phone
+ *   2. Calls WhatsApp's onWhatsApp to verify the number exists
+ *   3. Confirms the returned JID matches the sender
+ *
+ * For LID-based JIDs (privacy users), falls back to returning the
+ * normalized candidate with lid=true so the caller can handle it.
+ */
+export async function resolveContactPhone(
+  jid: string,
+  sock: WASocket
+): Promise<ContactResolution> {
+  const candidate = normalizeJidToLmsPhone(jid)
+
+  try {
+    const results = await sock.onWhatsApp(candidate)
+
+    if (results && results.length > 0) {
+      const entry = results[0]
+
+      if (entry.exists) {
+        const confirmedBase = (entry.jid?.split('@')[0]?.split(':')[0] || '').replace(/\D/g, '')
+        const originalBase = jid.split('@')[0]?.split(':')[0]?.replace(/\D/g, '') || ''
+
+        if (entry.lid) {
+          // User has privacy-enabled (LID). Can't get real phone number.
+          console.warn(`[Moon] ⚠️ LID user detected: ${jid}. Using fallback identifier.`)
+          return { phone: candidate, verified: false, lid: true }
+        }
+
+        if (confirmedBase && confirmedBase === originalBase) {
+          // Confirmed — phone number matches the sender's JID
+          const verified = normalizeJidToLmsPhone(entry.jid)
+          return { phone: verified, verified: true, lid: false }
+        }
+
+        // Mismatch — the number resolved to a different user.
+        // Use the confirmed JID's phone as a better guess.
+        if (entry.jid) {
+          const fallback = normalizeJidToLmsPhone(entry.jid)
+          return { phone: fallback, verified: true, lid: false }
+        }
+      }
+    }
+
+    // No results — candidate number doesn't exist on WhatsApp
+    return { phone: candidate, verified: false, lid: true }
+
+  } catch (err) {
+    console.error(`[Moon] WhatsApp lookup failed for ${candidate}:`, err)
+    return { phone: candidate, verified: false, lid: false }
+  }
 }
