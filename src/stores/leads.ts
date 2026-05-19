@@ -390,7 +390,7 @@ export const useLeadsStore = defineStore('leads', () => {
   }
 
   // ============ FETCH & SYNC ============
-  async function fetchLeads(page = 1, limit = 200): Promise<{ success: boolean; error?: string }> {
+  async function fetchLeads(page = 1, limit = 5000): Promise<{ success: boolean; error?: string }> {
     loading.value = true
     error.value = null
     try {
@@ -402,7 +402,18 @@ export const useLeadsStore = defineStore('leads', () => {
         }
       }) as import('@/types').ApiResponse
       if (response.success && response.data) {
-        leads.value = response.data.leads || []
+        // Merge: if since is set, merge updated leads into existing list instead of replacing
+        if (lastSyncTime.value && response.data.leads) {
+          const updatedMap = new Map((response.data.leads as Lead[]).map(l => [l.id, l]))
+          const existing = new Map(leads.value.map(l => [l.id, l]))
+          for (const [id, lead] of updatedMap) {
+            existing.set(id, lead)
+          }
+          leads.value = Array.from(existing.values())
+        } else {
+          // Full reload — no since filter
+          leads.value = response.data.leads || []
+        }
         lastSyncTime.value = Date.now()
         lastServerUpdate.value = response.data.lastUpdate || 0
         serverTotalCount.value = response.data.total ?? leads.value.length

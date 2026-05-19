@@ -85,7 +85,7 @@ router.get('/', requireAuth, async (req: Request, res: Response): Promise<void> 
   try {
     const since = req.query.since ? new Date(parseInt(req.query.since as string)).toISOString() : null
     const page  = Math.max(1, parseInt(req.query.page  as string) || 1)
-    const limit = Math.min(500, Math.max(1, parseInt(req.query.limit as string) || 200))
+    const limit = Math.min(10000, Math.max(1, parseInt(req.query.limit as string) || 500))
 
     // SECURITY: Role-based filtering
     // Agent role: ONLY see leads assigned to them
