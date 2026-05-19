@@ -17,6 +17,7 @@ import {
 } from '@whiskeysockets/baileys'
 import { Boom } from '@hapi/boom'
 import Pino from 'pino'
+import QRCode from 'qrcode-terminal'
 import { handleIncomingMessage } from './handler'
 import { config } from './config'
 
@@ -41,7 +42,13 @@ async function connect(): Promise<void> {
   sock.ev.on('creds.update', saveCreds)
 
   // Handle connection state changes with auto-reconnect
-  sock.ev.on('connection.update', ({ connection, lastDisconnect }) => {
+  sock.ev.on('connection.update', ({ connection, lastDisconnect, qr }) => {
+    // Show QR code in terminal for WhatsApp pairing
+    if (qr) {
+      QRCode.generate(qr, { small: true })
+      logger.info('📱 Scan the QR code above with WhatsApp to connect Moon')
+    }
+
     if (connection === 'close') {
       const statusCode = (lastDisconnect?.error as Boom)?.output?.statusCode
       const shouldReconnect = statusCode !== DisconnectReason.loggedOut

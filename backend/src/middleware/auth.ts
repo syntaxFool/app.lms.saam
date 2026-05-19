@@ -20,6 +20,11 @@ declare global {
 }
 
 export async function requireAuth(req: Request, res: Response, next: NextFunction): Promise<void> {
+  // If allowApiKey already set a synthetic user (internal service), skip JWT check
+  if (req.user) {
+    return next()
+  }
+
   const header = req.headers.authorization
   if (!header?.startsWith('Bearer ')) {
     res.status(401).json({ success: false, error: 'Missing or invalid authorization header' })
