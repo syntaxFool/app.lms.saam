@@ -423,11 +423,11 @@ router.post('/:id/tasks', requireAuth, async (req: Request, res: Response): Prom
        VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
       [req.params.id, title, note || null, dueDate || null, priority || 'medium', req.user!.username, assignedTo || null]
     )
-    // Log activity
+    // Log activity with related_task_id so it can be cleaned up on task delete
     await query(
-      `INSERT INTO activities (lead_id, type, note, created_by, role)
-       VALUES ($1, 'task', $2, $3, $4)`,
-      [req.params.id, `Task created: ${title}`, req.user!.username, req.user!.role]
+      `INSERT INTO activities (lead_id, type, note, created_by, role, related_task_id)
+       VALUES ($1, 'task', $2, $3, $4, $5)`,
+      [req.params.id, `Task created: ${title}`, req.user!.username, req.user!.role, row!.id]
     )
     res.status(201).json({ success: true, data: row })
   } catch (err) {
@@ -458,7 +458,10 @@ router.put('/:id/tasks/:taskId', requireAuth, async (req: Request, res: Response
 // ─── DELETE /api/leads/:id/tasks/:taskId ───
 router.delete('/:id/tasks/:taskId', requireAuth, async (req: Request, res: Response): Promise<void> => {
   try {
-    await query('DELETE FROM tasks WHERE id = $1 AND lead_id = $2', [req.params.taskId, req.params.id])
+    await Promise.all([
+      query('DELETE FROM tasks WHERE id = $1 AND lead_id = $2', [req.params.taskId, req.params.id]),
+      query('DELETE FROM activities WHERE related_task_id = $1 AND type = \'task\'', [req.params.taskId]),
+    ])
     res.json({ success: true })
   } catch (err) {
     console.error('Delete task error:', err)

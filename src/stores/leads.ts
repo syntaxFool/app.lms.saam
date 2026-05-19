@@ -205,7 +205,7 @@ export const useLeadsStore = defineStore('leads', () => {
   }
 
   // ============ ACTIVITY MANAGEMENT ============
-  async function addActivity(leadId: string, activity: Omit<Activity, 'id' | 'timestamp' | 'createdBy' | 'role'>): Promise<boolean> {
+  async function addActivity(leadId: string, activity: Omit<Activity, 'id' | 'timestamp' | 'createdBy' | 'role'> & { changes?: Record<string, unknown> }): Promise<boolean> {
     const lead = leads.value.find(l => l.id === leadId)
     if (!lead) return false
 
@@ -213,7 +213,8 @@ export const useLeadsStore = defineStore('leads', () => {
       // Call backend API to persist activity
       const response = await apiClient.post(`/leads/${leadId}/activities`, {
         type: activity.type,
-        note: activity.note
+        note: activity.note,
+        ...(activity.changes ? { changes: activity.changes } : {})
       })
 
       if (!response.data?.data) return false
@@ -488,6 +489,9 @@ export const useLeadsStore = defineStore('leads', () => {
       const lead = leads.value.find(l => l.id === id)
       if (!lead) return { success: false, error: 'Lead not found' }
 
+      const oldStatus = lead.status
+      const oldAssignedTo = lead.assignedTo
+
       // Check for conflicts if snapshot exists
       if (editingLeadSnapshot.value && detectConflict(editingLeadSnapshot.value.lead, lead)) {
         const merged = smartMergeLead(lead, updates)
@@ -501,17 +505,33 @@ export const useLeadsStore = defineStore('leads', () => {
       lead.lastModifiedBy = user?.name || 'System'
 
       // Log activities for status/assignment changes (don't await - fire and forget)
-      if (updates.status && editingLeadSnapshot.value?.lead.status !== updates.status) {
-        addActivity(id, {
+      if (updates.status && oldStatus !== updates.status) {
+        const statusActivityDone = addActivity(id, {
           type: 'status_change',
-          note: `Status changed from ${editingLeadSnapshot.value?.lead.status} to ${updates.status}`
+          note: `Status changed from ${oldStatus} to ${updates.status}`,
+          changes: { status: { old: oldStatus, new: updates.status } }
         }).catch(err => console.error('Failed to log status change activity:', err))
+
+        if (updates.status === 'Lost' && updates.lostReason) {
+          // Await status_change first so lost_reason always appears after it in the timeline
+          statusActivityDone.then(() =>
+            addActivity(id, {
+              type: 'lost_reason',
+              note: `Lost reason: ${updates.lostReason}`,
+              changes: {
+                reason: { old: '', new: updates.lostReason },
+                reasonType: { old: null, new: updates.lostReasonType ?? null }
+              }
+            }).catch(err => console.error('Failed to log lost reason activity:', err))
+          )
+        }
       }
 
-      if (updates.assignedTo && editingLeadSnapshot.value?.lead.assignedTo !== updates.assignedTo) {
+      if (updates.assignedTo && oldAssignedTo !== updates.assignedTo) {
         addActivity(id, {
           type: 'assignment',
-          note: `Lead reassigned to ${updates.assignedTo}`
+          note: `Lead reassigned to ${updates.assignedTo}`,
+          changes: { assignedTo: { old: oldAssignedTo, new: updates.assignedTo } }
         }).catch(err => console.error('Failed to log assignment activity:', err))
       }
 
@@ -670,11 +690,18 @@ export const useLeadsStore = defineStore('leads', () => {
     if (taskIndex === -1) return false
 
     try {
-      // Call backend API to delete task
+      // Call backend API to delete task (also deletes related task activity on server)
       await apiClient.delete(`/leads/${leadId}/tasks/${taskId}`)
 
-      // Remove from local state
+      // Remove task from local state
       lead.tasks.splice(taskIndex, 1)
+
+      // Remove the matching task activity from local state
+      if (lead.activities) {
+        const actIdx = lead.activities.findIndex(a => a.relatedTaskId === taskId && a.type === 'task')
+        if (actIdx !== -1) lead.activities.splice(actIdx, 1)
+      }
+
       return true
     } catch (error) {
       console.error('Delete task error:', error)
@@ -705,8 +732,10 @@ export const useLeadsStore = defineStore('leads', () => {
       task.completedAt = completedAt || undefined
       if (newStatus === 'completed') {
         task.resolution = resolution
-      } else {
-        task.resolution = undefined
+        const note = resolution?.trim()
+          ? `Task completed: ${task.title} — ${resolution.trim()}`
+          : `Task completed: ${task.title}`
+        addActivity(leadId, { type: 'task', note }).catch(err => console.error('Failed to log task completion activity:', err))
       }
 
       return true
