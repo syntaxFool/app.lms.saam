@@ -47,7 +47,7 @@
           <!-- Details Input -->
           <div class="mb-4">
             <label class="block text-sm font-semibold text-slate-700 mb-2">
-              Additional Details <span class="text-slate-400 font-normal">(Optional)</span>
+              Additional Details <span class="text-red-500">*</span>
             </label>
             <textarea
               v-model="details"
@@ -73,7 +73,7 @@
           </button>
           <button
             @click="submit"
-            :disabled="!selectedReason"
+            :disabled="!selectedReason || !details.trim()"
             class="flex-1 bg-red-600 text-white font-bold py-2.5 rounded-lg hover:bg-red-700 disabled:bg-slate-300 disabled:cursor-not-allowed transition"
           >
             Mark as Lost
