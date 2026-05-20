@@ -112,7 +112,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { useLeadsStore } from '@/stores/leads'
 import { api } from '@/services/api'
 
@@ -148,6 +148,9 @@ const leadsStore = useLeadsStore()
 const isOpen = ref(false)
 const activeFilter = ref('All')
 const filters = ['All', 'Follow-ups', 'Tasks', 'Leads', 'Server']
+
+// Persistent read state for local notifications (computed recreates objects, so we track read status here)
+const localReadState = reactive<Set<string>>(new Set())
 
 // ── Server notification state ──────────────────────────────────────────────
 const serverNotifications = ref<ServerNotification[]>([])
@@ -217,14 +220,15 @@ const localNotifications = computed<Notification[]>(() => {
     })
     .forEach(lead => {
       const daysOverdue = Math.floor((today.getTime() - new Date(lead.followUpDate!).getTime()) / (1000 * 60 * 60 * 24))
+      const id = `overdue-${lead.id}`
       notifs.push({
-        id: `overdue-${lead.id}`,
+        id,
         type: 'overdue-follow-up',
         title: 'Overdue Follow-up',
         message: `${lead.name || lead.phone} - ${daysOverdue} day${daysOverdue > 1 ? 's' : ''} overdue`,
         leadId: lead.id,
         createdAt: new Date(lead.followUpDate!),
-        read: false
+        read: localReadState.has(id)
       })
     })
 
@@ -240,14 +244,15 @@ const localNotifications = computed<Notification[]>(() => {
       return followUpDate.getTime() === tomorrow.getTime()
     })
     .forEach(lead => {
+      const id = `upcoming-${lead.id}`
       notifs.push({
-        id: `upcoming-${lead.id}`,
+        id,
         type: 'upcoming-follow-up',
         title: 'Upcoming Follow-up Tomorrow',
         message: `${lead.name || lead.phone} - Call scheduled`,
         leadId: lead.id,
         createdAt: new Date(),
-        read: false
+        read: localReadState.has(id)
       })
     })
 
@@ -261,14 +266,15 @@ const localNotifications = computed<Notification[]>(() => {
         dueDate.setHours(0, 0, 0, 0)
         if (dueDate < today) {
           const daysOverdue = Math.floor((today.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24))
+          const id = `task-${lead.id}-${task.id}`
           notifs.push({
-            id: `task-${lead.id}-${task.id}`,
+            id,
             type: 'overdue-task',
             title: 'Overdue Task',
             message: `"${task.title}" for ${lead.name || lead.phone} - ${daysOverdue} day${daysOverdue > 1 ? 's' : ''} overdue`,
             leadId: lead.id,
             createdAt: dueDate,
-            read: false
+            read: localReadState.has(id)
           })
         }
       })
@@ -375,16 +381,15 @@ function handleNotificationClick(notification: Notification) {
 }
 
 function markAsRead(id: string) {
-  const notification = notifications.value.find(n => n.id === id)
-  if (notification) {
-    notification.read = true
-  }
+  localReadState.add(id)
 }
 
 function markAllAsRead() {
-  // Local notifications
-  localNotifications.value.forEach(n => n.read = true)
-  // Server notifications
+  // Mark all local notifications as read
+  for (const n of localNotifications.value) {
+    localReadState.add(n.id)
+  }
+  // Mark all server notifications as read
   markAllServerRead()
 }
 </script>
