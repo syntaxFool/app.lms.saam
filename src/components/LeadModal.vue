@@ -451,7 +451,7 @@
                   v-model="newTaskNote"
                   rows="2"
                   class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none resize-none mb-3"
-                  placeholder="Task note (optional)..."
+                  placeholder="Describe the task..."
                 ></textarea>
                 <div class="flex gap-2 mb-2">
                   <input
@@ -467,7 +467,7 @@
                 </div>
                 <button
                   @click="addTask"
-                  :disabled="!newTaskTitle.trim() || isAddingTask"
+                  :disabled="!newTaskTitle.trim() || !newTaskNote.trim() || isAddingTask"
                   class="w-full px-4 bg-primary text-white text-sm font-semibold py-2 rounded-lg hover:bg-indigo-600 disabled:bg-slate-300 disabled:cursor-not-allowed transition"
                 >
                   <span v-if="isAddingTask" class="inline-block text-lg animate-pulse">{{ taskMoon.getCurrentMoon() }}</span>
