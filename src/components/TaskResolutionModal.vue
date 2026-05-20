@@ -25,7 +25,7 @@
             v-model="resolution"
             rows="4"
             class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none resize-none"
-            placeholder="Task resolution (optional)..."
+            placeholder="Describe what was done..."
             ref="resolutionInput"
           ></textarea>
         </div>
@@ -40,7 +40,8 @@
           </button>
           <button
             @click="confirm"
-            class="flex-1 px-4 py-2 bg-primary text-white font-semibold rounded-lg hover:bg-indigo-600 transition"
+            :disabled="!resolution.trim()"
+            class="flex-1 px-4 py-2 bg-primary text-white font-semibold rounded-lg hover:bg-indigo-600 transition disabled:bg-slate-300 disabled:cursor-not-allowed"
           >
             <i class="ph-bold ph-check mr-1"></i> Mark Complete
           </button>
