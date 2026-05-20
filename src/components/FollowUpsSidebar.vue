@@ -226,9 +226,10 @@ const getEarliestDate = (lead: Lead): Date | null => {
 // Filter leads by agent — include leads with followUpDate OR pending tasks with due dates
 const filteredLeads = computed(() => {
   let leads = leadsStore.leads.filter(lead => {
-    const hasFollowUp = !!lead.followUpDate
-    const hasPendingTasks = lead.tasks?.some(t => t.status === 'pending' && t.dueDate)
-    return hasFollowUp || hasPendingTasks
+    // Exclude Won and Lost leads — follow-ups are only for active leads
+    if (lead.status === 'Won' || lead.status === 'Lost') return false
+    // Only include leads that have at least one pending task with a due date
+    return lead.tasks?.some(t => t.status === 'pending' && t.dueDate) ?? false
   })
   if (selectedAgent.value) {
     leads = leads.filter(lead => lead.assignedTo === selectedAgent.value)
