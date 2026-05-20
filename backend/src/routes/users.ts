@@ -109,7 +109,7 @@ router.put('/:id', requireAuth, requireRole('superuser', 'admin'), validate(upda
 
     if (password) {
       const hashed = await bcrypt.hash(password, 12)
-      passwordClause = ', password = $5'
+      passwordClause = ', password = $4'
       params.splice(3, 0, hashed)
       params[params.length - 1] = id
     }
