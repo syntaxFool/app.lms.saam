@@ -29,6 +29,7 @@ services:
       ALLOWED_ORIGINS:  ${ALLOWED_ORIGINS}
       PORT:             8080
       MOON_API_KEY:     ${MOON_API_KEY}
+      GLITCHTIP_DSN:    ${GLITCHTIP_DSN}
     depends_on:
       - postgres
     networks:

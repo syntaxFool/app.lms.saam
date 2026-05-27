@@ -10,14 +10,11 @@ import usersRoutes    from './routes/users'
 import settingsRoutes from './routes/settings'
 import notificationsRoutes from './routes/notifications'
 
-// ─── Sentry (must init before everything else) ───
-if (process.env.SENTRY_DSN) {
-  Sentry.init({
-    dsn: process.env.SENTRY_DSN,
-    environment: process.env.NODE_ENV || 'production',
-    tracesSampleRate: 0.1,
-  })
-}
+import { requestLogger, sentryBreadcrumbs } from './middleware/requestLogger'
+import { initGlitchTip } from './glitchtip'
+
+// ─── GlitchTip / Sentry (must init before everything else) ───
+initGlitchTip()
 
 const app = express()
 const PORT = parseInt(process.env.PORT || '8080')
@@ -39,6 +36,10 @@ app.use(cors({
 
 // ─── Body parsing ───
 app.use(express.json({ limit: '1mb' }))
+
+// ─── Request logging & Sentry breadcrumbs ───
+app.use(requestLogger)
+app.use(sentryBreadcrumbs)
 
 // ─── Global rate limit ───
 app.use(rateLimit({
@@ -64,7 +65,7 @@ app.use('/api/settings', settingsRoutes)
 app.use('/api/notifications', notificationsRoutes)
 
 // ─── Sentry error handler (must be after routes) ───
-if (process.env.SENTRY_DSN) {
+if (process.env.GLITCHTIP_DSN || process.env.SENTRY_DSN) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   app.use(Sentry.expressErrorHandler() as unknown as express.ErrorRequestHandler)
 }
