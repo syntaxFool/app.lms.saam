@@ -42,7 +42,11 @@ const activityIcons: Record<ActivityType, string> = {
   task: 'ph-bold ph-check-square',
   follow_up: 'ph-bold ph-clock',
   field_update: 'ph-bold ph-pencil-simple',
-  lost_reason: 'ph-bold ph-x-circle'
+  lost_reason: 'ph-bold ph-x-circle',
+  note: 'ph-bold ph-note-pencil',
+  call: 'ph-bold ph-phone-call',
+  message: 'ph-bold ph-chat-text',
+  whatsapp: 'ph-bold ph-whatsapp-logo'
 }
 
 const activityLabels: Record<ActivityType, string> = {
@@ -52,7 +56,11 @@ const activityLabels: Record<ActivityType, string> = {
   task: 'Task',
   follow_up: 'Follow Up',
   field_update: 'Field Updated',
-  lost_reason: 'Lost Reason'
+  lost_reason: 'Lost Reason',
+  note: 'Note',
+  call: 'Call',
+  message: 'Message',
+  whatsapp: 'WhatsApp'
 }
 
 function getActivityIcon(type: ActivityType): string {

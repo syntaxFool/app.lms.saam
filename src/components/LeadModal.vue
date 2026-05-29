@@ -710,7 +710,7 @@ const handleWhatsAppClick = async () => {
   try {
     const leadName = existingLead.value?.name || formData.value.name || 'Unknown'
     const phone = existingLead.value?.phone || formData.value.phone || ''
-    await leadsStore.addActivity(props.leadId, { type: 'message', note: `WhatsApp message initiated from Contact tab — ${phone}` })
+    await leadsStore.addActivity(props.leadId, { type: 'whatsapp', note: `WhatsApp message initiated from Contact tab — ${phone}` })
     const existingAutoTask = existingLead.value?.tasks?.find(
       t => t.status === 'pending' && t.title.startsWith('Auto Task WhatsApp —')
     )

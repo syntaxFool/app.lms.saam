@@ -4,7 +4,7 @@
 export type LeadStatus = 'New' | 'Contacted' | 'Proposal' | 'Won' | 'Lost'
 export type Temperature = 'Hot' | 'Warm' | 'Cold' | ''
 export type TaskStatus = 'pending' | 'completed' | 'dropped'
-export type ActivityType = 'lead_created' | 'status_change' | 'assignment' | 'task' | 'follow_up' | 'field_update' | 'lost_reason' | 'note' | 'call' | 'message'
+export type ActivityType = 'lead_created' | 'status_change' | 'assignment' | 'task' | 'follow_up' | 'field_update' | 'lost_reason' | 'note' | 'call' | 'message' | 'whatsapp'
 export type UserRole = 'superuser' | 'admin' | 'agent' | 'user'
 export type PriorityLevel = 'critical' | 'high' | 'medium' | 'low'
 export type FollowUpCategory = 'overdue' | 'today' | 'upcoming'

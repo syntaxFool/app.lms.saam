@@ -14,7 +14,7 @@ const emit = defineEmits<{
 const allActivityTypes: Array<{ key: string; label: string; icon: string }> = [
   { key: 'all', label: 'All', icon: 'ph-list' },
   { key: 'lead_created', label: 'Created', icon: 'ph-user-plus' },
-  { key: 'message', label: 'Message', icon: 'ph-chat-text' },
+  { key: 'whatsapp', label: 'WhatsApp', icon: 'ph-whatsapp-logo' },
   { key: 'task', label: 'Task', icon: 'ph-check-square' },
   { key: 'status_change', label: 'Status', icon: 'ph-arrows-left-right' },
   { key: 'note', label: 'Note', icon: 'ph-note-pencil' },
@@ -77,6 +77,7 @@ const activityConfig: Record<string, { icon: string; color: string }> = {
   note:          { icon: 'ph-note-pencil',   color: 'text-sky-600 bg-sky-100' },
   call:          { icon: 'ph-phone-call',    color: 'text-emerald-600 bg-emerald-100' },
   message:       { icon: 'ph-chat-text',     color: 'text-indigo-600 bg-indigo-100' },
+  whatsapp:      { icon: 'ph-whatsapp-logo',  color: 'text-emerald-600 bg-emerald-100' },
 }
 
 function getActivityIcon(type: string): string {
