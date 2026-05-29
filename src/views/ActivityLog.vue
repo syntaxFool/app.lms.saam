@@ -15,11 +15,11 @@ const allActivityTypes: Array<{ key: string; label: string; icon: string }> = [
   { key: 'all', label: 'All', icon: 'ph-list' },
   { key: 'lead_created', label: 'Created', icon: 'ph-user-plus' },
   { key: 'message', label: 'Message', icon: 'ph-chat-text' },
-  { key: 'whatsapp', label: 'WhatsApp', icon: 'ph-whatsapp-logo' },
   { key: 'task', label: 'Task', icon: 'ph-check-square' },
   { key: 'status_change', label: 'Status', icon: 'ph-arrows-left-right' },
   { key: 'note', label: 'Note', icon: 'ph-note-pencil' },
   { key: 'call', label: 'Call', icon: 'ph-phone-call' },
+  { key: 'whatsapp', label: 'WhatsApp', icon: 'ph-whatsapp-logo' },
 ]
 
 const activeFilter = ref<string>('all')
