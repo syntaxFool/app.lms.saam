@@ -54,6 +54,11 @@ export function normalizeJidToLmsPhone(jid: string): string {
     return `+1 ${digits.slice(1)}`
   }
 
+  // 11 digits starting with 61 — Australia
+  if (digits.length === 11 && digits.startsWith('61')) {
+    return `+61 ${digits.slice(2)}`
+  }
+
   // ─── General international (11-15 digits) ───
   if (digits.length >= 11 && digits.length <= 15) {
     for (const ccLen of [3, 2, 1]) {
