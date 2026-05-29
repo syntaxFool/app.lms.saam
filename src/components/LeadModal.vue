@@ -542,19 +542,22 @@
             <div class="text-slate-600 text-sm">
               <p v-if="!formData.phone" class="text-slate-400">No phone number available</p>
               <div v-else class="space-y-3">
-                <a
-                  :href="callLink"
-                  class="block w-full bg-green-500 text-white rounded-xl py-4 text-center font-bold hover:bg-green-600 transition"
+                <button
+                  @click="handleCallClick"
+                  :disabled="!!isContactActionloading"
+                  class="block w-full bg-green-500 text-white rounded-xl py-4 text-center font-bold hover:bg-green-600 transition disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  <i class="ph-bold ph-phone mr-2"></i> Call
-                </a>
-                <a
-                  :href="whatsappLink"
-                  target="_blank"
-                  class="block w-full bg-[#25D366] text-white rounded-xl py-4 text-center font-bold hover:bg-[#20BA5D] transition"
+                  <span v-if="isContactActionloading === 'call'" class="inline-block animate-pulse">{{ contactMoon.getCurrentMoon() }}</span>
+                  <template v-else><i class="ph-bold ph-phone mr-2"></i> Call</template>
+                </button>
+                <button
+                  @click="handleWhatsAppClick"
+                  :disabled="!!isContactActionloading"
+                  class="block w-full bg-[#25D366] text-white rounded-xl py-4 text-center font-bold hover:bg-[#20BA5D] transition disabled:opacity-60 disabled:cursor-not-allowed"
                 >
-                  <i class="ph-bold ph-whatsapp-logo mr-2"></i> WhatsApp
-                </a>
+                  <span v-if="isContactActionloading === 'whatsapp'" class="inline-block animate-pulse">{{ contactMoon.getCurrentMoon() }}</span>
+                  <template v-else><i class="ph-bold ph-whatsapp-logo mr-2"></i> WhatsApp</template>
+                </button>
               </div>
             </div>
           </div>
@@ -631,6 +634,7 @@ const { formatToDateTime } = useDateUtils()
 const saveMoon = useMoonLoading()
 const taskMoon = useMoonLoading()
 const activityMoon = useMoonLoading()
+const contactMoon = useMoonLoading()
 
 interface Props {
   isOpen: boolean
@@ -671,6 +675,58 @@ const previousStatus = ref<string>('')
 const newActivity = ref('')
 const isAddingActivity = ref(false)
 const isSaving = ref(false)
+const isContactActionloading = ref<'call' | 'whatsapp' | null>(null)
+
+// Contact tab: log activity + create auto-prefixed task, then open link
+const handleCallClick = async () => {
+  if (!props.leadId || isContactActionloading.value) return
+  isContactActionloading.value = 'call'
+  contactMoon.start()
+  try {
+    const leadName = existingLead.value?.name || formData.value.name || 'Unknown'
+    const phone = existingLead.value?.phone || formData.value.phone || ''
+    await leadsStore.addActivity(props.leadId, { type: 'call', note: `Call initiated from Contact tab — ${phone}` })
+    const existingAutoTask = existingLead.value?.tasks?.find(
+      t => t.status === 'pending' && t.title.startsWith('Auto Task Call —')
+    )
+    if (!existingAutoTask) {
+      const dueDate = new Date(Date.now() + 30 * 60 * 1000).toISOString()
+      await leadsStore.addTask(props.leadId, { title: `Auto Task Call — ${leadName}`, note: 'Auto-generated follow-up after initiating call', dueDate, status: 'pending' })
+    }
+    window.location.href = callLink.value
+  } catch (error) {
+    console.error('Failed to log call:', error)
+    window.location.href = callLink.value
+  } finally {
+    isContactActionloading.value = null
+    contactMoon.stop()
+  }
+}
+
+const handleWhatsAppClick = async () => {
+  if (!props.leadId || isContactActionloading.value) return
+  isContactActionloading.value = 'whatsapp'
+  contactMoon.start()
+  try {
+    const leadName = existingLead.value?.name || formData.value.name || 'Unknown'
+    const phone = existingLead.value?.phone || formData.value.phone || ''
+    await leadsStore.addActivity(props.leadId, { type: 'message', note: `WhatsApp message initiated from Contact tab — ${phone}` })
+    const existingAutoTask = existingLead.value?.tasks?.find(
+      t => t.status === 'pending' && t.title.startsWith('Auto Task WhatsApp —')
+    )
+    if (!existingAutoTask) {
+      const dueDate = new Date(Date.now() + 30 * 60 * 1000).toISOString()
+      await leadsStore.addTask(props.leadId, { title: `Auto Task WhatsApp — ${leadName}`, note: 'Auto-generated follow-up after initiating WhatsApp message', dueDate, status: 'pending' })
+    }
+    window.open(whatsappLink.value, '_blank')
+  } catch (error) {
+    console.error('Failed to log WhatsApp:', error)
+    window.open(whatsappLink.value, '_blank')
+  } finally {
+    isContactActionloading.value = null
+    contactMoon.stop()
+  }
+}
 const isAddingTask = ref(false)
 const newTaskTitle = ref('')
 const newTaskNote = ref('')
