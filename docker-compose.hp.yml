@@ -69,6 +69,17 @@ services:
       - "traefik.http.routers.lms-hp-http.rule=Host(`hp-lms.aika-shuz.fyi`)"
       - "traefik.http.routers.lms-hp-http.entrypoints=http"
       - "traefik.http.routers.lms-hp-http.middlewares=redirect-to-https"
+      # ── Redirect: hplms.aika-shuz.fyi → hp-lms.aika-shuz.fyi ──
+      - "traefik.http.middlewares.hp-old-redirect.redirectregex.regex=^https?://hplms[.]aika-shuz[.]fyi(.*)"
+      - "traefik.http.middlewares.hp-old-redirect.redirectregex.replacement=https://hp-lms.aika-shuz.fyi$${1}"
+      - "traefik.http.middlewares.hp-old-redirect.redirectregex.permanent=true"
+      - "traefik.http.routers.hp-old-http.rule=Host(`hplms.aika-shuz.fyi`)"
+      - "traefik.http.routers.hp-old-http.entrypoints=http"
+      - "traefik.http.routers.hp-old-http.middlewares=hp-old-redirect"
+      - "traefik.http.routers.hp-old-https.rule=Host(`hplms.aika-shuz.fyi`)"
+      - "traefik.http.routers.hp-old-https.entrypoints=https"
+      - "traefik.http.routers.hp-old-https.tls=true"
+      - "traefik.http.routers.hp-old-https.middlewares=hp-old-redirect"
 
 volumes:
   postgres_hp_data:

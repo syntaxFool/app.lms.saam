@@ -83,7 +83,7 @@ services:
       - "traefik.http.services.lms.loadbalancer.server.port=80"
       - "traefik.docker.network=coolify"
       # ── Redirect: sa0lms.myaddr.tools → ac-lms.aika-shuz.fyi ──
-      - "traefik.http.middlewares.lms-old-redirect.redirectregex.regex=^https?://sa0lms\.myaddr\.tools(.*)"
+      - "traefik.http.middlewares.lms-old-redirect.redirectregex.regex=^https?://sa0lms[.]myaddr[.]tools(.*)"
       - "traefik.http.middlewares.lms-old-redirect.redirectregex.replacement=https://ac-lms.aika-shuz.fyi$${1}"
       - "traefik.http.middlewares.lms-old-redirect.redirectregex.permanent=true"
       - "traefik.http.routers.lms-old-http.rule=Host(`sa0lms.myaddr.tools`)"
@@ -116,18 +116,6 @@ services:
       - "traefik.http.routers.lms-landing-http.rule=Host(`lms.aika-shuz.fyi`)"
       - "traefik.http.routers.lms-landing-http.entrypoints=http"
       - "traefik.http.routers.lms-landing-http.middlewares=redirect-to-https"
-
-volumes:
-      - "traefik.http.middlewares.lms-old-redirect.redirectregex.regex=^https?://sa0lms\\.myaddr\\.tools(.*)"
-      - "traefik.http.middlewares.lms-old-redirect.redirectregex.replacement=https://ac-lms.aika-shuz.fyi$${1}"
-      - "traefik.http.middlewares.lms-old-redirect.redirectregex.permanent=true"
-      - "traefik.http.routers.lms-old-http.rule=Host(`sa0lms.myaddr.tools`)"
-      - "traefik.http.routers.lms-old-http.entrypoints=http"
-      - "traefik.http.routers.lms-old-http.middlewares=lms-old-redirect"
-      - "traefik.http.routers.lms-old-https.rule=Host(`sa0lms.myaddr.tools`)"
-      - "traefik.http.routers.lms-old-https.entrypoints=https"
-      - "traefik.http.routers.lms-old-https.tls=true"
-      - "traefik.http.routers.lms-old-https.middlewares=lms-old-redirect"
 
 volumes:
   postgres_data:
