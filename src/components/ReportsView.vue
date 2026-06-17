@@ -654,6 +654,7 @@ import { useLeadScoring } from '@/composables/useLeadScoring'
 import { useAnalyticsUtils } from '@/composables/useAnalyticsUtils'
 import { useFollowUpTracking } from '@/composables/useFollowUpTracking'
 import DateRangePicker from '@/components/DateRangePicker.vue'
+import { STATUS_TAB_COLORS, TEMPERATURE_BG_COLORS } from '@/constants/leadOptions'
 import ConversionFunnelChart from '@/components/charts/ConversionFunnelChart.vue'
 import PipelineValueChart from '@/components/charts/PipelineValueChart.vue'
 import LeadSourceChart from '@/components/charts/LeadSourceChart.vue'
@@ -947,13 +948,11 @@ const timeToConvert = computed(() => {
 
 // ─── Colour helpers ───────────────────────────────────────────────
 function getStatusColor(status: string): string {
-  const c: Record<string, string> = { New: 'bg-blue-500', Contacted: 'bg-yellow-500', Proposal: 'bg-purple-500', Won: 'bg-green-500', Lost: 'bg-red-500' }
-  return c[status] || 'bg-slate-500'
+  return STATUS_TAB_COLORS[status] || 'bg-slate-500'
 }
 
 function getTempColor(temp: string): string {
-  const c: Record<string, string> = { Hot: 'bg-red-500', Warm: 'bg-amber-500', Cold: 'bg-blue-500', 'Not Set': 'bg-slate-300' }
-  return c[temp] || 'bg-slate-300'
+  return TEMPERATURE_BG_COLORS[temp] || 'bg-slate-300'
 }
 
 // ─── Expand/collapse animation ────────────────────────────────────

@@ -74,6 +74,7 @@ import type { Lead, LeadStatus } from '@/types'
 import LeadCard from './LeadCard.vue'
 import QuickActionsSheet from './QuickActionsSheet.vue'
 import { useLeadScoring } from '@/composables/useLeadScoring'
+import { LEAD_STATUSES, STATUS_TAB_COLORS } from '@/constants/leadOptions'
 
 const props = defineProps<{
   leads: Lead[]
@@ -121,7 +122,7 @@ function handleMoveStatus(id: string, status: LeadStatus) {
   emit('move', id, status)
 }
 
-const statuses: LeadStatus[] = ['New', 'Contacted', 'Proposal', 'Won', 'Lost']
+const statuses = LEAD_STATUSES
 
 const leadsByStatus = computed(() => {
   const result: Record<LeadStatus, Lead[]> = {
@@ -144,14 +145,7 @@ function columnTotal(status: LeadStatus): number {
 }
 
 function getStatusColor(status: LeadStatus): string {
-  const colors: Record<LeadStatus, string> = {
-    New: 'bg-blue-500',
-    Contacted: 'bg-yellow-500',
-    Proposal: 'bg-purple-500',
-    Won: 'bg-green-500',
-    Lost: 'bg-red-500'
-  }
-  return colors[status] || 'bg-slate-500'
+  return STATUS_TAB_COLORS[status] || 'bg-slate-500'
 }
 </script>
 

@@ -98,15 +98,15 @@
     <nav v-if="showMobileTabs" class="md:hidden bg-white border-b border-slate-200 py-2 shrink-0 z-10">
       <div class="flex px-3 gap-1.5 w-full">
         <button
-          v-for="status in statusConfig"
-          :key="status.id"
-          @click="activeStatus = status.id as LeadStatus; activeMobileTab = status.id as LeadStatus"
+          v-for="s in LEAD_STATUSES"
+          :key="s"
+          @click="activeStatus = s as LeadStatus; activeMobileTab = s as LeadStatus"
           :class="[
             'mobile-tab-btn',
-            activeStatus === status.id ? 'active' : ''
+            activeStatus === s ? 'active' : ''
           ]"
         >
-          {{ status.id }}
+          {{ s }}
         </button>
       </div>
     </nav>
@@ -266,6 +266,7 @@ import { useAppStore } from '@/stores/app'
 import { useMoonLoading } from '@/composables/useMoonLoading'
 import { useFollowUpTracking } from '@/composables/useFollowUpTracking'
 import type { LeadStatus } from '@/types'
+import { LEAD_STATUSES, STATUS_TAB_COLORS } from '@/constants/leadOptions'
 import LeadModal from '@/components/LeadModal.vue'
 import SearchModal from '@/components/SearchModal.vue'
 import SideMenu from '@/components/SideMenu.vue'
@@ -322,13 +323,7 @@ const pullState = ref({
   threshold: 80
 })
 
-const statusConfig = [
-  { id: 'New', color: 'bg-blue-500' },
-  { id: 'Contacted', color: 'bg-yellow-500' },
-  { id: 'Proposal', color: 'bg-purple-500' },
-  { id: 'Won', color: 'bg-green-500' },
-  { id: 'Lost', color: 'bg-red-500' }
-]
+const statusConfig = LEAD_STATUSES.map(s => ({ id: s, color: STATUS_TAB_COLORS[s] || 'bg-slate-500' }))
 
 // Apply filters from store
 const filteredLeads = computed(() => leadsStore.filteredLeads)

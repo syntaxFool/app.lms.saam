@@ -122,11 +122,7 @@
                 v-model="formData.status"
                 class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary outline-none"
               >
-                <option value="New">New</option>
-                <option value="Contacted">Contacted</option>
-                <option value="Proposal">Proposal</option>
-                <option value="Won">Won</option>
-                <option value="Lost">Lost</option>
+                <option v-for="s in LEAD_STATUSES" :key="s" :value="s">{{ s }}</option>
               </select>
             </div>
           </div>
@@ -140,9 +136,7 @@
                 class="w-full bg-white border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary outline-none"
               >
                 <option value="">Not Set</option>
-                <option value="Hot">🔴 Hot</option>
-                <option value="Warm">🟠 Warm</option>
-                <option value="Cold">🔵 Cold</option>
+                <option v-for="t in TEMPERATURE_OPTIONS" :key="t.value" :value="t.value">{{ t.label }}</option>
               </select>
             </div>
             <div>
@@ -275,6 +269,7 @@ import { ref, computed, watch } from 'vue'
 import type { Lead, User, LeadStatus } from '@/types'
 import { useCountryCodes } from '@/composables/useCountryCodes'
 import { useAuthStore } from '@/stores/auth'
+import { LEAD_STATUSES, TEMPERATURE_OPTIONS } from '@/constants/leadOptions'
 import ActivityTimeline from './ActivityTimeline.vue'
 import TaskList from './TaskList.vue'
 import CountryCodeSelect from './CountryCodeSelect.vue'

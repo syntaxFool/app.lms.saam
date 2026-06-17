@@ -49,11 +49,7 @@
                          text-sm outline-none"
                 >
                   <option value="">All Status</option>
-                  <option value="New">New</option>
-                  <option value="Contacted">Contacted</option>
-                  <option value="Proposal">Proposal</option>
-                  <option value="Won">Won</option>
-                  <option value="Lost">Lost</option>
+                  <option v-for="s in LEAD_STATUSES" :key="s" :value="s">{{ s }}</option>
                 </select>
               </div>
 
@@ -67,9 +63,7 @@
                          text-sm outline-none"
                 >
                   <option value="">All Temperature</option>
-                  <option value="Hot">🔴 Hot</option>
-                  <option value="Warm">🟠 Warm</option>
-                  <option value="Cold">🔵 Cold</option>
+                  <option v-for="t in TEMPERATURE_OPTIONS" :key="t.value" :value="t.value">{{ t.label }}</option>
                 </select>
               </div>
 
@@ -215,7 +209,7 @@
 import { ref, watch } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useAppStore } from '@/stores/app'
-import { LEAD_LOCATIONS } from '@/constants/leadOptions'
+import { LEAD_LOCATIONS, LEAD_STATUSES, TEMPERATURE_OPTIONS } from '@/constants/leadOptions'
 
 const authStore = useAuthStore()
 const appStore = useAppStore()

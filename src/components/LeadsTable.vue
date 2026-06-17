@@ -214,23 +214,13 @@
               <div class="text-xs text-slate-400 line-clamp-1">{{ lead.email }}</div>
             </td>
             <td class="px-4 py-3">
-              <span :class="{
-                'bg-blue-100 text-blue-800': lead.status === 'New',
-                'bg-yellow-100 text-yellow-800': lead.status === 'Contacted',
-                'bg-purple-100 text-purple-800': lead.status === 'Proposal',
-                'bg-green-100 text-green-800': lead.status === 'Won',
-                'bg-red-100 text-red-800': lead.status === 'Lost'
-              }" class="inline-block px-2.5 py-1 text-xs font-semibold rounded-full">
+              <span :class="STATUS_BADGE_CLASSES[lead.status] || 'bg-slate-100 text-slate-800'" class="inline-block px-2.5 py-1 text-xs font-semibold rounded-full">
                 {{ lead.status }}
               </span>
             </td>
             <td class="px-4 py-3 hidden md:table-cell">
-              <span v-if="lead.temperature" :class="{
-                'text-red-600': lead.temperature === 'Hot',
-                'text-orange-600': lead.temperature === 'Warm',
-                'text-blue-600': lead.temperature === 'Cold'
-              }" class="text-sm font-semibold">
-                {{ lead.temperature === 'Hot' ? '🔴' : lead.temperature === 'Warm' ? '🟠' : '🔵' }}
+              <span v-if="lead.temperature" :class="TEMPERATURE_COLORS[lead.temperature] || 'text-slate-600'" class="text-sm font-semibold">
+                {{ TEMPERATURE_EMOJI[lead.temperature] || '🔵' }}
                 {{ lead.temperature }}
               </span>
               <span v-else class="text-slate-400 text-xs">—</span>
@@ -369,6 +359,7 @@ import { useAppStore } from '@/stores/app'
 import FilterSheet from './FilterSheet.vue'
 import CsvImportModal from './CsvImportModal.vue'
 import type { Lead } from '@/types'
+import { STATUS_BADGE_CLASSES, TEMPERATURE_COLORS, TEMPERATURE_EMOJI } from '@/constants/leadOptions'
 
 interface Props {
   leads: Lead[]
@@ -440,7 +431,7 @@ const activeFilterChips = computed(() => {
   const chips: Array<{ key: string; label: string }> = []
   if (statusFilter.value) chips.push({ key: 'status', label: `Status: ${statusFilter.value}` })
   if (temperatureFilter.value) {
-    const tempEmoji = temperatureFilter.value === 'Hot' ? '🔴' : temperatureFilter.value === 'Warm' ? '🟠' : '🔵'
+    const tempEmoji = TEMPERATURE_EMOJI[temperatureFilter.value] || '🔵'
     chips.push({ key: 'temperature', label: `${tempEmoji} ${temperatureFilter.value}` })
   }
   if (assignedFilter.value) {

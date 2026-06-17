@@ -81,3 +81,23 @@ export const TEMPERATURE_EMOJI: Record<string, string> = {
   Warm: '🟠',
   Cold: '🔵',
 }
+
+/**
+ * Bold tab/dot colors for each lead status (used in Kanban columns, mobile tabs, etc.).
+ */
+export const STATUS_TAB_COLORS: Record<string, string> = {
+  New: 'bg-blue-500',
+  Contacted: 'bg-yellow-500',
+  Proposal: 'bg-purple-500',
+  Won: 'bg-green-500',
+  Lost: 'bg-red-500',
+}
+
+/**
+ * Background colors for temperature (used in charts, legends, etc.).
+ */
+export const TEMPERATURE_BG_COLORS: Record<string, string> = {
+  Hot: 'bg-red-500',
+  Warm: 'bg-amber-500',
+  Cold: 'bg-blue-500',
+}

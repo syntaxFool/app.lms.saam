@@ -228,6 +228,7 @@
 import { computed, ref, withDefaults } from 'vue'
 import type { Lead, LeadStatus } from '@/types'
 import { useLeadScoring } from '@/composables/useLeadScoring'
+import { LEAD_STATUSES } from '@/constants/leadOptions'
 
 const props = withDefaults(
   defineProps<{
@@ -296,7 +297,7 @@ function handleClick() {
   }
 }
 
-const statusOrder: LeadStatus[] = ['New', 'Contacted', 'Proposal', 'Won', 'Lost']
+const statusOrder = LEAD_STATUSES
 
 const temperatureScore = computed(() => getTemperatureScore(props.lead))
 

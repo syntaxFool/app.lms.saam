@@ -134,6 +134,7 @@
 import { computed } from 'vue'
 import type { Lead, LeadStatus } from '@/types'
 import { useLeadScoring } from '@/composables/useLeadScoring'
+import { LEAD_STATUSES } from '@/constants/leadOptions'
 
 const props = defineProps<{
   isOpen: boolean
@@ -150,7 +151,7 @@ const emit = defineEmits<{
 
 const { formatCurrency } = useLeadScoring()
 
-const statusOrder: LeadStatus[] = ['New', 'Contacted', 'Proposal', 'Won', 'Lost']
+const statusOrder = LEAD_STATUSES
 
 const cleanPhone = computed(() => (props.lead?.phone || '').replace(/\D/g, ''))
 
