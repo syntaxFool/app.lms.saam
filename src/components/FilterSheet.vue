@@ -106,15 +106,7 @@
                          text-sm outline-none"
                 >
                   <option value="">All Sources</option>
-                  <option value="Website">Website</option>
-                  <option value="Facebook">Facebook</option>
-                  <option value="Instagram">Instagram</option>
-                  <option value="LinkedIn">LinkedIn</option>
-                  <option value="Referral">Referral</option>
-                  <option value="WhatsApp">WhatsApp</option>
-                  <option value="Walk-in">Walk-in</option>
-                  <option value="Call">Call</option>
-                  <option value="Other">Other</option>
+                  <option v-for="src in appStore.sourcesList" :key="src" :value="src">{{ src }}</option>
                 </select>
               </div>
 
@@ -128,15 +120,7 @@
                          text-sm outline-none"
                 >
                   <option value="">All Interests</option>
-                  <option value="Full Stack Development">Full Stack Development</option>
-                  <option value="Data Science">Data Science</option>
-                  <option value="UI/UX Design">UI/UX Design</option>
-                  <option value="Digital Marketing">Digital Marketing</option>
-                  <option value="Mobile App Development">Mobile App Development</option>
-                  <option value="Cloud Computing">Cloud Computing</option>
-                  <option value="Cybersecurity">Cybersecurity</option>
-                  <option value="Business Analytics">Business Analytics</option>
-                  <option value="Other">Other</option>
+                  <option v-for="interest in appStore.interestsList" :key="interest" :value="interest">{{ interest }}</option>
                 </select>
               </div>
 
@@ -150,15 +134,7 @@
                          text-sm outline-none"
                 >
                   <option value="">All Locations</option>
-                  <option value="Mumbai">Mumbai</option>
-                  <option value="Delhi">Delhi</option>
-                  <option value="Bangalore">Bangalore</option>
-                  <option value="Hyderabad">Hyderabad</option>
-                  <option value="Chennai">Chennai</option>
-                  <option value="Kolkata">Kolkata</option>
-                  <option value="Pune">Pune</option>
-                  <option value="Ahmedabad">Ahmedabad</option>
-                  <option value="Other">Other</option>
+                  <option v-for="loc in LEAD_LOCATIONS" :key="loc" :value="loc">{{ loc }}</option>
                 </select>
               </div>
             </div>
@@ -238,8 +214,11 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import { useAppStore } from '@/stores/app'
+import { LEAD_LOCATIONS } from '@/constants/leadOptions'
 
 const authStore = useAuthStore()
+const appStore = useAppStore()
 
 interface FilterState {
   status: string

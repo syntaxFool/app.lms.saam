@@ -613,6 +613,7 @@ import { useCountryCodes } from '@/composables/useCountryCodes'
 import { useDateUtils } from '@/composables/useDateUtils'
 import { useMoonLoading } from '@/composables/useMoonLoading'
 import type { Lead, ActivityType, LostReasonType } from '@/types'
+import { LEAD_LOCATIONS } from '@/constants/leadOptions'
 import LostReasonModal from './LostReasonModal.vue'
 import TaskResolutionModal from './TaskResolutionModal.vue'
 import CountryCodeSelect from './CountryCodeSelect.vue'
@@ -756,24 +757,7 @@ const interests = computed(() => appStore.interestsList || [])
 const sources = computed(() => appStore.sourcesList || [])
 const experienceOptions = computed(() => appStore.priorExperienceList || [])
 
-const locations = [
-  'Bangalore',
-  'Mumbai',
-  'Delhi',
-  'Chennai',
-  'Hyderabad',
-  'Pune',
-  'Kolkata',
-  'Ahmedabad',
-  'Jaipur',
-  'Surat',
-  'Lucknow',
-  'Kanpur',
-  'Nagpur',
-  'Indore',
-  'Coimbatore',
-  'Kochi'
-]
+const locations = LEAD_LOCATIONS
 
 const formData = ref({
   name: '',
