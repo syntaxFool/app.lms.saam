@@ -2,7 +2,7 @@
 
 **Date**: April 14, 2026  
 **Old URL**: `https://sa0lms.myaddr.tools`  
-**New URL**: `https://lms.aika-shuz.fyi`
+**New URL**: `https://ac-lms.aika-shuz.fyi`
 
 ## Problems Encountered
 
@@ -64,7 +64,7 @@ After changing the domain, users experienced:
 
 OR simply **uninstall and reinstall the PWA**:
 1. Remove the app icon from home screen
-2. Visit `https://lms.aika-shuz.fyi` in browser
+2. Visit `https://ac-lms.aika-shuz.fyi` in browser
 3. Re-add to home screen
 
 ## Verification
@@ -78,7 +78,7 @@ After hard refresh, users should see:
 ## Technical Notes
 
 ### CORS Configuration
-- **Backend**: `ALLOWED_ORIGINS` was already correctly set to `https://lms.aika-shuz.fyi` in `/home/nas/lms-app/.env`
+- **Backend**: `ALLOWED_ORIGINS` was already correctly set to `https://ac-lms.aika-shuz.fyi` in `/home/nas/lms-app/.env`
 - **No changes needed** - CORS was never the issue
 
 ### DNS & SSL
@@ -110,4 +110,4 @@ be3a2eb - Fix URL change issues: Update domain to lms.aika-shuz.fyi, bump servic
 
 ## Live URL
 
-✅ **https://lms.aika-shuz.fyi**
+✅ **https://ac-lms.aika-shuz.fyi**

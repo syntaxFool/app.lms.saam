@@ -28,7 +28,7 @@ services:
       DB_USER:          ${DB_USER}
       DB_PASSWORD:      ${DB_PASSWORD}
       JWT_SECRET:       ${JWT_SECRET}
-      ALLOWED_ORIGINS:  https://hplms.aika-shuz.fyi
+      ALLOWED_ORIGINS:  https://hp-lms.aika-shuz.fyi
       PORT:             8080
     depends_on:
       - postgres
@@ -59,14 +59,14 @@ services:
     labels:
       - "traefik.enable=true"
       # ── HTTPS router ──
-      - "traefik.http.routers.lms-hp.rule=Host(`hplms.aika-shuz.fyi`)"
+      - "traefik.http.routers.lms-hp.rule=Host(`hp-lms.aika-shuz.fyi`)"
       - "traefik.http.routers.lms-hp.entrypoints=https"
       - "traefik.http.routers.lms-hp.tls=true"
       - "traefik.http.routers.lms-hp.tls.certresolver=letsencrypt"
       - "traefik.http.services.lms-hp.loadbalancer.server.port=80"
       - "traefik.docker.network=coolify"
       # ── HTTP → HTTPS redirect ──
-      - "traefik.http.routers.lms-hp-http.rule=Host(`hplms.aika-shuz.fyi`)"
+      - "traefik.http.routers.lms-hp-http.rule=Host(`hp-lms.aika-shuz.fyi`)"
       - "traefik.http.routers.lms-hp-http.entrypoints=http"
       - "traefik.http.routers.lms-hp-http.middlewares=redirect-to-https"
 

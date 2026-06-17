@@ -94,7 +94,7 @@ Use when you want both GitHub synced and immediate deploy.
 Check the live site is serving the new build:
 
 ```bash
-curl -s https://lms.aika-shuz.fyi/ | grep -o 'assets/[^"]*\.js'
+curl -s https://ac-lms.aika-shuz.fyi/ | grep -o 'assets/[^"]*\.js'
 ```
 
 Confirm the JS bundle hash changed from the previous deployment.

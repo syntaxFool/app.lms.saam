@@ -18,6 +18,66 @@ Two deployment paths exist for this project:
 
 ---
 
+## Data Safety — Academy DB
+
+The Academy database (`ac-lms.aika-shuz.fyi`) has real data that must never be lost.
+
+### Automated backups (NAS)
+
+A daily cron job runs at 2:00 AM IST on the NAS:
+- `pg_dump` → gzip → `/home/nas/backups/lms/lmsdb_YYYY-MM-DD_HHMM.sql.gz`
+- Retains last **90 days** of backups
+- Logged to `/home/nas/backups/lms/backup.log`
+
+### Pre-deploy backup
+
+Before any deployment that touches containers, take a manual backup:
+
+```bash
+ssh -i ~/.ssh/id_ed25519_nas -p 2222 nas@154.84.215.26 \
+  "bash /home/nas/scripts/backup-lms.sh"
+```
+
+### Restore from backup
+
+```bash
+gunzip -c /home/nas/backups/lms/lmsdb_YYYY-MM-DD_HHMM.sql.gz | \
+  docker exec -i lms_db psql -U lms lmsdb
+```
+
+⚠️ **Never run `docker compose down -v` on the Academy stack** — it destroys the database volume. Use `docker compose down` (without `-v`) to stop gracefully.
+
+---
+
+## Data Safety — HP (Hair Patch) DB
+
+The HP database (`hpac-lms.aika-shuz.fyi`) has the same backup setup.
+
+### Automated backups (NAS)
+
+A daily cron job runs at 2:30 AM IST:
+- `pg_dump` → gzip → `/home/nas/backups/hp/lmsdb_hp_YYYY-MM-DD_HHMM.sql.gz`
+- Retains last **90 days**
+- Logged to `/home/nas/backups/hp/backup.log`
+
+### Pre-deploy backup
+
+```bash
+ssh -i ~/.ssh/id_ed25519_nas -p 2222 nas@154.84.215.26 \
+  "bash /home/nas/scripts/backup-hp.sh"
+```
+
+### Restore from backup
+
+```bash
+gunzip -c /home/nas/backups/hp/lmsdb_hp_YYYY-MM-DD_HHMM.sql.gz | \
+  docker exec -i lms_hp_db psql -U lms lmsdb
+```
+
+⚠️ **Never run `docker compose -f docker-compose.hp.yml down -v` on the HP stack** — same risk.
+
+---
+
 ## Prerequisites
 
 - Clean git working tree (`git status` shows no modified tracked files)
@@ -76,7 +136,7 @@ Expected: both commands return `0` (local and remote are in sync).
 
 - Log into Coolify dashboard
 - Check deployment status for the LMS project
-- Or visit `https://lms.aika-shuz.fyi` and verify the changes are live
+- Or visit `https://ac-lms.aika-shuz.fyi` and verify the changes are live
 
 ---
 

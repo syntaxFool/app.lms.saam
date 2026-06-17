@@ -39,7 +39,7 @@ if (import.meta.env.VITE_SENTRY_DSN) {
     environment: import.meta.env.MODE,
     integrations: [Sentry.browserTracingIntegration({ router })],
     tracesSampleRate: 0.1,
-    tracePropagationTargets: ['lms.aika-shuz.fyi', /^\/api\//],
+    tracePropagationTargets: ['lms.aika-shuz.fyi', 'ac-lms.aika-shuz.fyi', 'hp-lms.aika-shuz.fyi', /^\/api\//],
     // Don't send errors in dev unless DSN is explicitly set
     enabled: !!import.meta.env.VITE_SENTRY_DSN,
   })

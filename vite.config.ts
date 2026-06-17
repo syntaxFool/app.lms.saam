@@ -36,7 +36,7 @@ export default defineConfig({
         ]
       },
       workbox: {
-        cacheId: 'shanuzz-lms-v3',
+        cacheId: 'shanuzz-lms-v4',
         skipWaiting: true,
         clientsClaim: true,
         cleanupOutdatedCaches: true,
