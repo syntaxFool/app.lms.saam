@@ -169,28 +169,53 @@ rsync -avz \
   nas@154.84.215.26:/home/nas/lms-app/
 ```
 
-### Step 3: Rebuild containers on NAS
+### Step 3: Update .env on NAS (if needed)
 
+`.env` is excluded from rsync, so if ALLOWED_ORIGINS or other env vars changed:
+
+```bash
+ssh -i ~/.ssh/id_ed25519_nas -p 2222 nas@154.84.215.26 \
+  "sed -i 's|ALLOWED_ORIGINS=.*|ALLOWED_ORIGINS=<new-value>|' /home/nas/lms-app/.env"
+```
+
+### Step 4: Rebuild containers on NAS
+
+Rebuild **Academy** stack:
 ```bash
 ssh -i ~/.ssh/id_ed25519_nas -p 2222 nas@154.84.215.26 \
   "cd /home/nas/lms-app && docker compose up -d --build"
 ```
 
-### Step 4: Restart nginx
+If HP stack changed, rebuild it too:
+```bash
+ssh -i ~/.ssh/id_ed25519_nas -p 2222 nas@154.84.215.26 \
+  "cd /home/nas/lms-app && docker compose -f docker-compose.hp.yml up -d --build"
+```
+
+⚠️ **Important**: If `.env` changed, `docker compose up -d` will recreate the backend container automatically. If you only ran `docker restart lms_api`, the `.env` changes won't apply — always use `docker compose up -d`.
+
+### Step 5: Restart nginx
 
 ```bash
 ssh -i ~/.ssh/id_ed25519_nas -p 2222 nas@154.84.215.26 \
-  "docker restart lms_nginx"
+  "docker restart lms_nginx lms_hp_nginx"
 ```
 
-### Step 5: Verify logs
+Nginx containers sometimes get stale upstream references after backend rebuilds. A restart fixes 502/503 errors.
+
+### Step 6: Verify logs & CORS
 
 ```bash
+# Check API is running
 ssh -i ~/.ssh/id_ed25519_nas -p 2222 nas@154.84.215.26 \
-  "docker logs lms_api --tail 30"
+  "docker logs lms_api --tail 5"
+
+# Check for CORS errors (common after domain changes)
+ssh -i ~/.ssh/id_ed25519_nas -p 2222 nas@154.84.215.26 \
+  "docker logs lms_api --tail 30 | grep -i 'cors\|Not allowed'"
 ```
 
-Check for: `Server running on port 8080` and no crash loops.
+Check for: `Server running on port 8080` and no "Not allowed by CORS" errors.
 
 ---
 
@@ -224,3 +249,7 @@ npm run build
 | Coolify not deploying | Webhook missed | Trigger "Manual Deploy" from Coolify dashboard |
 | Container crash loop | Docker build issue | `docker logs lms_api` on NAS to see error |
 | SSL cert issue | Let's Encrypt renewal | Traefik handles this automatically — wait 5 min |
+| 500 on login after deploy | CORS — ALLOWED_ORIGINS missing new domain | Update `.env` on NAS + `docker compose up -d --no-deps backend` |
+| 502/503 after container rebuild | Nginx stale upstream | `docker restart lms_nginx lms_hp_nginx` |
+| DNS not resolving new subdomain | Cloudflare propagation | Wait 1-15 min. Verify with `dig @1.1.1.1` or `curl --resolve` |
+| YAML error in docker-compose | `\.` in double-quoted string | Replace `\.` with `[.]` in regex patterns |
