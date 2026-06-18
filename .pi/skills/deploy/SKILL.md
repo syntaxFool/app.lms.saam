@@ -1,255 +1,138 @@
 ---
 name: deploy
-description: Deploy the webApp x LMS project to production. Verifies git state, builds the frontend, pushes to GitHub for Coolify auto-deploy, or performs manual rsync+Docker deploy to the NAS server.
+description: Deploy the webApp x LMS project to production. Verifies git state, builds, deploys via Coolify auto-deploy or manual rsync+Docker to the NAS, and handles Moon WhatsApp pairing.
+tools: read, bash, shell_exec, edit
+model: sonnet
 ---
 
-> **Related skills:** Use `/skill:verification-before-completion` before deploying. Use `/skill:finishing-a-development-branch` after pushing.
+# Deploy Agent — webApp x LMS
 
-> **Automated deployment:** Use the `deploy` agent (`.pi/agents/deploy.md`) to run the full workflow automatically. Invoke via `Agent` with `subagent_type: "deploy"` and prompt describing what to deploy.
-
-# Deploy — webApp x LMS
-
-## Overview
-
-Two deployment paths exist for this project:
-
-1. **Coolify auto-deploy (default)** — Push to `origin/master` on GitHub. Coolify detects the push, pulls, builds containers, and redeploys. Fastest path for routine patches.
-2. **Manual rsync + Docker** — Rsync source to the NAS server, then SSH and rebuild containers. Use when you need immediate deploy or Coolify is unavailable.
-
----
-
-## Data Safety — Academy DB
-
-The Academy database (`ac-lms.aika-shuz.fyi`) has real data that must never be lost.
-
-### Automated backups (NAS)
-
-A daily cron job runs at 2:00 AM IST on the NAS:
-- `pg_dump` → gzip → `/home/nas/backups/lms/lmsdb_YYYY-MM-DD_HHMM.sql.gz`
-- Retains last **90 days** of backups
-- Logged to `/home/nas/backups/lms/backup.log`
-
-### Pre-deploy backup
-
-Before any deployment that touches containers, take a manual backup:
-
-```bash
-ssh -i ~/.ssh/id_ed25519_nas -p 2222 nas@154.84.215.26 \
-  "bash /home/nas/scripts/backup-lms.sh"
-```
-
-### Restore from backup
-
-```bash
-gunzip -c /home/nas/backups/lms/lmsdb_YYYY-MM-DD_HHMM.sql.gz | \
-  docker exec -i lms_db psql -U lms lmsdb
-```
-
-⚠️ **Never run `docker compose down -v` on the Academy stack** — it destroys the database volume. Use `docker compose down` (without `-v`) to stop gracefully.
-
----
-
-## Data Safety — HP (Hair Patch) DB
-
-The HP database (`hpac-lms.aika-shuz.fyi`) has the same backup setup.
-
-### Automated backups (NAS)
-
-A daily cron job runs at 2:30 AM IST:
-- `pg_dump` → gzip → `/home/nas/backups/hp/lmsdb_hp_YYYY-MM-DD_HHMM.sql.gz`
-- Retains last **90 days**
-- Logged to `/home/nas/backups/hp/backup.log`
-
-### Pre-deploy backup
-
-```bash
-ssh -i ~/.ssh/id_ed25519_nas -p 2222 nas@154.84.215.26 \
-  "bash /home/nas/scripts/backup-hp.sh"
-```
-
-### Restore from backup
-
-```bash
-gunzip -c /home/nas/backups/hp/lmsdb_hp_YYYY-MM-DD_HHMM.sql.gz | \
-  docker exec -i lms_hp_db psql -U lms lmsdb
-```
-
-⚠️ **Never run `docker compose -f docker-compose.hp.yml down -v` on the HP stack** — same risk.
-
----
+You are a deployment automation agent. Your job is to build, deploy, and verify the LMS project.
 
 ## Prerequisites
 
-- Clean git working tree (`git status` shows no modified tracked files)
-- On `master` branch
-- `npm run build` passes
-- SSH key `~/.ssh/id_ed25519_nas` exists (for manual path)
+- SSH key: `~/.ssh/id_ed25519_nas` (passwordless)
+- NAS: `nas@154.84.215.26` port `2222`
+- Remote path: `/home/nas/lms-app/`
+- Git remote: `origin` (`https://github.com/syntaxFool/app.lms.saam`)
 
 ---
 
-## Path A — Coolify Auto-Deploy (Default)
+## Moon WhatsApp Pairing
 
-Use for routine patches, bug fixes, and small features.
+Moon (the WhatsApp-to-LMS bridge) requires a special pairing workflow. **CRITICAL: Never copy `auth_info_moon` session files between machines.** WhatsApp detects IP/device mismatch and permanently kills copied sessions with 503/401 errors.
 
-### Step 1: Verify git state
+### When to pair Moon:
+- First deployment
+- After `auth_info_moon` is cleared
+- After Moon logs show "🔴 Logged out from WhatsApp"
+- When user says "moon not working", "pair moon", "scan moon QR"
 
-```bash
-git status --porcelain
-```
-
-Confirm: no unstaged changes on tracked files.
-Expected output (untracked files like `node_modules/`, `dev-dist/` are OK):
-
-```
- M .pi/superpowers-state.json
-?? dev-dist/
-```
-
-### Step 2: Build and verify
+### Pairing Workflow:
 
 ```bash
-npm run build
-```
-
-Expected: `✓ built in X.XXs` — exit 0.
-
-### Step 3: Push to GitHub
-
-```bash
-git push origin master
-```
-
-Expected output lists the pushed commits:
-```
-   <old-commit>..<new-commit>  master -> master
-```
-
-### Step 4: Verify remote is up-to-date
-
-```bash
-git fetch origin --quiet && git rev-list --count HEAD..origin/master && git rev-list --count origin/master..HEAD
-```
-
-Expected: both commands return `0` (local and remote are in sync).
-
-### Step 5: Confirm on Coolify
-
-- Log into Coolify dashboard
-- Check deployment status for the LMS project
-- Or visit `https://ac-lms.aika-shuz.fyi` and verify the changes are live
-
----
-
-## Path B — Manual rsync + Docker Deploy
-
-Use when Coolify auto-deploy fails or you need to bypass GitHub.
-
-### Step 1: Verify git state + build (same as Path A)
-
-```bash
-git status --porcelain
-npm run build
-```
-
-Same checks as Path A.
-
-### Step 2: Rsync source to NAS
-
-```bash
-rsync -avz \
-  -e "ssh -p 2222 -i ~/.ssh/id_ed25519_nas" \
-  --exclude='.git' \
-  --exclude='node_modules' \
-  --exclude='dist' \
-  --exclude='dev-dist' \
-  --exclude='.env' \
-  --exclude='.env.production' \
-  --exclude='.env.local' \
-  "/Drive/codeProject/Shanuzz/saLab-server/webApp x LMS/" \
-  nas@154.84.215.26:/home/nas/lms-app/
-```
-
-### Step 3: Update .env on NAS (if needed)
-
-`.env` is excluded from rsync, so if ALLOWED_ORIGINS or other env vars changed:
-
-```bash
+# Step 1: Clear old auth and start Moon on NAS
 ssh -i ~/.ssh/id_ed25519_nas -p 2222 nas@154.84.215.26 \
-  "sed -i 's|ALLOWED_ORIGINS=.*|ALLOWED_ORIGINS=<new-value>|' /home/nas/lms-app/.env"
+  "cd /home/nas/lms-app && docker compose -f docker-compose.yml stop moon && docker compose -f docker-compose.yml rm -f moon && rm -rf whatsapp-moon/auth_info_moon/* && docker compose -f docker-compose.yml up -d moon"
+
+# Step 2: Wait 10 seconds for Moon to start, then extract QR
+sleep 10
+B64=$(ssh -i ~/.ssh/id_ed25519_nas -p 2222 nas@154.84.215.26 \
+  "docker logs lms_moon 2>&1 | grep 'base64,' | tail -1 | grep -oP 'base64,\K[A-Za-z0-9+/=]+'")
+QR_TEXT=$(echo "$B64" | base64 -d)
+
+# Step 3: Generate QR PNG instantly and save to project
+npx --yes qrcode -o "whatsapp-moon/nas_qr.png" "$QR_TEXT"
+echo "📱 QR saved to whatsapp-moon/nas_qr.png — OPEN NOW and scan with WhatsApp"
+
+# Step 4: Wait and verify pairing
+sleep 15
+ssh -i ~/.ssh/id_ed25519_nas -p 2222 nas@154.84.215.26 \
+  "docker logs lms_moon 2>&1 | grep -E 'pairing configured|Moon connected'"
+
+# Step 5: If not paired, refresh QR every 12 seconds (up to 5 times)
+for i in 1 2 3 4 5; do
+  ssh -i ~/.ssh/id_ed25519_nas -p 2222 nas@154.84.215.26 \
+    "docker logs lms_moon 2>&1 | grep -c 'Moon connected'" 2>/dev/null
+  CONNECTED=$(ssh ... "docker logs ... | grep -c 'Moon connected'")
+  if [ "$CONNECTED" -gt 0 ]; then echo "✅ Moon connected!"; break; fi
+  # Refresh QR
+  B64=$(ssh ... "docker logs ... | grep 'base64,' | tail -1 | grep -oP 'base64,\K[A-Za-z0-9+/=]+'")
+  QR_TEXT=$(echo "$B64" | base64 -d)
+  npx --yes qrcode -o "whatsapp-moon/nas_qr.png" "$QR_TEXT"
+  echo "🔄 QR refreshed — keep file open"
+  sleep 12
+done
+
+# Step 6: Verify stability (no 503 errors after 30+ seconds)
+sleep 30
+ssh -i ~/.ssh/id_ed25519_nas -p 2222 nas@154.84.215.26 \
+  "docker logs lms_moon 2>&1 | grep -E '503|Moon connected' | tail -5"
 ```
 
-### Step 4: Rebuild containers on NAS
+### IMPORTANT NOTES:
+- **NEVER copy auth_info_moon between machines** — sessions are IP-locked by WhatsApp
+- **DO NOT use MOON_PHONE/pairing codes** — they don't work reliably with Baileys
+- **DO NOT use WARP proxy or any proxy** — the NAS office network reaches WhatsApp fine
+- QRs expire in ~20 seconds — generate and display them as fast as possible
+- Moon connects through Docker bridge network (`lms_net`) — no special networking needed
 
-Rebuild **Academy** stack:
+---
+
+## Deployment Workflow
+
+### Step 1: Assess what changed
+
+Show the user what will be deployed:
+
 ```bash
+git log origin/master..HEAD --oneline    # unpushed commits
+git diff --stat                          # unstaged changes
+```
+
+### Step 2: Verify git state
+
+```bash
+git branch --show-current
+git status --porcelain
+```
+
+### Step 3: Build
+
+```bash
+# Frontend
+npm run build
+
+# WhatsApp moon service
+cd whatsapp-moon && npm run build && cd ..
+```
+
+### Step 4: Decide deployment path
+
+**Path A — Push to GitHub (Coolify auto-deploy):**
+- `git push origin master`
+
+**Path B — Manual rsync + Docker:**
+```bash
+rsync -avz -e "ssh -p 2222 -i ~/.ssh/id_ed25519_nas" \
+  --exclude='.git' --exclude='node_modules' --exclude='dist' \
+  ./ nas@154.84.215.26:/home/nas/lms-app/
 ssh -i ~/.ssh/id_ed25519_nas -p 2222 nas@154.84.215.26 \
   "cd /home/nas/lms-app && docker compose up -d --build"
 ```
 
-If HP stack changed, rebuild it too:
-```bash
-ssh -i ~/.ssh/id_ed25519_nas -p 2222 nas@154.84.215.26 \
-  "cd /home/nas/lms-app && docker compose -f docker-compose.hp.yml up -d --build"
-```
-
-⚠️ **Important**: If `.env` changed, `docker compose up -d` will recreate the backend container automatically. If you only ran `docker restart lms_api`, the `.env` changes won't apply — always use `docker compose up -d`.
-
-### Step 5: Restart nginx
+### Step 5: Check Moon status
 
 ```bash
 ssh -i ~/.ssh/id_ed25519_nas -p 2222 nas@154.84.215.26 \
-  "docker restart lms_nginx lms_hp_nginx"
+  "docker ps --format '{{.Names}}: {{.Status}}' | grep moon"
 ```
 
-Nginx containers sometimes get stale upstream references after backend rebuilds. A restart fixes 502/503 errors.
+If Moon is in a restart loop or shows "not logged in", follow the Moon Pairing Workflow above.
 
-### Step 6: Verify logs & CORS
+### Step 6: Verify
 
 ```bash
-# Check API is running
-ssh -i ~/.ssh/id_ed25519_nas -p 2222 nas@154.84.215.26 \
-  "docker logs lms_api --tail 5"
-
-# Check for CORS errors (common after domain changes)
-ssh -i ~/.ssh/id_ed25519_nas -p 2222 nas@154.84.215.26 \
-  "docker logs lms_api --tail 30 | grep -i 'cors\|Not allowed'"
+curl -s https://ac-lms.aika-shuz.fyi/ | grep -o 'assets/[^"]*\.js'
+curl -s -o /dev/null -w "%{http_code}" https://lms.aika-shuz.fyi/
 ```
-
-Check for: `Server running on port 8080` and no "Not allowed by CORS" errors.
-
----
-
-## Rollback
-
-If the deploy breaks the live site:
-
-### Rollback Coolify deploy
-1. Log into Coolify dashboard
-2. Navigate to the LMS project → Deployments
-3. Find the previous working deployment
-4. Click "Rollback"
-
-### Rollback manual deploy
-```bash
-# On the local machine, checkout the previous commit
-git checkout HEAD~1 -- .
-npm run build
-
-# Then re-run Path B steps 2-4 (rsync + rebuild + nginx restart)
-```
-
----
-
-## Troubleshooting
-
-| Symptom | Likely Cause | Fix |
-|---------|-------------|-----|
-| `git push` blocked | Git Guardrails | Run `/git-guardrails allow-next push` then retry |
-| `npm run build` fails | TypeScript error | Check console output for error, fix before deploy |
-| Coolify not deploying | Webhook missed | Trigger "Manual Deploy" from Coolify dashboard |
-| Container crash loop | Docker build issue | `docker logs lms_api` on NAS to see error |
-| SSL cert issue | Let's Encrypt renewal | Traefik handles this automatically — wait 5 min |
-| 500 on login after deploy | CORS — ALLOWED_ORIGINS missing new domain | Update `.env` on NAS + `docker compose up -d --no-deps backend` |
-| 502/503 after container rebuild | Nginx stale upstream | `docker restart lms_nginx lms_hp_nginx` |
-| DNS not resolving new subdomain | Cloudflare propagation | Wait 1-15 min. Verify with `dig @1.1.1.1` or `curl --resolve` |
-| YAML error in docker-compose | `\.` in double-quoted string | Replace `\.` with `[.]` in regex patterns |

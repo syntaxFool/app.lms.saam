@@ -13,6 +13,7 @@
 import type { WASocket } from '@whiskeysockets/baileys'
 import { resolveContactPhone } from './phone'
 import { lmsApi } from './api'
+import { config } from './config'
 
 interface WAMessage {
   key: {
@@ -59,7 +60,7 @@ export async function handleIncomingMessage(msg: WAMessage, sock: WASocket): Pro
     : jid
 
   if (effectiveJid !== jid) {
-    console.log(`[Moon] 🔑 Using senderPn(${effectiveJid}) instead of lid JID(${jid})`)
+    console.log(`[${config.serviceName}] 🔑 Using senderPn(${effectiveJid}) instead of lid JID(${jid})`)
   }
 
   // ── Resolve phone via WhatsApp contact lookup ──
@@ -68,11 +69,11 @@ export async function handleIncomingMessage(msg: WAMessage, sock: WASocket): Pro
     const resolution = await resolveContactPhone(effectiveJid, sock)
     phone = resolution.phone
   } catch (err) {
-    console.error(`[Moon] Failed to resolve phone for JID: ${effectiveJid}`, err)
+    console.error(`[${config.serviceName}] Failed to resolve phone for JID: ${effectiveJid}`, err)
     return
   }
 
-  console.log(`[Moon] 🌕 Message from ${phone}: "${summary}"`)
+  console.log(`[${config.serviceName}] 🌕 Message from ${phone}: "${summary}"`)
 
   try {
     // ── Check if lead already exists ──
@@ -95,10 +96,10 @@ export async function handleIncomingMessage(msg: WAMessage, sock: WASocket): Pro
         message: `${lead.name || phone}: ${text ? text.slice(0, 100) : 'Sent media'}`,
         type: 'whatsapp-message',
         leadId: lead.id,
-        createdBy: 'moon',
+        createdBy: config.serviceName.toLowerCase(),
       })
 
-      console.log(`[Moon] ✅ Activity added to lead ${lead.id}`)
+      console.log(`[${config.serviceName}] ✅ Activity added to lead ${lead.id}`)
     } else {
       // ── NEW LEAD: create lead + notification ──
       const newLead = await lmsApi.createLead({
@@ -117,13 +118,13 @@ export async function handleIncomingMessage(msg: WAMessage, sock: WASocket): Pro
           message: `${phone} — ${text ? text.slice(0, 100) : 'Sent media'}`,
           type: 'whatsapp-new-lead',
           leadId,
-          createdBy: 'moon',
+          createdBy: config.serviceName.toLowerCase(),
         })
-        console.log(`[Moon] ✅ New lead created: ${leadId}`)
+        console.log(`[${config.serviceName}] ✅ New lead created: ${leadId}`)
       }
     }
   } catch (err: any) {
-    console.error(`[Moon] ❌ Error processing message from ${phone}:`,
+    console.error(`[${config.serviceName}] ❌ Error processing message from ${phone}:`,
       err.response?.status, err.response?.data || err.message)
 
     try {
@@ -131,10 +132,10 @@ export async function handleIncomingMessage(msg: WAMessage, sock: WASocket): Pro
         title: '⚠️ Moon processing error',
         message: `Failed to process message from ${phone}: ${err.message}`,
         type: 'error',
-        createdBy: 'moon',
+        createdBy: config.serviceName.toLowerCase(),
       })
     } catch {
-      console.error('[Moon] Could not create error notification')
+      console.error(`[${config.serviceName}] Could not create error notification`)
     }
   }
 }

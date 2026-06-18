@@ -20,7 +20,7 @@ const api: AxiosInstance = axios.create({
 api.interceptors.response.use(
   (res) => res.data,
   (err) => {
-    console.error('[Moon API] Error:', err.response?.status, err.response?.data || err.message)
+    console.error(`[${config.serviceName} API] Error:`, err.response?.status, err.response?.data || err.message)
     return Promise.reject(err)
   }
 )

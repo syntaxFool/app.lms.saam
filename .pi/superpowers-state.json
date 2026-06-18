@@ -19,7 +19,7 @@
     },
     "prompted": {
       "brainstorm": false,
-      "plan": false,
+      "plan": true,
       "execute": false,
       "verify": false,
       "review": false,

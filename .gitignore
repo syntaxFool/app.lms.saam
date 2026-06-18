@@ -62,3 +62,9 @@ temp/
 .vite/
 # Local Netlify folder
 .netlify
+whatsapp-bridge/auth_info_moon/
+whatsapp-bridge/auth_info_bun/
+whatsapp-bridge/bun_qr.png
+whatsapp-bridge/nas_qr.png
+whatsapp-bridge/live_qr.png
+whatsapp-bridge/moon_qr.png

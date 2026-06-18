@@ -123,7 +123,7 @@ export async function resolveContactPhone(
         const confirmedBase = (entry.jid?.split('@')[0]?.split(':')[0] || '').replace(/\D/g, '')
         const originalBase = rawId.replace(/\D/g, '')
 
-        if (entry.lid) {
+        if ((entry as any).lid) {
           // onWhatsApp returned a LID — but the phone number EXISTS on WhatsApp.
           // The candidate phone IS a real WhatsApp number. Return it.
           // The `lid` flag means the user has privacy, but the phone itself is valid.
