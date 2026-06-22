@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Hair Patch Solutions — Free Consultation</title>
+  <title>Find Your Hair Restoration Solution — Free Consultation</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body { background: linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 50%, #fefce8 100%); }
@@ -23,34 +23,33 @@
         <span class="text-white text-3xl">💇</span>
       </div>
       <h1 class="text-3xl md:text-4xl font-bold text-slate-800 mb-3">
-        Hair Patch Solutions
+        Find Your Hair Restoration Solution
       </h1>
       <p class="text-slate-500 text-lg mb-6">
         Get expert advice for your hair concerns — free consultation
       </p>
-      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
-        <div class="bg-white/70 backdrop-blur rounded-xl px-3 py-3 shadow-sm">
-          <span class="text-emerald-600 font-semibold">✓</span>
-          <span class="text-slate-600"> Natural Results</span>
-        </div>
-        <div class="bg-white/70 backdrop-blur rounded-xl px-3 py-3 shadow-sm">
-          <span class="text-emerald-600 font-semibold">✓</span>
-          <span class="text-slate-600"> Expert Stylists</span>
-        </div>
-        <div class="bg-white/70 backdrop-blur rounded-xl px-3 py-3 shadow-sm">
-          <span class="text-emerald-600 font-semibold">✓</span>
-          <span class="text-slate-600"> Free Consultation</span>
-        </div>
-      </div>
     </div>
 
     <!-- ─── Form Section ─── -->
     <div class="card bg-white rounded-2xl shadow-lg shadow-emerald-100/50 border border-emerald-100 overflow-hidden">
-      <!-- Card accent header -->
-      <div class="h-2 bg-gradient-to-r from-emerald-500 to-emerald-400"></div>
-
       <div class="p-6 md:p-8">
-        <h2 class="text-xl font-semibold text-slate-800 mb-6">Hair Patch Enquiry</h2>
+        <h2 class="text-xl font-semibold text-slate-800 mb-4">Request Your Personalized Consultation</h2>
+
+        <!-- Benefits inside the form card -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6 text-sm">
+          <div class="bg-emerald-50 rounded-xl px-3 py-3 text-center">
+            <span class="text-emerald-600 font-semibold">✓</span>
+            <span class="text-slate-600"> Natural Results</span>
+          </div>
+          <div class="bg-emerald-50 rounded-xl px-3 py-3 text-center">
+            <span class="text-emerald-600 font-semibold">✓</span>
+            <span class="text-slate-600"> Expert Stylists</span>
+          </div>
+          <div class="bg-emerald-50 rounded-xl px-3 py-3 text-center">
+            <span class="text-emerald-600 font-semibold">✓</span>
+            <span class="text-slate-600"> Free Consultation</span>
+          </div>
+        </div>
 
         <!-- Status banners -->
         <div id="successBanner" class="hidden mb-4 p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 text-sm flex items-start gap-3">
@@ -72,8 +71,9 @@
         <form id="leadForm" novalidate>
           <!-- Name -->
           <div class="mb-4">
-            <label for="name" class="block text-sm font-medium text-slate-700 mb-1">Name</label>
+            <label for="name" class="block text-sm font-medium text-slate-700 mb-1">Name <span class="text-slate-400 font-normal">(Optional)</span></label>
             <input type="text" id="name" name="name" maxlength="100"
+                   placeholder="Your full name"
                    class="form-input w-full px-4 py-2.5 border border-slate-200 rounded-xl text-slate-800
                           focus:outline-none focus:border-emerald-400 focus:ring-0 transition" />
           </div>
@@ -91,29 +91,40 @@
 
           <!-- Age -->
           <div class="mb-4">
-            <label for="age" class="block text-sm font-medium text-slate-700 mb-1">Age</label>
+            <label for="age" class="block text-sm font-medium text-slate-700 mb-1">Age <span class="text-slate-400 font-normal">(Optional)</span></label>
             <input type="number" id="age" name="age" min="1" max="120"
+                   placeholder="e.g. 28"
                    class="form-input w-full px-4 py-2.5 border border-slate-200 rounded-xl text-slate-800
                           focus:outline-none focus:border-emerald-400 focus:ring-0 transition" />
           </div>
 
-          <!-- Location -->
+          <!-- Location with autocomplete -->
           <div class="mb-4">
-            <label for="location" class="block text-sm font-medium text-slate-700 mb-1">Location</label>
-            <input type="text" id="location" name="location" maxlength="200"
+            <label for="location" class="block text-sm font-medium text-slate-700 mb-1">Location <span class="text-slate-400 font-normal">(Optional)</span></label>
+            <input type="text" id="location" name="location" maxlength="200" list="citySuggestions"
+                   placeholder="e.g. Mumbai, Maharashtra" autocomplete="off"
                    class="form-input w-full px-4 py-2.5 border border-slate-200 rounded-xl text-slate-800
                           focus:outline-none focus:border-emerald-400 focus:ring-0 transition" />
-          </div>
-
-          <!-- Profession / Notes -->
-          <div class="mb-6">
-            <label for="notes" class="block text-sm font-medium text-slate-700 mb-1">
-              Profession
-            </label>
-            <textarea id="notes" name="notes" rows="2" maxlength="1000"
-                      placeholder="e.g. Software Engineer, Teacher, Business Owner"
-                      class="form-input w-full px-4 py-2.5 border border-slate-200 rounded-xl text-slate-800
-                             focus:outline-none focus:border-emerald-400 focus:ring-0 transition resize-none"></textarea>
+            <datalist id="citySuggestions">
+              <option value="Mumbai, Maharashtra">
+              <option value="Delhi">
+              <option value="Bangalore, Karnataka">
+              <option value="Hyderabad, Telangana">
+              <option value="Chennai, Tamil Nadu">
+              <option value="Kolkata, West Bengal">
+              <option value="Pune, Maharashtra">
+              <option value="Ahmedabad, Gujarat">
+              <option value="Jaipur, Rajasthan">
+              <option value="Lucknow, Uttar Pradesh">
+              <option value="Surat, Gujarat">
+              <option value="Chandigarh">
+              <option value="Dubai, UAE">
+              <option value="Abu Dhabi, UAE">
+              <option value="Riyadh, Saudi Arabia">
+              <option value="London, UK">
+              <option value="New York, USA">
+              <option value="Toronto, Canada">
+            </datalist>
           </div>
 
           <!-- Submit -->
@@ -125,7 +136,7 @@
             <span id="btnSpinner" class="hidden"><span class="spinner"></span></span>
           </button>
 
-          <p class="mt-3 text-xs text-slate-400 text-center">
+          <p class="mt-3 text-xs text-slate-500 text-center">
             We respect your privacy. Your details are safe with us.
           </p>
         </form>
@@ -133,7 +144,7 @@
     </div>
 
     <!-- ─── Footer ─── -->
-    <p class="mt-8 text-xs text-slate-400 text-center">
+    <p class="mt-8 text-xs text-slate-500 text-center">
       Hair Patch Solutions — aika-shuz.fyi
     </p>
   </div>
@@ -172,7 +183,6 @@
         hideBanners()
         successBanner.classList.remove('hidden')
         form.reset()
-        // Auto-hide success after 8 seconds
         setTimeout(function () { successBanner.classList.add('hidden') }, 8000)
       }
 
@@ -186,21 +196,17 @@
         e.preventDefault()
         hideBanners()
 
-        // Gather form data
         var name     = (document.getElementById('name').value || '').trim()
         var phone    = (document.getElementById('phone').value || '').trim()
         var ageRaw   = (document.getElementById('age').value || '').trim()
         var location = (document.getElementById('location').value || '').trim()
-        var notes    = (document.getElementById('notes').value || '').trim()
 
-        // Validate required fields
         if (!phone) {
           showError('Contact Number is required.')
           document.getElementById('phone').focus()
           return
         }
 
-        // Validate age range
         var age = ageRaw ? parseInt(ageRaw, 10) : undefined
         if (ageRaw && (isNaN(age) || age < 1 || age > 120)) {
           showError('Age must be between 1 and 120.')
@@ -215,7 +221,6 @@
           phone:    phone,
           age:      age || undefined,
           location: location || undefined,
-          notes:    notes || undefined,
           interest: 'Hair Patch',
           source:   'hp-landing',
           status:   'New'
@@ -232,7 +237,6 @@
         .then(function (res) {
           return res.json().then(function (data) {
             if (!res.ok) {
-              // Extract meaningful error from API response
               var errMsg = data && data.error ? data.error : 'Failed to submit enquiry. Please try again.'
               throw new Error(errMsg)
             }
