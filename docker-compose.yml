@@ -46,7 +46,7 @@ services:
 
   moon:
     build:
-      context: ./whatsapp-moon
+      context: ./whatsapp-bridge
       dockerfile: Dockerfile
     container_name: lms_moon
     restart: unless-stopped
