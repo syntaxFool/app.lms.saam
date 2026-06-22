@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hair Patch Solutions — Free Consultation</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { background: linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 50%, #fefce8 100%); }
+    .card { transition: transform 0.2s, box-shadow 0.2s; }
+    .card:hover { transform: translateY(-2px); }
+    .form-input:focus { box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2); }
+    .spinner { border: 3px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; width: 20px; height: 20px; animation: spin 0.8s linear infinite; display: inline-block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4 md:p-6">
+  <div class="w-full max-w-lg mx-auto">
+
+    <!-- ─── Hero Section ─── -->
+    <div class="text-center mb-8">
+      <div class="w-16 h-16 bg-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-emerald-200/50">
+        <span class="text-white text-3xl">💇</span>
+      </div>
+      <h1 class="text-3xl md:text-4xl font-bold text-slate-800 mb-3">
+        Hair Patch Solutions
+      </h1>
+      <p class="text-slate-500 text-lg mb-6">
+        Get expert advice for your hair concerns — free consultation
+      </p>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
+        <div class="bg-white/70 backdrop-blur rounded-xl px-3 py-3 shadow-sm">
+          <span class="text-emerald-600 font-semibold">✓</span>
+          <span class="text-slate-600"> Natural Results</span>
+        </div>
+        <div class="bg-white/70 backdrop-blur rounded-xl px-3 py-3 shadow-sm">
+          <span class="text-emerald-600 font-semibold">✓</span>
+          <span class="text-slate-600"> Expert Stylists</span>
+        </div>
+        <div class="bg-white/70 backdrop-blur rounded-xl px-3 py-3 shadow-sm">
+          <span class="text-emerald-600 font-semibold">✓</span>
+          <span class="text-slate-600"> Free Consultation</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── Form Section ─── -->
+    <div class="card bg-white rounded-2xl shadow-lg shadow-emerald-100/50 border border-emerald-100 overflow-hidden">
+      <!-- Card accent header -->
+      <div class="h-2 bg-gradient-to-r from-emerald-500 to-emerald-400"></div>
+
+      <div class="p-6 md:p-8">
+        <h2 class="text-xl font-semibold text-slate-800 mb-6">Hair Patch Enquiry</h2>
+
+        <!-- Status banners -->
+        <div id="successBanner" class="hidden mb-4 p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 text-sm flex items-start gap-3">
+          <span class="text-emerald-600 text-lg leading-none mt-0.5">✓</span>
+          <div>
+            <strong class="block">Enquiry submitted!</strong>
+            <span>We'll contact you shortly. You can also reach us directly on WhatsApp.</span>
+          </div>
+        </div>
+
+        <div id="errorBanner" class="hidden mb-4 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm flex items-start gap-3">
+          <span class="text-red-500 text-lg leading-none mt-0.5">!</span>
+          <div>
+            <strong class="block">Something went wrong</strong>
+            <span id="errorText">Please try again later.</span>
+          </div>
+        </div>
+
+        <form id="leadForm" novalidate>
+          <!-- Name -->
+          <div class="mb-4">
+            <label for="name" class="block text-sm font-medium text-slate-700 mb-1">Name</label>
+            <input type="text" id="name" name="name" maxlength="100"
+                   class="form-input w-full px-4 py-2.5 border border-slate-200 rounded-xl text-slate-800
+                          focus:outline-none focus:border-emerald-400 focus:ring-0 transition" />
+          </div>
+
+          <!-- Contact Number (required) -->
+          <div class="mb-4">
+            <label for="phone" class="block text-sm font-medium text-slate-700 mb-1">
+              Contact Number <span class="text-red-500">*</span>
+            </label>
+            <input type="tel" id="phone" name="phone" maxlength="20" required
+                   placeholder="e.g. +91 9876543210"
+                   class="form-input w-full px-4 py-2.5 border border-slate-200 rounded-xl text-slate-800
+                          focus:outline-none focus:border-emerald-400 focus:ring-0 transition" />
+          </div>
+
+          <!-- Age -->
+          <div class="mb-4">
+            <label for="age" class="block text-sm font-medium text-slate-700 mb-1">Age</label>
+            <input type="number" id="age" name="age" min="1" max="120"
+                   class="form-input w-full px-4 py-2.5 border border-slate-200 rounded-xl text-slate-800
+                          focus:outline-none focus:border-emerald-400 focus:ring-0 transition" />
+          </div>
+
+          <!-- Location -->
+          <div class="mb-4">
+            <label for="location" class="block text-sm font-medium text-slate-700 mb-1">Location</label>
+            <input type="text" id="location" name="location" maxlength="200"
+                   class="form-input w-full px-4 py-2.5 border border-slate-200 rounded-xl text-slate-800
+                          focus:outline-none focus:border-emerald-400 focus:ring-0 transition" />
+          </div>
+
+          <!-- Profession / Notes -->
+          <div class="mb-6">
+            <label for="notes" class="block text-sm font-medium text-slate-700 mb-1">
+              Profession
+            </label>
+            <textarea id="notes" name="notes" rows="2" maxlength="1000"
+                      placeholder="e.g. Software Engineer, Teacher, Business Owner"
+                      class="form-input w-full px-4 py-2.5 border border-slate-200 rounded-xl text-slate-800
+                             focus:outline-none focus:border-emerald-400 focus:ring-0 transition resize-none"></textarea>
+          </div>
+
+          <!-- Submit -->
+          <button type="submit" id="submitBtn"
+                  class="w-full py-3 px-6 bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800
+                         text-white font-semibold rounded-xl transition shadow-lg shadow-emerald-200/50
+                         flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed">
+            <span id="btnText">Submit Enquiry</span>
+            <span id="btnSpinner" class="hidden"><span class="spinner"></span></span>
+          </button>
+
+          <p class="mt-3 text-xs text-slate-400 text-center">
+            We respect your privacy. Your details are safe with us.
+          </p>
+        </form>
+      </div>
+    </div>
+
+    <!-- ─── Footer ─── -->
+    <p class="mt-8 text-xs text-slate-400 text-center">
+      Hair Patch Solutions — aika-shuz.fyi
+    </p>
+  </div>
+
+  <script>
+    (function () {
+      var FORM_URL = 'https://hp-lms.aika-shuz.fyi/api/leads'
+      var API_KEY  = 'e10e23d58d98d1270e1acc8e244186cc8b65b37c896c8f4bd58a3ab0c51cfc7b'
+
+      var form       = document.getElementById('leadForm')
+      var submitBtn  = document.getElementById('submitBtn')
+      var btnText    = document.getElementById('btnText')
+      var btnSpinner = document.getElementById('btnSpinner')
+      var successBanner = document.getElementById('successBanner')
+      var errorBanner   = document.getElementById('errorBanner')
+      var errorText     = document.getElementById('errorText')
+
+      function hideBanners () {
+        successBanner.classList.add('hidden')
+        errorBanner.classList.add('hidden')
+      }
+
+      function setLoading (loading) {
+        if (loading) {
+          submitBtn.disabled = true
+          btnText.textContent = 'Submitting...'
+          btnSpinner.classList.remove('hidden')
+        } else {
+          submitBtn.disabled = false
+          btnText.textContent = 'Submit Enquiry'
+          btnSpinner.classList.add('hidden')
+        }
+      }
+
+      function showSuccess () {
+        hideBanners()
+        successBanner.classList.remove('hidden')
+        form.reset()
+        // Auto-hide success after 8 seconds
+        setTimeout(function () { successBanner.classList.add('hidden') }, 8000)
+      }
+
+      function showError (msg) {
+        hideBanners()
+        errorText.textContent = msg || 'Please try again later.'
+        errorBanner.classList.remove('hidden')
+      }
+
+      form.addEventListener('submit', function (e) {
+        e.preventDefault()
+        hideBanners()
+
+        // Gather form data
+        var name     = (document.getElementById('name').value || '').trim()
+        var phone    = (document.getElementById('phone').value || '').trim()
+        var ageRaw   = (document.getElementById('age').value || '').trim()
+        var location = (document.getElementById('location').value || '').trim()
+        var notes    = (document.getElementById('notes').value || '').trim()
+
+        // Validate required fields
+        if (!phone) {
+          showError('Contact Number is required.')
+          document.getElementById('phone').focus()
+          return
+        }
+
+        // Validate age range
+        var age = ageRaw ? parseInt(ageRaw, 10) : undefined
+        if (ageRaw && (isNaN(age) || age < 1 || age > 120)) {
+          showError('Age must be between 1 and 120.')
+          document.getElementById('age').focus()
+          return
+        }
+
+        setLoading(true)
+
+        var payload = {
+          name:     name || undefined,
+          phone:    phone,
+          age:      age || undefined,
+          location: location || undefined,
+          notes:    notes || undefined,
+          interest: 'Hair Patch',
+          source:   'hp-landing',
+          status:   'New'
+        }
+
+        fetch(FORM_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-API-Key':    API_KEY
+          },
+          body: JSON.stringify(payload)
+        })
+        .then(function (res) {
+          return res.json().then(function (data) {
+            if (!res.ok) {
+              // Extract meaningful error from API response
+              var errMsg = data && data.error ? data.error : 'Failed to submit enquiry. Please try again.'
+              throw new Error(errMsg)
+            }
+            return data
+          })
+        })
+        .then(function () {
+          showSuccess()
+        })
+        .catch(function (err) {
+          showError(err.message)
+        })
+        .finally(function () {
+          setLoading(false)
+        })
+      })
+    })()
+  </script>
+</body>
+</html>
