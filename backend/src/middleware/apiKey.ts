@@ -13,12 +13,16 @@ export function allowApiKey(req: Request, res: Response, next: NextFunction): vo
   const expectedKey = process.env.MOON_API_KEY
 
   if (expectedKey && apiKey === expectedKey) {
+    // Use X-Service-Name header to identify which bridge created the lead
+    // (e.g., 'Moon' for ac-lms, 'Bun' for hp-lms). Default to 'moon'.
+    const serviceName = (req.headers['x-service-name'] as string || 'moon').toLowerCase()
+    
     // Synthetic user so downstream handlers don't break on req.user checks
     req.user = {
-      userId: 'moon-service',
-      username: 'moon',
+      userId: serviceName + '-service',
+      username: serviceName,
       role: 'agent',
-      sessionId: 'moon-internal',
+      sessionId: serviceName + '-internal',
     }
     return next()
   }
