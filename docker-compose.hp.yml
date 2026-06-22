@@ -28,7 +28,7 @@ services:
       DB_USER:          ${DB_USER}
       DB_PASSWORD:      ${DB_PASSWORD}
       JWT_SECRET:       ${JWT_SECRET}
-      ALLOWED_ORIGINS:  https://hp-lms.aika-shuz.fyi,https://hp-landing.aika-shuz.fyi
+      ALLOWED_ORIGINS:  https://hp-lms.aika-shuz.fyi
       MOON_API_KEY:     ${MOON_API_KEY}
       PORT:             8080
     depends_on:
@@ -51,6 +51,7 @@ services:
     restart: unless-stopped
     volumes:
       - ./nginx/nginx-hp.conf:/etc/nginx/nginx.conf:ro
+      - ./hp-landing.aika-shuz.fyi:/usr/share/nginx/html/landingpage:ro
     depends_on:
       - backend
       - frontend
@@ -81,29 +82,6 @@ services:
       - "traefik.http.routers.hp-old-https.entrypoints=https"
       - "traefik.http.routers.hp-old-https.tls=true"
       - "traefik.http.routers.hp-old-https.middlewares=hp-old-redirect"
-
-  landing:
-    build:
-      context: ./hp-landing.aika-shuz.fyi
-      dockerfile: Dockerfile
-    container_name: lms_hp_landing
-    restart: unless-stopped
-    networks:
-      - lms_hp_net
-      - coolify
-    labels:
-      - "traefik.enable=true"
-      # ── Hair Patch Landing: hp-landing.aika-shuz.fyi ──
-      - "traefik.http.routers.hp-landing.rule=Host(`hp-landing.aika-shuz.fyi`)"
-      - "traefik.http.routers.hp-landing.entrypoints=https"
-      - "traefik.http.routers.hp-landing.tls=true"
-      - "traefik.http.routers.hp-landing.tls.certresolver=letsencrypt"
-      - "traefik.http.services.hp-landing.loadbalancer.server.port=80"
-      - "traefik.docker.network=coolify"
-      # HTTP → HTTPS redirect
-      - "traefik.http.routers.hp-landing-http.rule=Host(`hp-landing.aika-shuz.fyi`)"
-      - "traefik.http.routers.hp-landing-http.entrypoints=http"
-      - "traefik.http.routers.hp-landing-http.middlewares=redirect-to-https"
 
 volumes:
   postgres_hp_data:
