@@ -675,52 +675,76 @@ const isContactActionloading = ref<'call' | 'whatsapp' | null>(null)
 // Contact tab: log activity + create auto-prefixed task, then open link
 const handleCallClick = async () => {
   if (!props.leadId || isContactActionloading.value) return
+
+  // Open call link synchronously — BEFORE any await
+  window.location.href = callLink.value
+
+  // Visual feedback for fire-and-forget API calls
   isContactActionloading.value = 'call'
   contactMoon.start()
-  try {
-    const leadName = existingLead.value?.name || formData.value.name || 'Unknown'
-    const phone = existingLead.value?.phone || formData.value.phone || ''
-    await leadsStore.addActivity(props.leadId, { type: 'call', note: `Call initiated from Contact tab — ${phone}` })
-    const existingAutoTask = existingLead.value?.tasks?.find(
-      t => t.status === 'pending' && t.title.startsWith('Auto Task Call —')
-    )
-    if (!existingAutoTask) {
-      const dueDate = new Date(Date.now() + 30 * 60 * 1000).toISOString()
-      await leadsStore.addTask(props.leadId, { title: `Auto Task Call — ${leadName}`, note: 'Auto-generated follow-up after initiating call', dueDate, status: 'pending' })
-    }
-    window.location.href = callLink.value
-  } catch (error) {
-    console.error('Failed to log call:', error)
-    window.location.href = callLink.value
-  } finally {
-    isContactActionloading.value = null
-    contactMoon.stop()
+
+  // Fire-and-forget API calls (no await, use .catch())
+  const leadName = existingLead.value?.name || formData.value.name || 'Unknown'
+  const phone = existingLead.value?.phone || formData.value.phone || ''
+
+  leadsStore.addActivity(props.leadId, {
+    type: 'call',
+    note: `Call initiated from Contact tab — ${phone}`
+  }).catch(err => console.error('Failed to log call:', err))
+
+  const existingAutoTask = existingLead.value?.tasks?.find(
+    t => t.status === 'pending' && t.title.startsWith('Auto Task Call —')
+  )
+  if (!existingAutoTask) {
+    const dueDate = new Date(Date.now() + 30 * 60 * 1000).toISOString()
+    leadsStore.addTask(props.leadId, {
+      title: `Auto Task Call — ${leadName}`,
+      note: 'Auto-generated follow-up after initiating call',
+      dueDate,
+      status: 'pending'
+    }).catch(err => console.error('Failed to create auto-task:', err))
   }
+
+  // Reset visual feedback
+  isContactActionloading.value = null
+  contactMoon.stop()
 }
 
 const handleWhatsAppClick = async () => {
   if (!props.leadId || isContactActionloading.value) return
+
+  // Open WhatsApp link synchronously — BEFORE any await
+  window.open(whatsappLink.value, '_blank')
+
+  // Visual feedback for fire-and-forget API calls
   isContactActionloading.value = 'whatsapp'
   contactMoon.start()
-  try {
-    const leadName = existingLead.value?.name || formData.value.name || 'Unknown'
-    const phone = existingLead.value?.phone || formData.value.phone || ''
-    await leadsStore.addActivity(props.leadId, { type: 'whatsapp', note: `WhatsApp message initiated from Contact tab — ${phone}` })
-    const existingAutoTask = existingLead.value?.tasks?.find(
-      t => t.status === 'pending' && t.title.startsWith('Auto Task WhatsApp —')
-    )
-    if (!existingAutoTask) {
-      const dueDate = new Date(Date.now() + 30 * 60 * 1000).toISOString()
-      await leadsStore.addTask(props.leadId, { title: `Auto Task WhatsApp — ${leadName}`, note: 'Auto-generated follow-up after initiating WhatsApp message', dueDate, status: 'pending' })
-    }
-    window.open(whatsappLink.value, '_blank')
-  } catch (error) {
-    console.error('Failed to log WhatsApp:', error)
-    window.open(whatsappLink.value, '_blank')
-  } finally {
-    isContactActionloading.value = null
-    contactMoon.stop()
+
+  // Fire-and-forget API calls (no await, use .catch())
+  const leadName = existingLead.value?.name || formData.value.name || 'Unknown'
+  const phone = existingLead.value?.phone || formData.value.phone || ''
+
+  leadsStore.addActivity(props.leadId, {
+    type: 'whatsapp',
+    note: `WhatsApp message initiated from Contact tab — ${phone}`
+  }).catch(err => console.error('Failed to log WhatsApp:', err))
+
+  const existingAutoTask = existingLead.value?.tasks?.find(
+    t => t.status === 'pending' && t.title.startsWith('Auto Task WhatsApp —')
+  )
+  if (!existingAutoTask) {
+    const dueDate = new Date(Date.now() + 30 * 60 * 1000).toISOString()
+    leadsStore.addTask(props.leadId, {
+      title: `Auto Task WhatsApp — ${leadName}`,
+      note: 'Auto-generated follow-up after initiating WhatsApp message',
+      dueDate,
+      status: 'pending'
+    }).catch(err => console.error('Failed to create auto-task:', err))
   }
+
+  // Reset visual feedback
+  isContactActionloading.value = null
+  contactMoon.stop()
 }
 const isAddingTask = ref(false)
 const newTaskTitle = ref('')
