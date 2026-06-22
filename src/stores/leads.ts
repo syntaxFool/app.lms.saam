@@ -477,17 +477,22 @@ export const useLeadsStore = defineStore('leads', () => {
       return { success: false, error: 'Failed to create lead' }
     } catch (error: any) {
       console.error('Create lead error:', error)
+      // Extract the actual error message from the server response
+      const serverError = error?.response?.data?.error 
+        || error?.response?.data?.message 
+        || error?.message 
+        || 'Failed to create lead'
       
       // Handle 409 Conflict (duplicate phone number)
       if (error.response?.status === 409) {
         return {
           success: false,
-          error: 'Duplicate phone number',
+          error: serverError,
           existingLead: error.response.data?.data?.existingLead
         }
       }
       
-      return { success: false, error: 'Failed to create lead' }
+      return { success: false, error: serverError }
     } finally {
       loading.value = false
     }
@@ -570,9 +575,13 @@ export const useLeadsStore = defineStore('leads', () => {
       
       await apiClient.put(`/leads/${id}`, payload)
       return { success: true, data: lead }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Update lead error:', error)
-      return { success: false, error: 'Failed to update lead' }
+      const serverError = error?.response?.data?.error 
+        || error?.response?.data?.message 
+        || error?.message 
+        || 'Failed to update lead'
+      return { success: false, error: serverError }
     } finally {
       loading.value = false
     }
@@ -676,8 +685,12 @@ export const useLeadsStore = defineStore('leads', () => {
 
       lead.tasks.push(newTask)
       return true
-    } catch (error) {
-      console.error('Add task error:', error)
+    } catch (error: any) {
+      const serverError = error?.response?.data?.error 
+        || error?.response?.data?.message 
+        || error?.message 
+        || 'Failed to add task'
+      console.error('Add task error:', serverError, error)
       return false
     }
   }
@@ -714,8 +727,12 @@ export const useLeadsStore = defineStore('leads', () => {
       }
 
       return true
-    } catch (error) {
-      console.error('Delete task error:', error)
+    } catch (error: any) {
+      const serverError = error?.response?.data?.error 
+        || error?.response?.data?.message 
+        || error?.message 
+        || 'Failed to delete task'
+      console.error('Delete task error:', serverError, error)
       return false
     }
   }
@@ -750,8 +767,12 @@ export const useLeadsStore = defineStore('leads', () => {
       }
 
       return true
-    } catch (error) {
-      console.error('Toggle task status error:', error)
+    } catch (error: any) {
+      const serverError = error?.response?.data?.error 
+        || error?.response?.data?.message 
+        || error?.message 
+        || 'Failed to toggle task status'
+      console.error('Toggle task status error:', serverError, error)
       return false
     }
   }
