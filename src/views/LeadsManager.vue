@@ -204,7 +204,7 @@
     </nav>
 
     <!-- FAB Button -->
-    <div class="fixed bottom-24 right-6 md:bottom-8 md:right-8 z-50">
+    <div v-if="authStore.canCreateLead()" class="fixed bottom-24 right-6 md:bottom-8 md:right-8 z-50">
       <button
         @click="openAddLead"
         class="bg-primary hover:bg-indigo-600 text-white w-14 h-14 md:w-16 md:h-16 rounded-full shadow-lg shadow-indigo-500/30 flex items-center justify-center transition transform active:scale-95"
