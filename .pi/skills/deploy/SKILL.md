@@ -33,7 +33,7 @@ Moon (the WhatsApp-to-LMS bridge) requires a special pairing workflow. **CRITICA
 ```bash
 # Step 1: Clear old auth and start Moon on NAS
 ssh -i ~/.ssh/id_ed25519_nas -p 2222 nas@154.84.215.26 \
-  "cd /home/nas/lms-app && docker compose -f docker-compose.yml stop moon && docker compose -f docker-compose.yml rm -f moon && rm -rf whatsapp-moon/auth_info_moon/* && docker compose -f docker-compose.yml up -d moon"
+  "cd /home/nas/lms-app && docker compose -f docker-compose.yml stop moon && docker compose -f docker-compose.yml rm -f moon && rm -rf whatsapp-bridge/auth_info_moon/* && docker compose -f docker-compose.yml up -d moon"
 
 # Step 2: Wait 10 seconds for Moon to start, then extract QR
 sleep 10
@@ -42,8 +42,8 @@ B64=$(ssh -i ~/.ssh/id_ed25519_nas -p 2222 nas@154.84.215.26 \
 QR_TEXT=$(echo "$B64" | base64 -d)
 
 # Step 3: Generate QR PNG instantly and save to project
-npx --yes qrcode -o "whatsapp-moon/nas_qr.png" "$QR_TEXT"
-echo "📱 QR saved to whatsapp-moon/nas_qr.png — OPEN NOW and scan with WhatsApp"
+npx --yes qrcode -o "whatsapp-bridge/nas_qr.png" "$QR_TEXT"
+echo "📱 QR saved to whatsapp-bridge/nas_qr.png — OPEN NOW and scan with WhatsApp"
 
 # Step 4: Wait and verify pairing
 sleep 15
@@ -59,7 +59,7 @@ for i in 1 2 3 4 5; do
   # Refresh QR
   B64=$(ssh ... "docker logs ... | grep 'base64,' | tail -1 | grep -oP 'base64,\K[A-Za-z0-9+/=]+'")
   QR_TEXT=$(echo "$B64" | base64 -d)
-  npx --yes qrcode -o "whatsapp-moon/nas_qr.png" "$QR_TEXT"
+  npx --yes qrcode -o "whatsapp-bridge/nas_qr.png" "$QR_TEXT"
   echo "🔄 QR refreshed — keep file open"
   sleep 12
 done
@@ -103,8 +103,8 @@ git status --porcelain
 # Frontend
 npm run build
 
-# WhatsApp moon service
-cd whatsapp-moon && npm run build && cd ..
+# WhatsApp bridge service
+cd whatsapp-bridge && npm run build && cd ..
 ```
 
 ### Step 4: Decide deployment path
@@ -115,13 +115,25 @@ cd whatsapp-moon && npm run build && cd ..
 **Path B — Manual rsync + Docker:**
 ```bash
 rsync -avz -e "ssh -p 2222 -i ~/.ssh/id_ed25519_nas" \
-  --exclude='.git' --exclude='node_modules' --exclude='dist' \
+  --exclude='.git' --exclude='node_modules' --exclude='dist' --exclude='.env' \
   ./ nas@154.84.215.26:/home/nas/lms-app/
 ssh -i ~/.ssh/id_ed25519_nas -p 2222 nas@154.84.215.26 \
   "cd /home/nas/lms-app && docker compose up -d --build"
 ```
 
-### Step 5: Check Moon status
+### Step 5: Reload nginx (clear DNS cache after container rebuild)
+
+Always reload nginx after rebuilding containers. This clears its cached DNS
+resolution so it re-resolves upstream hostnames to the new container IPs,
+preventing 502 Bad Gateway errors.
+
+```bash
+ssh -i ~/.ssh/id_ed25519_nas -p 2222 nas@154.84.215.26 \
+  "docker exec lms_nginx nginx -s reload"
+echo '✅ nginx reloaded'
+```
+
+### Step 6: Check Moon status
 
 ```bash
 ssh -i ~/.ssh/id_ed25519_nas -p 2222 nas@154.84.215.26 \
@@ -130,7 +142,7 @@ ssh -i ~/.ssh/id_ed25519_nas -p 2222 nas@154.84.215.26 \
 
 If Moon is in a restart loop or shows "not logged in", follow the Moon Pairing Workflow above.
 
-### Step 6: Verify
+### Step 7: Verify
 
 ```bash
 curl -s https://ac-lms.aika-shuz.fyi/ | grep -o 'assets/[^"]*\.js'
