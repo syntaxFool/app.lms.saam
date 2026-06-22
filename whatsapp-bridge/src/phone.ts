@@ -101,11 +101,11 @@ function jidLocalPart(jid: string): string {
  *
  * Strategy (tried in order):
  *   1. Normalize JID → call onWhatsApp(phone) — confirms number exists
- *   2. If onWhatsApp returns a LID → the number exists! Return the normalized phone.
- *   3. If onWhatsApp fails (LID where we don't have the phone) →
- *      query USync by LID JID directly — the response may contain the
+ *   2. If onWhatsApp returns a LID → candidate is JID-derived, NOT the real phone.
+ *      Fall through to USync which queries by JID and may return the real phone.
+ *   3. Try USync query by JID directly — the response may contain the
  *      phone-based JID (not just the LID), which we can normalize.
- *   4. Last resort: use the raw JID local part as a stable identifier.
+ *   4. Last resort: throw — cannot resolve phone number.
  */
 export async function resolveContactPhone(
   jid: string,
@@ -115,6 +115,8 @@ export async function resolveContactPhone(
   const rawId = jidLocalPart(jid)
 
   try {
+    let isLidUser = false
+
     // ── Step 1: Try onWhatsApp with the normalized phone ──
     const results = await sock.onWhatsApp(candidate)
 
@@ -122,38 +124,41 @@ export async function resolveContactPhone(
       const entry = results[0]
 
       if (entry.exists) {
-        const confirmedBase = (entry.jid?.split('@')[0]?.split(':')[0] || '').replace(/\D/g, '')
-        const originalBase = rawId.replace(/\D/g, '')
-
         if ((entry as any).lid) {
-          // onWhatsApp returned a LID — but the phone number EXISTS on WhatsApp.
-          // The candidate phone IS a real WhatsApp number. Return it.
-          // The `lid` flag means the user has privacy, but the phone itself is valid.
-          console.log(`[Moon] 📞 Phone ${candidate} exists (LID user). Using number as-is.`)
-          return { phone: candidate, verified: true, lid: true }
-        }
+          // LID user — the JID doesn't contain the real phone number.
+          // The candidate from normalizeJidToLmsPhone is unreliable.
+          // Skip to USync query which queries by JID directly.
+          console.log(`[🌕] LID user detected. Candidate ${candidate} is JID-derived, not real phone. Trying USync...`)
+          isLidUser = true
+        } else {
+          // Non-LID user — JID contains the real phone number
+          const confirmedBase = (entry.jid?.split('@')[0]?.split(':')[0] || '').replace(/\D/g, '')
+          const originalBase = rawId.replace(/\D/g, '')
 
-        if (confirmedBase && confirmedBase === originalBase) {
-          // Confirmed — phone number matches the sender's JID
-          const verified = normalizeJidToLmsPhone(entry.jid)
-          return { phone: verified, verified: true, lid: false }
-        }
+          if (confirmedBase && confirmedBase === originalBase) {
+            // Confirmed — phone number matches the sender's JID
+            const verified = normalizeJidToLmsPhone(entry.jid)
+            return { phone: verified, verified: true, lid: false }
+          }
 
-        // Mismatch — use the confirmed JID's phone
-        if (entry.jid) {
-          const fallback = normalizeJidToLmsPhone(entry.jid)
-          return { phone: fallback, verified: true, lid: false }
+          // Mismatch — use the confirmed JID's phone
+          if (entry.jid) {
+            const fallback = normalizeJidToLmsPhone(entry.jid)
+            return { phone: fallback, verified: true, lid: false }
+          }
         }
       }
     }
 
-    // ── Step 2: onWhatsApp returned nothing — try USync query by JID ──
+    // ── Step 2: Try USync query by JID (for LID users or when onWhatsApp returns nothing) ──
     // When querying by LID JID with contact+LID protocols, WhatsApp may
     // return the phone-based JID in the user node's `jid` attribute.
-    console.log(`[Moon] 🔍 onWhatsApp returned nothing for ${candidate}. Trying USync by JID...`)
-    const jidPhone = await resolvePhoneByJid(jid, sock)
-    if (jidPhone) {
-      return { phone: jidPhone, verified: true, lid: false }
+    if (isLidUser || !results || results.length === 0) {
+      console.log(`[🌕] 🔍 Trying USync by JID for ${jid}...`)
+      const jidPhone = await resolvePhoneByJid(jid, sock)
+      if (jidPhone) {
+        return { phone: jidPhone, verified: true, lid: false }
+      }
     }
 
     // ── Step 3: All lookups failed — cannot resolve phone number ──
