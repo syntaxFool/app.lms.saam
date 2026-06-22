@@ -942,7 +942,12 @@ const submitForm = async () => {
       })
       if (result.success && result.data) {
         emit('saved', result.data)
+        closeModal()
+        return
       }
+      // Show error from store and stay on modal
+      formError.value = result.error || 'Failed to save lead'
+      return
     } else if (modalMode.value === 'edit' && props.leadId) {
       const result = await leadsStore.updateLeadData(props.leadId, {
         name: formData.value.name,
@@ -963,11 +968,30 @@ const submitForm = async () => {
       })
       if (result.success && result.data) {
         emit('saved', result.data)
+        closeModal()
+        return
       }
+      // Show error from store and stay on modal
+      formError.value = result.error || 'Failed to save lead'
+      return
     }
     closeModal()
   } catch (error) {
-    formError.value = error instanceof Error ? error.message : 'Failed to save lead'
+    // Extract meaningful error from axios error responses
+    const err = error as any
+    if (err?.response?.data?.error) {
+      formError.value = err.response.data.error
+    } else if (err?.response?.data?.message) {
+      formError.value = err.response.data.message
+    } else if (err?.code === 'ECONNABORTED') {
+      formError.value = 'Request timed out'
+    } else if (!err?.response && err?.message) {
+      formError.value = 'Network error: Unable to reach server'
+    } else if (error instanceof Error) {
+      formError.value = error.message
+    } else {
+      formError.value = 'Failed to save lead'
+    }
   } finally {
     isSaving.value = false
     saveMoon.stop()
