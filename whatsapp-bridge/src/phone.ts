@@ -61,7 +61,9 @@ export function normalizeJidToLmsPhone(jid: string): string {
 
   // ─── General international (11-15 digits) ───
   if (digits.length >= 11 && digits.length <= 15) {
-    for (const ccLen of [3, 2, 1]) {
+    // Try shorter country codes first (1-digit, 2-digit, 3-digit)
+    // Most country codes are 1-2 digits. 3-digit codes like +212 are rare.
+    for (const ccLen of [1, 2, 3]) {
       const cc = digits.slice(0, ccLen)
       const local = digits.slice(ccLen)
       if (local.length >= 7 && local.length <= 12) {
@@ -154,13 +156,13 @@ export async function resolveContactPhone(
       return { phone: jidPhone, verified: true, lid: false }
     }
 
-    // ── Step 3: All lookups failed — use raw JID identifier ──
-    console.warn(`[Moon] ⚠️ Could not resolve phone for ${jid}. Using raw identifier: ${rawId}`)
-    return { phone: rawId, verified: false, lid: true }
+    // ── Step 3: All lookups failed — cannot resolve phone number ──
+    console.error(`[Moon] ❌ Could not resolve phone for JID: ${jid}. Raw identifier ${rawId} is not a valid phone number. Skipping message.`)
+    throw new Error(`Could not resolve phone number for JID: ${jid}`)
 
   } catch (err) {
     console.error(`[Moon] WhatsApp lookup failed for ${candidate}:`, err)
-    return { phone: candidate, verified: false, lid: false }
+    throw err
   }
 }
 
