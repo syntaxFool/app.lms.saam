@@ -26,6 +26,13 @@
     .card { transition: transform 0.2s, box-shadow 0.2s; }
     .card:hover { transform: translateY(-2px); }
     .form-input:focus { box-shadow: 0 0 0 3px rgba(192, 146, 92, 0.25); }
+    /* Remove native number input spinners */
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    input[type=number] { -moz-appearance: textfield; }
     .spinner { border: 3px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; width: 20px; height: 20px; animation: spin 0.8s linear infinite; display: inline-block; }
     @keyframes spin { to { transform: rotate(360deg); } }
   </style>
@@ -88,7 +95,7 @@
             <label for="name" class="block text-sm font-medium text-catacombs mb-1">Name <span class="text-rusty/60 font-normal">(Optional)</span></label>
             <input type="text" id="name" name="name" maxlength="100"
                    placeholder="Your full name"
-                   class="form-input w-full px-4 py-2.5 bg-white border border-glaze rounded-xl text-catacombs placeholder-rusty/40
+                   class="form-input w-full px-4 py-2.5 bg-white border border-glaze rounded-xl text-catacombs placeholder-rusty/70
                           focus:outline-none focus:border-lone focus:ring-0 transition" />
           </div>
 
@@ -99,7 +106,7 @@
             </label>
             <input type="tel" id="phone" name="phone" maxlength="20" required
                    placeholder="e.g. +91 9876543210"
-                   class="form-input w-full px-4 py-2.5 bg-white border border-glaze rounded-xl text-catacombs placeholder-rusty/40
+                   class="form-input w-full px-4 py-2.5 bg-white border border-glaze rounded-xl text-catacombs placeholder-rusty/70
                           focus:outline-none focus:border-lone focus:ring-0 transition" />
           </div>
 
@@ -108,7 +115,7 @@
             <label for="age" class="block text-sm font-medium text-catacombs mb-1">Age <span class="text-rusty/60 font-normal">(Optional)</span></label>
             <input type="number" id="age" name="age" min="1" max="120"
                    placeholder="e.g. 28"
-                   class="form-input w-full px-4 py-2.5 bg-white border border-glaze rounded-xl text-catacombs placeholder-rusty/40
+                   class="form-input w-full px-4 py-2.5 bg-white border border-glaze rounded-xl text-catacombs placeholder-rusty/70
                           focus:outline-none focus:border-lone focus:ring-0 transition" />
           </div>
 
@@ -116,8 +123,8 @@
           <div class="mb-4">
             <label for="location" class="block text-sm font-medium text-catacombs mb-1">Location <span class="text-rusty/60 font-normal">(Optional)</span></label>
             <input type="text" id="location" name="location" maxlength="200" list="citySuggestions"
-                   placeholder="e.g. Mumbai, Maharashtra" autocomplete="off"
-                   class="form-input w-full px-4 py-2.5 bg-white border border-glaze rounded-xl text-catacombs placeholder-rusty/40
+                   placeholder="e.g. Andheri West" autocomplete="off"
+                   class="form-input w-full px-4 py-2.5 bg-white border border-glaze rounded-xl text-catacombs placeholder-rusty/70
                           focus:outline-none focus:border-lone focus:ring-0 transition" />
             <datalist id="citySuggestions">
               <option value="Mumbai, Maharashtra">
