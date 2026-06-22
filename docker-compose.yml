@@ -17,7 +17,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: lms_api
+    container_name: lms_ac_api
     restart: unless-stopped
     environment:
       DB_HOST:          postgres
@@ -51,7 +51,7 @@ services:
     container_name: lms_moon
     restart: unless-stopped
     environment:
-      LMS_API_URL: http://lms_api:8080/api
+      LMS_API_URL: http://lms_ac_api:8080/api
       MOON_API_KEY: ${MOON_API_KEY}
       LOG_LEVEL: ${LOG_LEVEL:-info}
     volumes:
