@@ -82,6 +82,15 @@ services:
       - "traefik.http.routers.hp-old-https.entrypoints=https"
       - "traefik.http.routers.hp-old-https.tls=true"
       - "traefik.http.routers.hp-old-https.middlewares=hp-old-redirect"
+      # ── hp-landing.aika-shuz.fyi → redirect to hp-lms.aika-shuz.fyi/landingpage/leadform/ ──
+      - "traefik.http.routers.hp-landing.rule=Host(`hp-landing.aika-shuz.fyi`)"
+      - "traefik.http.routers.hp-landing.entrypoints=https"
+      - "traefik.http.routers.hp-landing.tls=true"
+      - "traefik.http.routers.hp-landing.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.hp-landing.service=lms-hp"
+      - "traefik.http.routers.hp-landing-http.rule=Host(`hp-landing.aika-shuz.fyi`)"
+      - "traefik.http.routers.hp-landing-http.entrypoints=http"
+      - "traefik.http.routers.hp-landing-http.middlewares=redirect-to-https"
 
 volumes:
   postgres_hp_data:
