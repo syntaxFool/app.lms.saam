@@ -1,0 +1,34 @@
+{
+  "name": "whatsapp-bridge",
+  "version": "1.0.0",
+  "description": "Moon — WhatsApp-to-LMS bridge service. Listens for incoming messages and creates/updates leads.",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node-dev --respawn src/index.ts"
+  },
+  "keywords": [
+    "whatsapp",
+    "lms",
+    "baileys",
+    "moon"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@hapi/boom": "^10.0.0",
+    "@whiskeysockets/baileys": "^7.0.0-rc13",
+    "axios": "^1.6.0",
+    "dotenv": "^16.4.0",
+    "https-proxy-agent": "^9.1.0",
+    "pino": "^8.17.0",
+    "qrcode-terminal": "^0.12.0",
+    "socks-proxy-agent": "^10.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/qrcode-terminal": "^0.12.2",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.3.0"
+  }
+}
